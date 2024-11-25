@@ -1,0 +1,24 @@
+{
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#2b2b2b",
+        "activityBar.background": "#2b2b2b",
+        "sash.hoverBorder": "#2b2b2b",
+        "statusBar.background": "#121212",
+        "statusBarItem.hoverBackground": "#2b2b2b",
+        "statusBarItem.remoteBackground": "#121212",
+        "sideBar.border": "#2b2b2b",
+        "statusBar.debuggingBackground": "#121212",
+        "editorGroup.border": "#2b2b2b",
+        "panel.border": "#2b2b2b",
+        "statusBar.border": "#121212",
+        "statusBar.debuggingBorder": "#121212",
+        "tab.activeBorder": "#2b2b2b",
+        "titleBar.activeBackground": "#121212",
+        "titleBar.border": "#121212",
+        "titleBar.inactiveBackground": "#12121299"
+    },
+    "peacock.color": "#121212",
+    "cSpell.words": [
+        "zaccessories"
+    ]
+}
