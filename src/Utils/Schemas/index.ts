@@ -9,11 +9,19 @@ const RequiredUniqueString = {
   required: true,
   unique: true,
 };
-const RequiredUniqueEmail = {
+const NotRequiredUniqueEmail = {
   type: String,
-  required: true,
+  required: false,
   unique: true,
+  sparse: true,
   toLowerCase: true,
+  trim: true,
+};
+const NotRequiredUniquePhone = {
+  type: String,
+  required: false,
+  unique: true,
+  sparse: true,
   trim: true,
 };
 const NotRequiredString = {
@@ -45,6 +53,7 @@ const RequiredUniqueNumber = {
 };
 const NotRequiredNumber = {
   type: Number,
+  default: 0,
 };
 const createdAtTokenModel ={
   type: Date,
@@ -127,7 +136,8 @@ export {
   RequiredUniqueString,
   RequiredUniqueNumber,
   NotRequiredTimeStamp,
-  RequiredUniqueEmail,
+  NotRequiredUniqueEmail,
+  NotRequiredUniquePhone,
   createdAtTokenModel,
   expiresAtTokenModel,
   ImageSchema,

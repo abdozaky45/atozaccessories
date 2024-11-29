@@ -2,7 +2,7 @@ import slugify from "slugify";
 import CategoryModel from "../../Model/Categories/CategoryModel";
 import { Types } from "mongoose";
 import e from "cors";
-import s3_service from "../Aws/S3_Bucket/PresinedUrl";
+import s3_service from "../Aws/S3_Bucket/presignedUrl";
 export const createCategory = async ({
   categoryName,
   mediaUrl,

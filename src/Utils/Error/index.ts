@@ -1,5 +1,6 @@
 enum ErrorMessages {
   EMAIL_REQUIRED = "email is required",
+  PHONE_REQUIRED = "phone is required",
   EMAIL_NOT_SENT = "email not sent",
   EMAIL_NOT_FOUND = "email not found",
   EMAIL_REQUIRED_AND_ACTIVE_CODE = "email is required and active code is required",
@@ -21,5 +22,9 @@ enum ErrorMessages {
   UNAUTHORIZED_ACCESS = "Unauthorized access",
 CATEGORY_NOT_FOUND_OR_EALREADY_DELETED = "Category not found or already deleted",
 NO_FILES_PROVIDED = "No files provided",
+DATA_IS_REQUIRED = "Data is Required",
+PLEASE_PROVIDE_EITHER_AN_EMAIL_ADDRESS_OR_A_PHONE_NUMBER_BUT_NOT_BOTH= "Please provide either an email address or a phone number, but not both",
+EMAIL_OR_PHONE_NOT_FOUND = "Email or Phone is valid",
+PHONE_NOT_FOUND = "Phone not found",
 }
 export default ErrorMessages;

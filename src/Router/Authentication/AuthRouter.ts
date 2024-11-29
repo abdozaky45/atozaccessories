@@ -1,6 +1,10 @@
 import { Router } from "express";
 const authenticationRouter = Router();
 import * as authenticationController from "../../Controller/Authentication/AuthController";
-authenticationRouter.post("/registration", authenticationController.registration);
+authenticationRouter.post("/register-email", authenticationController.registerWithEmail);
+authenticationRouter.post("/register-phone", authenticationController.registerWithEmail);
+authenticationRouter.post("/active-account", authenticationController.activeAccount);
+authenticationRouter.post("/email-new-code", authenticationController.sendNewActiveCodeWithEmail);
+authenticationRouter.post("/phone-new-code", authenticationController.sendNewActiveCodeWithPhone);
 authenticationRouter.post("/refresh-token", authenticationController.refreshedToken);
 export default authenticationRouter;

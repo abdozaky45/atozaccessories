@@ -1,5 +1,4 @@
 import { Types } from "mongoose";
-import UserInterfaceModel from "../User/UserInterfaceModel";
 interface categoryImage {
     mediaUrl: string;
     mediaId: string;

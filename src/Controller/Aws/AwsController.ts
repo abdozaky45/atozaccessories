@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ApiResponse, ApiError, asyncHandler } from "../../Utils/ErrorHandling";
 import ErrorMessages from "../../Utils/Error";
-import s3_service from "../../Service/Aws/S3_Bucket/PresinedUrl";
+import s3_service from "../../Service/Aws/S3_Bucket/presignedUrl";
 export const getPresignedURL = asyncHandler(
   async (req: Request, res: Response) => {
     const regionAws = process.env.AWS_REGION!;
