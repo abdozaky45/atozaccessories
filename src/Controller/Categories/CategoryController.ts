@@ -98,3 +98,15 @@ export const getCategories = asyncHandler(
     return res.json(new ApiResponse(200, { categories }));
   }
 );
+export const getCategoryById = asyncHandler(
+  async (req: Request, res: Response) => {
+    if(!req.params.categoryId) {
+      throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
+    }
+  const category = await findCategoryById(req.params.categoryId);
+    if (!category) {
+      throw new ApiError(404, ErrorMessages.CATEGORY_NOT_FOUND);
+    }
+    return res.json(new ApiResponse(200, { category }));
+  }
+);

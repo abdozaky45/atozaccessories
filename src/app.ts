@@ -14,6 +14,7 @@ import { UserTypeEnum } from "./Utils/UserType";
 import categoryRouter from "./Router/Categories/CategoryRouter";
 import publicRouter from "./Router/PublicRouters/PublicRouter";
 import AwsRouter from "./Router/Aws/AwsRouter";
+import ProductRouter from "./Router/Product/ProductRouter";
 const app: Application = express();
 app.use(cors());
 app.use(express.json());
@@ -32,7 +33,12 @@ app.use(
   checkRole([UserTypeEnum.ADMIN]),
   categoryRouter
 );
-app.use(`/${RouterEnum.aws}`,AwsRouter)
+app.use(
+  `/${RouterEnum.product}`,
+  checkRole([UserTypeEnum.ADMIN]),
+  ProductRouter
+);
+app.use(`/${RouterEnum.aws}`, AwsRouter);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });

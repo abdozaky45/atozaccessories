@@ -8,5 +8,6 @@ enum SuccessMessage {
   CATEGORY_UPDATED = "Category updated",
   NO_UPDATE_CATEGORY = "No changes to update",
   CATEGORY_DELETED_SUCCESS = "Category deleted successfully",
+  PRODUCT_CREATED = "Product created successfully",
 }
 export default SuccessMessage;
