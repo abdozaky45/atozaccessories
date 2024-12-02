@@ -15,17 +15,30 @@ export default interface ProductInterFaceModel {
   productName: string;
   productDescription: string;
   price: number;
-  salePrice: number;
-  expiredSale: number;
-  isExpiredSale: boolean;
-  discount: number;
   availableItems: number;  
-  soldItems:number;
-  category: Types.ObjectId;
-  createdBy: Types.ObjectId;
+  salePrice?: number;
+  discount?:number;
+  discountPercentage?: number;
+  soldItems?:number;
+  isSoldOut?: boolean;
+  expiredSale?: number;
+  isExpiredSale?: boolean;
+  category: Types.ObjectId | string;
+  createdBy: Types.ObjectId | string;
   slug: string;
   defaultImage: ProductDefaultImage;
-  albumImages: ProductAlbumImages[];
+  albumImages?: ProductAlbumImages[];
   createdAt: number;
   updatedAt: number;
 }
+   /*
+*productName
+*productDescription
+*price
+*availableItems
+*Category
+*defaultImage
+salePrice
+expiredSale
+albumImages
+ */

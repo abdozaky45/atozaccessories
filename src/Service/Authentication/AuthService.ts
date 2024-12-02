@@ -5,8 +5,6 @@ import { activeCodeTemplate } from "../../Utils/Nodemailer/SendCodeTemplate";
 import { StatusEnum } from "../../Utils/StatusType";
 import TokenModel from "../../Model/Token/TokenModel";
 import { Types } from "mongoose";
-import { ApiError } from "../../Utils/ErrorHandling";
-import ErrorMessages from "../../Utils/Error";
 export function generateSixDigitCode() {
   let code = nanoid(6);
   code = code.replace(/[^0-9]/g, "");
@@ -54,12 +52,16 @@ export const CreateNewAccount = async ({
   activeCode: string;
   codeCreatedAt: number;
 }) => {
+  const newEmail = email || '';
+  const newPhone = phone || '';
+
   const user = await UserModel.create({
-    email,
-    phone,
+    email: newEmail,
+    phone: newPhone,
     activeCode,
     codeCreatedAt,
   });
+
   return user;
 };
 export const updateUserAndDeleteActiveCode = async (searchKey: string) => {
