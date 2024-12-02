@@ -1,15 +1,11 @@
 import { Types } from "mongoose";
 interface ProductDefaultImage {
-  defaultImage: {
     mediaUrl: string;
     mediaId: string;
-  };
 }
 interface ProductAlbumImages {
-  alumImages: {
     mediaUrl: string;
     mediaId: string;
-  };
 }
 export default interface ProductInterFaceModel {
   productName: string;

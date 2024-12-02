@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model } from "mongoose";
 import ProductInterFaceModel from "./ProductInterFaceModel";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import {

@@ -27,5 +27,6 @@ enum ErrorMessages {
   EMAIL_OR_PHONE_NOT_FOUND = "Email or Phone is valid",
   PHONE_NOT_FOUND = "Phone not found",
   ALL_FIELDS_REQUIRED = "Please provide all required fields",
+  PRODUCT_NOT_FOUND= "Product not found",
 }
 export default ErrorMessages;

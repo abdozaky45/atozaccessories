@@ -12,16 +12,12 @@ const RequiredUniqueString = {
 const NotRequiredUniqueEmail = {
   type: String,
   required: false,
-  unique: true,
-  sparse: true,
   toLowerCase: true,
   trim: true,
 };
 const NotRequiredUniquePhone = {
   type: String,
   required: false,
-  unique: true,
-  sparse: true,
   trim: true,
 };
 const NotRequiredString = {

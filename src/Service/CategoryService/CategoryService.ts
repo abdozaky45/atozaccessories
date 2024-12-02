@@ -1,7 +1,6 @@
 import slugify from "slugify";
 import CategoryModel from "../../Model/Categories/CategoryModel";
 import { Types } from "mongoose";
-import e from "cors";
 import s3_service from "../Aws/S3_Bucket/presignedUrl";
 export const createCategory = async ({
   categoryName,
@@ -28,7 +27,7 @@ export const createCategory = async ({
   });
   return category;
 };
-export const extractMediaId = async (imageUrl: string) => {
+export const extractMediaId =(imageUrl: string) => {
   if (!imageUrl.includes("amazonaws.com/")) {
     return "Invalid image url";
   }
@@ -59,7 +58,7 @@ export const prepareCategoryUpdates = async (
     updated = true;
   }
   if (imageUrl && imageUrl !== category.image.mediaUrl) {
-    const mediaId = await extractMediaId(imageUrl);
+    const mediaId = extractMediaId(imageUrl);
     if (mediaId !== category.image.mediaId) {
       await deletePresignedURL(category.image.mediaId);
     }
