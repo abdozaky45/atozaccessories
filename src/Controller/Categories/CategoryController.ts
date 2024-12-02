@@ -61,7 +61,7 @@ export const updateCategory = asyncHandler(
     return res.json(
       new ApiResponse(
         200,
-        { createCategory },
+        { },
         SuccessMessage.NO_UPDATE_CATEGORY
       )
     );

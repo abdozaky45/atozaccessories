@@ -15,7 +15,7 @@ export const getPresignedURL = asyncHandler(
     const aws_s3_service = new s3_service();
     const preSignedURLs = await Promise.all(
       files.map(async (file: {contentType:string,fileName?:string}, index: number) => {
-        const fileName = `${req.body.fileName}/${
+        const fileName = `${req.body.folder}/${
           req.body.currentUser.userInfo._id
         }_${Date.now()}_${index}`;
         const preSignedURL = await aws_s3_service.createPresignedUrlWithClient({

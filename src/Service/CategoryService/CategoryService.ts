@@ -60,12 +60,10 @@ export const prepareCategoryUpdates = async (
   if (imageUrl && imageUrl !== category.image.mediaUrl) {
     const mediaId = extractMediaId(imageUrl);
     if (mediaId !== category.image.mediaId) {
-      await deletePresignedURL(category.image.mediaId);
-    }
-
     category.image.mediaUrl = imageUrl;
     category.image.mediaId = mediaId;
     updated = true;
+    }
   }
   return updated ? category : null;
 };

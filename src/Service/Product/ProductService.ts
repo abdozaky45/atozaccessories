@@ -1,7 +1,7 @@
+import slugify from "slugify";
 import ProductInterFaceModel from "../../Model/Product/ProductInterFaceModel";
 import ProductModel from "../../Model/Product/ProductModel";
 import {
-  deletePresignedURL,
   extractMediaId,
 } from "../CategoryService/CategoryService";
 
@@ -17,29 +17,44 @@ export const prepareProductUpdates = async (
   productData: any,
   product: ProductInterFaceModel
 ) => {
-  let updates = false;
-  productData.productName = productData.productName || product.productName;
-  productData.productDescription =
+  let updates = true;
+  product.productName = productData.productName || product.productName;
+  product.slug = productData.productName
+    ? slugify(product.productName)
+    : product.slug;
+  product.productDescription =
     productData.productDescription || product.productDescription;
-  productData.availableItems =
-    productData.availableItems || product.availableItems;
-  productData.price = productData.price || product.price;
-  productData.salePrice = productData.salePrice || product.salePrice;
-  productData.expiredSale = productData.expiredSale || product.expiredSale;
-  productData.category = productData.category || product.category;
+  product.availableItems = productData.availableItems || product.availableItems;
+  product.price = productData.price || product.price;
+  product.salePrice = productData.salePrice || product.salePrice;
+  product.expiredSale = productData.expiredSale || product.expiredSale;
+  product.category = productData.category || product.category;
   if (
     productData.defaultImage &&
     productData.defaultImage !== product.defaultImage.mediaUrl
   ) {
     const mediaId = extractMediaId(productData.defaultImage);
     if (mediaId !== product.defaultImage.mediaId) {
-      await deletePresignedURL(product.defaultImage.mediaId);
+      product.defaultImage.mediaUrl = productData.defaultImage;
+      product.defaultImage.mediaId = mediaId;
     }
-    product.defaultImage.mediaUrl = productData.defaultImage;
-    product.defaultImage.mediaId = mediaId;
-    updates = true;
   }
-  if (productData.albumImages && productData.albumImages > 0) {
-    
+
+  if (productData.albumImages) {
+    productData.albumImages.forEach((imageUrl: string, index: number) => {
+      const existingImages = product.albumImages?.[index];
+      if (existingImages && imageUrl !== existingImages.mediaUrl) {
+        const mediaId = extractMediaId(imageUrl);
+        if (mediaId !== existingImages.mediaId) {
+          existingImages.mediaUrl = imageUrl;
+          existingImages.mediaId = mediaId;
+        }
+      }
+    });
   }
+  return updates ? product : null;
+};
+export const deleteOneProduct = async (productId:string) => {
+  const product = await ProductModel.deleteOne({ _id: productId });
+  return product;
 };

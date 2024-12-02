@@ -2,13 +2,19 @@ import { Request, Response } from "express";
 import { ApiError, ApiResponse, asyncHandler } from "../../Utils/ErrorHandling";
 import ErrorMessages from "../../Utils/Error";
 import {
+  deletePresignedURL,
   extractMediaId,
   findCategoryById,
 } from "../../Service/CategoryService/CategoryService";
 import ProductInterFaceModel from "../../Model/Product/ProductInterFaceModel";
 import slugify from "slugify";
 import moment from "../../../src/Utils/DateAndTime";
-import { createProduct, findProductById } from "../../Service/Product/ProductService";
+import {
+  createProduct,
+  deleteOneProduct,
+  findProductById,
+  prepareProductUpdates,
+} from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
 export const CreateProduct = asyncHandler(
   async (req: Request, res: Response) => {
@@ -66,17 +72,79 @@ export const CreateProduct = asyncHandler(
 );
 export const updateProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const Category = await findCategoryById(req.params.categoryId);
+    const {
+      productName,
+      productDescription,
+      price,
+      availableItems,
+      salePrice,
+      expiredSale,
+      category,
+      defaultImage,
+      albumImages,
+    } = req.body;
+    const { productId } = req.params;
+    const product = await findProductById(productId);
+    if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
+    const Category = await findCategoryById(category);
     if (!Category) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
     if (
       req.body.currentUser.userInfo._id.toString() !==
-      Category.createdBy.toString()
+      product.createdBy.toString()
     ) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    const product = await findProductById(req.params.productId);
-    if(!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
-    
-
+    const productData = {
+      productName,
+      productDescription,
+      price,
+      availableItems,
+      salePrice,
+      expiredSale,
+      category,
+      defaultImage,
+      albumImages,
+    };
+    const updates = await prepareProductUpdates(productData, product);
+    if (updates) {
+      await product.save();
+      return res.json(
+        new ApiResponse(200, { product }, SuccessMessage.PRODUCT_UPDATED)
+      );
+    }
+    return res.json(
+      new ApiResponse(200, {}, SuccessMessage.PRODUCT_NOT_UPDATED)
+    );
+  }
+);
+export const deleteProduct = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { productId } = req.params;
+    const product = await findProductById(productId);
+    if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
+    if (
+      req.body.currentUser.userInfo._id.toString() !==
+      product.createdBy.toString()
+    )
+      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
+    const mediaIds = [
+      product.defaultImage.mediaId,
+      ...(product.albumImages?.map((image) => image.mediaId) || []),
+    ];
+    await Promise.all(
+      mediaIds.map(async (mediaId) => {
+        await deletePresignedURL(mediaId);
+      })
+    );
+    await deleteOneProduct(productId);
+    return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_DELETED));
+  }
+);
+export const getProductById = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { productId } = req.params;
+    const product = await findProductById(productId);
+    if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
+    return res.json(new ApiResponse(200, { product }, ""));
   }
 );
