@@ -12,16 +12,12 @@ const RequiredUniqueString = {
 const NotRequiredUniqueEmail = {
   type: String,
   required: false,
-  unique: true,
-  sparse: true,
   toLowerCase: true,
   trim: true,
 };
 const NotRequiredUniquePhone = {
   type: String,
   required: false,
-  unique: true,
-  sparse: true,
   trim: true,
 };
 const NotRequiredString = {
@@ -55,7 +51,7 @@ const NotRequiredNumber = {
   type: Number,
   default: 0,
 };
-const createdAtTokenModel ={
+const createdAtTokenModel = {
   type: Date,
   default: () => moment().toDate(),
 };
@@ -63,9 +59,9 @@ const expiresAtTokenModel = {
   type: Date,
   default: () => moment().add(365, "days").toDate(),
 };
-const ImageSchema={
-  mediaUrl:{type:String ,required:true},
-  mediaId:{type:String ,required:true},
+const ImageSchema = {
+  mediaUrl: { type: String, required: true },
+  mediaId: { type: String, required: true },
 };
 const RequiredSpecificNumber = (specificNumber: number) => {
   return {
@@ -76,7 +72,7 @@ const RequiredSpecificNumber = (specificNumber: number) => {
 };
 const RefType = (ref: string, required: boolean) => {
   return {
-    type:Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     required,
     ref,
     default: null,
@@ -115,7 +111,7 @@ const EnumStringRole = (enumValues: Array<string>) => {
     type: String,
     required: false,
     enum: enumValues,
-    default:"user",
+    default: "user",
   };
 };
 const EnumStringStatus = (enumValues: Array<string>) => {
@@ -123,9 +119,31 @@ const EnumStringStatus = (enumValues: Array<string>) => {
     type: String,
     required: false,
     enum: enumValues,
-    default:"offline",
+    default: "offline",
   };
 };
+import { Query } from "mongoose";
+
+export async function paginate<T>(
+  query: Query<T[], T>,
+  page: number = 1,
+  categoryFields :string,
+  categories :string
+): Promise<{
+  data: T[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+}> {
+  let limit =20;
+  page = !page || page < 1 || isNaN(page) ? 1 : page;
+  const skip = limit * (page - 1);
+  const totalItems = await query.model.countDocuments(query.getFilter());
+  const totalPages = Math.ceil(totalItems / limit);
+  const data = await query.skip(skip).limit(limit).populate(categories, categoryFields).exec();
+  return { totalItems, totalPages, currentPage: page, data };
+}
+
 export {
   RequiredString,
   NotRequiredString,
@@ -147,5 +165,5 @@ export {
   EnumStringRequired,
   EnumStringNotRequired,
   EnumStringStatus,
-  EnumStringRole
+  EnumStringRole,
 };

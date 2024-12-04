@@ -1,15 +1,11 @@
 import { Types } from "mongoose";
 interface ProductDefaultImage {
-  defaultImage: {
     mediaUrl: string;
     mediaId: string;
-  };
 }
 interface ProductAlbumImages {
-  alumImages: {
     mediaUrl: string;
     mediaId: string;
-  };
 }
 export default interface ProductInterFaceModel {
   productName: string;
@@ -23,6 +19,7 @@ export default interface ProductInterFaceModel {
   isSoldOut?: boolean;
   expiredSale?: number;
   isExpiredSale?: boolean;
+  isSale?: boolean;
   category: Types.ObjectId | string;
   createdBy: Types.ObjectId | string;
   slug: string;
@@ -30,6 +27,7 @@ export default interface ProductInterFaceModel {
   albumImages?: ProductAlbumImages[];
   createdAt: number;
   updatedAt: number;
+  paginate?: (page: number) => Promise<any>;
 }
    /*
 *productName

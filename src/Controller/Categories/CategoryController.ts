@@ -18,7 +18,7 @@ export const CreateNewCategory = asyncHandler(
     if (!categoryName || !imageUrl) {
       throw new ApiError(400, ErrorMessages.INVALID_CATEGORY_DATA);
     }
-    const mediaId = await extractMediaId(imageUrl);
+    const mediaId =  extractMediaId(imageUrl);
     const category = await createCategory({
       categoryName,
       mediaUrl: imageUrl,
@@ -61,7 +61,7 @@ export const updateCategory = asyncHandler(
     return res.json(
       new ApiResponse(
         200,
-        { createCategory },
+        { },
         SuccessMessage.NO_UPDATE_CATEGORY
       )
     );
