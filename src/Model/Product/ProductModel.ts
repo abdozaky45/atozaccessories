@@ -9,6 +9,7 @@ import {
   RequiredNumber,
   RequiredString,
 } from "../../Utils/Schemas";
+import { NextFunction } from "express";
 const ProductSchema = new Schema<ProductInterFaceModel>({
   productName: RequiredString,
   productDescription: RequiredString,
@@ -19,6 +20,7 @@ const ProductSchema = new Schema<ProductInterFaceModel>({
   discountPercentage: NotRequiredNumber,
   soldItems: NotRequiredNumber,
   isSoldOut: NotRequiredBoolean,
+  isSale: NotRequiredBoolean,
   expiredSale: NotRequiredNumber,
   isExpiredSale: NotRequiredBoolean,
   category: RefType(SchemaTypesReference.Category, true),
@@ -34,9 +36,11 @@ ProductSchema.pre("save", function (next) {
   if (product.salePrice && product.salePrice < product.price) {
     product.discount = product.price - product.salePrice;
     product.discountPercentage = (product.discount / product.price) * 100;
+    product.isSale=true
   } else {
     product.discount = 0;
     product.discountPercentage = 0;
+    product.isSale=false
   }
   next();
 });

@@ -1,9 +1,9 @@
 import slugify from "slugify";
 import ProductInterFaceModel from "../../Model/Product/ProductInterFaceModel";
 import ProductModel from "../../Model/Product/ProductModel";
-import {
-  extractMediaId,
-} from "../CategoryService/CategoryService";
+import { extractMediaId } from "../CategoryService/CategoryService";
+import { paginate } from "../../Utils/Schemas";
+import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 
 export const createProduct = async (productData: ProductInterFaceModel) => {
   const product = await ProductModel.create(productData);
@@ -54,7 +54,25 @@ export const prepareProductUpdates = async (
   }
   return updates ? product : null;
 };
-export const deleteOneProduct = async (productId:string) => {
+export const deleteOneProduct = async (productId: string) => {
   const product = await ProductModel.deleteOne({ _id: productId });
   return product;
+};
+export const findAllProducts = async (page: number) => {
+  const products = await paginate(
+    ProductModel.find({}).sort({ createdAt: -1 }),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+};
+export const findAllSaleProducts = async (page: number) => {
+  const products = await paginate(
+    ProductModel.find({ isSale: true }).sort({ createdAt: -1 }),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
 };

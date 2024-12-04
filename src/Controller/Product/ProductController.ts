@@ -12,6 +12,8 @@ import moment from "../../../src/Utils/DateAndTime";
 import {
   createProduct,
   deleteOneProduct,
+  findAllProducts,
+  findAllSaleProducts,
   findProductById,
   prepareProductUpdates,
 } from "../../Service/Product/ProductService";
@@ -146,5 +148,21 @@ export const getProductById = asyncHandler(
     const product = await findProductById(productId);
     if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
     return res.json(new ApiResponse(200, { product }, ""));
+  }
+);
+export const getAllProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page } = req.query;
+    const pageNumber = Number(page);
+    const products = await findAllProducts(pageNumber);
+    return res.json(new ApiResponse(200, { products }, ""));
+  }
+);
+export const getAllSaleProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page } = req.query;
+    const pageNumber = Number(page);
+    const products = await findAllSaleProducts(pageNumber);
+    return res.json(new ApiResponse(200, { products }, ""));
   }
 );

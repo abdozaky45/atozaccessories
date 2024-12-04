@@ -28,5 +28,6 @@ enum ErrorMessages {
   PHONE_NOT_FOUND = "Phone not found",
   ALL_FIELDS_REQUIRED = "Please provide all required fields",
   PRODUCT_NOT_FOUND= "Product not found",
+  IMAGE_NOT_FOUND = "Image not found",
 }
 export default ErrorMessages;
