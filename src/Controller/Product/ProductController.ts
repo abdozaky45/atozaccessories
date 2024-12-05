@@ -16,6 +16,7 @@ import {
   findAllSaleProducts,
   findProductById,
   prepareProductUpdates,
+  ratioCalculatePrice,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
 export const CreateProduct = asyncHandler(
@@ -51,6 +52,7 @@ export const CreateProduct = asyncHandler(
           mediaId: extractMediaId(image),
         };
       }) || [];
+    const finalPrices = await ratioCalculatePrice(price, salePrice);
     const productData: ProductInterFaceModel = {
       productName,
       slug: slugify(productName),
@@ -58,6 +60,9 @@ export const CreateProduct = asyncHandler(
       price,
       availableItems,
       salePrice,
+      discount: finalPrices?.discount,
+      discountPercentage: finalPrices?.discountPercentage,
+      isSale: finalPrices?.isSale,
       expiredSale,
       category: category._id,
       defaultImage: { mediaUrl, mediaId },
@@ -96,10 +101,7 @@ export const updateProduct = asyncHandler(
     ) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    if(salePrice){
-
-    }
-    const productData = {
+    const productData: Partial<ProductInterFaceModel> = {
       productName,
       productDescription,
       price,
@@ -107,11 +109,25 @@ export const updateProduct = asyncHandler(
       salePrice,
       expiredSale,
       category,
-      defaultImage,
-      albumImages,
     };
 
-    const updates = await prepareProductUpdates(productData, product);
+    let finalPrices;
+    if (price !== undefined || salePrice !== undefined) {
+      const currentPrice = price !== undefined ? price : product.price;
+      const currentSalePrice =
+        salePrice !== undefined ? salePrice : product.salePrice;
+      finalPrices = await ratioCalculatePrice(currentPrice, currentSalePrice);
+      productData.discount = finalPrices.discount;
+      productData.discountPercentage = finalPrices.discountPercentage;
+      productData.isSale = finalPrices.isSale;
+    }
+
+    const updates = await prepareProductUpdates(
+      productData,
+      product,
+      defaultImage,
+      albumImages
+    );
     if (updates) {
       await product.save();
       return res.json(

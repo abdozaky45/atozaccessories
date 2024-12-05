@@ -1,4 +1,6 @@
 import slugify from "slugify";
+import _ from "lodash";
+// @ts-ignore
 import ProductInterFaceModel from "../../Model/Product/ProductInterFaceModel";
 import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
@@ -15,33 +17,35 @@ export const findProductById = async (id: string) => {
 };
 export const prepareProductUpdates = async (
   productData: any,
-  product: ProductInterFaceModel
+  product: ProductInterFaceModel,
+  defaultImage: string,
+  albumImages: string[]
 ) => {
-  let updates = true;
-  product.productName = productData.productName || product.productName;
-  product.slug = productData.productName
-    ? slugify(product.productName)
-    : product.slug;
-  product.productDescription =
-    productData.productDescription || product.productDescription;
-  product.availableItems = productData.availableItems || product.availableItems;
-  product.price = productData.price || product.price;
-  product.salePrice = productData.salePrice || product.salePrice;
-  product.expiredSale = productData.expiredSale || product.expiredSale;
-  product.category = productData.category || product.category;
+  let updates = false;
+  Object.keys(productData).forEach((key) => {
+    const field = key as keyof ProductInterFaceModel;
+    if (!_.isEqual(productData[field], product[field])) {
+      (product[field] as any) = productData[field];
+      updates = true;
+    }
+  });
   if (
-    productData.defaultImage &&
-    productData.defaultImage !== product.defaultImage.mediaUrl
+    productData.productName &&
+    productData.productName !== product.productName
   ) {
-    const mediaId = extractMediaId(productData.defaultImage);
+    product.slug = slugify(product.productName);
+    updates = true;
+  }
+  if (defaultImage && defaultImage !== product.defaultImage.mediaUrl) {
+    const mediaId = extractMediaId(defaultImage);
     if (mediaId !== product.defaultImage.mediaId) {
-      product.defaultImage.mediaUrl = productData.defaultImage;
+      product.defaultImage.mediaUrl = defaultImage;
       product.defaultImage.mediaId = mediaId;
     }
   }
 
-  if (productData.albumImages) {
-    productData.albumImages.forEach((imageUrl: string, index: number) => {
+  if (albumImages) {
+    albumImages.forEach((imageUrl: string, index: number) => {
       const existingImages = product.albumImages?.[index];
       if (existingImages && imageUrl !== existingImages.mediaUrl) {
         const mediaId = extractMediaId(imageUrl);
@@ -80,7 +84,7 @@ export const ratioCalculatePrice = async (price: number, salePrice: number) => {
   let discount = 0;
   let discountPercentage = 0;
   let isSale = false;
-  if (salePrice === 0) {
+  if (!salePrice || salePrice === 0) {
     discount = 0;
     discountPercentage = 0;
     isSale = false;
