@@ -96,6 +96,9 @@ export const updateProduct = asyncHandler(
     ) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
+    if(salePrice){
+      
+    }
     const productData = {
       productName,
       productDescription,

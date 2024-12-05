@@ -76,3 +76,18 @@ export const findAllSaleProducts = async (page: number) => {
   );
   return products;
 };
+export const ratioCalculatePrice = async (price: number, salePrice: number) => {
+  let discount = 0;
+  let discountPercentage = 0;
+  let isSale = false;
+  if (salePrice === 0) {
+    discount = 0;
+    discountPercentage = 0;
+    isSale = false;
+  } else if (salePrice < price) {
+    discount = price - salePrice;
+    discountPercentage = (discount / price) * 100;
+    isSale = true;
+  }
+  return { discount, discountPercentage, isSale };
+};
