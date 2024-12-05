@@ -97,7 +97,7 @@ export const updateProduct = asyncHandler(
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
     if(salePrice){
-      
+
     }
     const productData = {
       productName,
@@ -110,6 +110,7 @@ export const updateProduct = asyncHandler(
       defaultImage,
       albumImages,
     };
+
     const updates = await prepareProductUpdates(productData, product);
     if (updates) {
       await product.save();
