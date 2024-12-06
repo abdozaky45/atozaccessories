@@ -69,7 +69,6 @@ export const CreateProduct = asyncHandler(
       albumImages: processedAlbumImages,
       createdBy: req.body.currentUser!.userInfo._id,
       createdAt: moment().valueOf(),
-      updatedAt: moment().valueOf(),
     };
     const product = await createProduct(productData);
     res

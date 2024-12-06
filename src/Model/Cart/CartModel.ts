@@ -21,10 +21,7 @@ const CartSchema = new Schema<CartInterfaceModel>({
     ],
     required:true,
   },
-  Subtotal: RequiredNumber,
-  Total: RequiredNumber,
   createdAt: RequiredNumber,
-  updatedAt: RequiredNumber,
 });
 const CartModel = model(SchemaTypesReference.Cart, CartSchema);
 export default CartModel;

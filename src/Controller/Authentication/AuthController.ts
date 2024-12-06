@@ -33,6 +33,7 @@ export const registerWithEmail = asyncHandler(
     const user = await findUserByEmail(email);
     if (user) {
       user.activeCode = hashCode;
+      user.codeCreatedAt = moment().valueOf();
       await user.save();
     } else {
       await CreateNewAccount({

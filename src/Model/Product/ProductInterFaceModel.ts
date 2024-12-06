@@ -26,7 +26,6 @@ export default interface ProductInterFaceModel {
   defaultImage: ProductDefaultImage;
   albumImages?: ProductAlbumImages[];
   createdAt: number;
-  updatedAt: number;
   paginate?: (page: number) => Promise<any>;
 }
    /*
