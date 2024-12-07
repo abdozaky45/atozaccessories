@@ -15,5 +15,8 @@ enum SuccessMessage {
   IMAGE_DELETED = "Image deleted successfully",
   CART_UPDATED = "Cart updated successfully",
   ADD_PRODUCT_TO_CART = "Product added to cart successfully",
+  CART_FOUND = "Cart found",
+  QUANTITY_CART_UPDATED = "Quantity updated successfully",
+  CART_CLEARED = "Cart cleared successfully",
 }
 export default SuccessMessage;
