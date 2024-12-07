@@ -1,4 +1,4 @@
-import CartInterfaceModel from "../../Model/Cart/CartInterfaceModel";
+import {CartInterfaceModel} from "../../Model/Cart/CartInterfaceModel";
 import CartModel from "../../Model/Cart/CartModel";
 
 export const checkProductInCart = async (user: string, productId: string) => {

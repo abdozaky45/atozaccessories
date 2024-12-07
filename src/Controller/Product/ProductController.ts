@@ -16,6 +16,7 @@ import {
   findAllSaleProducts,
   findProductById,
   prepareProductUpdates,
+  productSearch,
   ratioCalculatePrice,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
@@ -183,5 +184,12 @@ export const getAllSaleProducts = asyncHandler(
     const pageNumber = Number(page);
     const products = await findAllSaleProducts(pageNumber);
     return res.json(new ApiResponse(200, { products }, ""));
+  }
+);
+export const SearchProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { searchQuery } = req.query;
+    const products = await productSearch(searchQuery as string);
+    return res.json(new ApiResponse(200, { products }, "Success"));
   }
 );

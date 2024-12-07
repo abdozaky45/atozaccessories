@@ -1,11 +1,12 @@
 import { Types } from "mongoose";
 
-export interface CartItems {
-  productId:  Types.ObjectId | string;
+export interface ProductItem {
+  productId: Types.ObjectId | string;
   quantity: number;
 }
-export default interface CartInterfaceModel {
-  user?: Types.ObjectId | string;
-  items: CartItems[];
+export interface BaseProductInterface {
+  user: Types.ObjectId | string;
+  items: ProductItem[];
   createdAt: number;
 }
+export interface CartInterfaceModel extends BaseProductInterface {}

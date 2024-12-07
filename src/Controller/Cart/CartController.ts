@@ -1,15 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError, ApiResponse, asyncHandler } from "../../Utils/ErrorHandling";
-import CartInterfaceModel, {
-  CartItems,
-} from "../../Model/Cart/CartInterfaceModel";
+import { ProductItem } from "../../Model/Cart/CartInterfaceModel";
 import moment from "../../Utils/DateAndTime";
 import ErrorMessages from "../../Utils/Error";
 import { findProductById } from "../../Service/Product/ProductService";
 import {
   checkProductInCart,
   clearCart,
-  findCartByUserId,
   getAllProductsInCartByUserId,
   removeProductInCart,
   updateCart,
@@ -31,7 +28,7 @@ export const createOrUpdateCart = asyncHandler(
       });
     const isProductInCart = await checkProductInCart(userId, productId);
     if (isProductInCart) {
-      isProductInCart.items.forEach((productObj: CartItems) => {
+      isProductInCart.items.forEach((productObj: ProductItem) => {
         if (
           productObj.productId.toString() === productId.toString() &&
           productObj.quantity + quantity < Product.availableItems

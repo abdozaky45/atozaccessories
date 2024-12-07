@@ -6,6 +6,7 @@ import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
+import Fuse from "fuse.js";
 
 export const createProduct = async (productData: ProductInterFaceModel) => {
   const product = await ProductModel.create(productData);
@@ -94,4 +95,13 @@ export const ratioCalculatePrice = async (price: number, salePrice: number) => {
     isSale = true;
   }
   return { discount, discountPercentage, isSale };
+};
+export const productSearch = async (querySearch: string) => {
+  const products = await ProductModel.find({});
+  const fuse = new Fuse(products, {
+    keys: ["productName", "productDescription"],
+    threshold: 0.3,
+  });
+  const results = fuse.search(querySearch).map((result) => result.item);
+  return results;
 };
