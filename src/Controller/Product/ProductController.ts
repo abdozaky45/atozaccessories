@@ -15,6 +15,8 @@ import {
   findAllProducts,
   findAllSaleProducts,
   findProductById,
+  findProductByPriceRange,
+  findProductBySort,
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
@@ -190,6 +192,22 @@ export const SearchProducts = asyncHandler(
   async (req: Request, res: Response) => {
     const { searchQuery } = req.query;
     const products = await productSearch(searchQuery as string);
+    return res.json(new ApiResponse(200, { products }, "Success"));
+  }
+);
+export const sortProduct = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page, sort } = req.query;
+    const pageNumber = Number(page);
+    const products = await findProductBySort(sort as string, pageNumber);
+    return res.json(new ApiResponse(200, { products }, "Success"));
+  }
+);
+export const sortProductByPrice = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page, sort } = req.query;
+    const pageNumber = Number(page);
+    const products = await findProductByPriceRange(sort as string, pageNumber);
     return res.json(new ApiResponse(200, { products }, "Success"));
   }
 );

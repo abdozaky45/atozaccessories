@@ -6,5 +6,8 @@ ProductPublicRouter.get("/get-one-product/:productId", ProductController.getProd
 ProductPublicRouter.get("/get-all-product",ProductController.getAllProducts);
 ProductPublicRouter.get("/get-all-sale",ProductController.getAllSaleProducts);
 ProductPublicRouter.get("/search-product",ProductController.SearchProducts);
+ProductPublicRouter.get("/sort-by",ProductController.sortProduct);
+ProductPublicRouter.get("/sort-by-price",ProductController.sortProductByPrice);
+
 
 export default ProductPublicRouter;

@@ -7,6 +7,7 @@ import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import Fuse from "fuse.js";
+import { sortProductEnum } from "../../Utils/SortProduct";
 
 export const createProduct = async (productData: ProductInterFaceModel) => {
   const product = await ProductModel.create(productData);
@@ -105,3 +106,54 @@ export const productSearch = async (querySearch: string) => {
   const results = fuse.search(querySearch).map((result) => result.item);
   return results;
 };
+export const findProductBySort = async (sortBy: string, page: number) => {
+  let sortCriteria = {};
+  switch (sortBy) {
+    case sortProductEnum.newest:
+      sortCriteria = { createdAt: -1 };
+      break;
+    case sortProductEnum.priceLowToHigh:
+      sortCriteria = { price: -1 };
+      break;
+    case sortProductEnum.priceHighToLow:
+      sortCriteria = { price: 1 };
+      break;
+    default:
+      sortCriteria = { createdAt: -1 };
+      break;
+  }
+  const products = await paginate(
+    ProductModel.find({}).sort(sortCriteria),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+};
+export const findProductByPriceRange=async(priceRange :string,page:number)=>{
+  let priceCriteria = {};
+  switch (priceRange) {
+    case sortProductEnum.priceUnder100:
+      priceCriteria = {price:{$lte:100}};
+      break;
+    case sortProductEnum.priceBetween100and500:
+      priceCriteria = {price:{$gte:100,$lte:500}};
+      break;
+    case sortProductEnum.priceBetween500and1000:
+      priceCriteria = {price:{$gte:500,$lte:1000}};
+      break;
+    case sortProductEnum.priceAbove1000:
+      priceCriteria = {price:{$gte:1000}};
+      break;
+    default:
+      priceCriteria = {};
+      break;
+  }
+  const products = await paginate(
+    ProductModel.find(priceCriteria),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+}
