@@ -25,8 +25,6 @@ const productWorker = new Worker(
   "productQueue",
   async (job) => {
     const { productId } = job.data;
-    console.log("Processing job:", job);
-
     const product = await ProductModel.findById(productId);
     if (product) {
       product.expiredSale = 0;
@@ -43,7 +41,10 @@ const productWorker = new Worker(
 );
 
 const scheduleProductUpdate = async (productId: string, delayInMs: number) => {
-  const existingJob: Job | undefined = await productQueue.getJob(productId);
+  const jobId = `product_${productId}`;
+  console.log(`Scheduling job for productId: ${productId}`);
+  const existingJob: Job | undefined = await productQueue.getJob(jobId);
+  console.log(`Existing job for productId: ${productId}`, existingJob);
 
   if (existingJob) {
     console.log(`Removing existing job for productId: ${productId}`);
@@ -51,7 +52,7 @@ const scheduleProductUpdate = async (productId: string, delayInMs: number) => {
   }
 
   await productQueue.add(
-    productId, 
+    jobId, 
     { productId },
     {
       delay: delayInMs, 
