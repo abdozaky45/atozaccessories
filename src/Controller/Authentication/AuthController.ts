@@ -22,6 +22,7 @@ import {
 import ErrorMessages from "../../Utils/Error";
 import SuccessMessage from "../../Utils/SuccessMessages";
 import { sendSMS } from "../../Service/Aws/Sns_Simple Notification Service/SendSMS";
+import { log } from "console";
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body;
@@ -203,6 +204,7 @@ export const refreshedToken = asyncHandler(
       throw new ApiError(400, ErrorMessages.INVALID_PAYLOAD);
     }
     const checkUser = await findUserById(decoded?._id);
+    console.log(checkUser);
     if (!checkUser) {
       throw new ApiError(400, ErrorMessages.USER_NOT_FOUND_OR_UNAUTHORIZED);
     }

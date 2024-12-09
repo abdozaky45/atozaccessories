@@ -22,6 +22,7 @@ import {
   ratioCalculatePrice,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
+import { scheduleProductUpdate } from "../../Utils/scheduledBull";
 export const CreateProduct = asyncHandler(
   async (req: Request, res: Response) => {
     const {
@@ -74,7 +75,11 @@ export const CreateProduct = asyncHandler(
       createdAt: moment().valueOf(),
     };
     const product = await createProduct(productData);
-    res
+    if(expiredSale){
+      console.log("======here============");
+      scheduleProductUpdate(product._id.toString(), expiredSale);
+    }
+    return res
       .status(201)
       .json(new ApiResponse(201, { product }, SuccessMessage.PRODUCT_CREATED));
   }
@@ -132,6 +137,10 @@ export const updateProduct = asyncHandler(
     );
     if (updates) {
       await product.save();
+      if(expiredSale){
+        console.log("======here2============");
+        scheduleProductUpdate(productId, expiredSale);
+      }
       return res.json(
         new ApiResponse(200, { product }, SuccessMessage.PRODUCT_UPDATED)
       );
@@ -195,14 +204,12 @@ export const SearchProducts = asyncHandler(
     return res.json(new ApiResponse(200, { products }, "Success"));
   }
 );
-export const sortProduct = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { page, sort } = req.query;
-    const pageNumber = Number(page);
-    const products = await findProductBySort(sort as string, pageNumber);
-    return res.json(new ApiResponse(200, { products }, "Success"));
-  }
-);
+export const sortProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { page, sort } = req.query;
+  const pageNumber = Number(page);
+  const products = await findProductBySort(sort as string, pageNumber);
+  return res.json(new ApiResponse(200, { products }, "Success"));
+});
 export const sortProductByPrice = asyncHandler(
   async (req: Request, res: Response) => {
     const { page, sort } = req.query;
