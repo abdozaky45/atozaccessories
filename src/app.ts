@@ -16,6 +16,7 @@ import publicRouter from "./Router/PublicRouters/PublicRouter";
 import AwsRouter from "./Router/Aws/AwsRouter";
 import ProductRouter from "./Router/Product/ProductRouter";
 import imageSliderRouter from "./Router/ImageSlider/ImageSliderRouter";
+import CartRouter from "./Router/Cart/CartRouter";
 const app: Application = express();
 app.use(cors());
 app.use(express.json());
@@ -39,8 +40,13 @@ app.use(
   checkRole([UserTypeEnum.ADMIN]),
   ProductRouter
 );
-app.use(`/${RouterEnum.aws}`, AwsRouter);
-app.use(`${RouterEnum.imageSlider}`,imageSliderRouter)
+app.use(`/${RouterEnum.aws}`, checkRole([UserTypeEnum.ADMIN]), AwsRouter);
+app.use(
+  `/${RouterEnum.imageSlider}`,
+  checkRole([UserTypeEnum.ADMIN]),
+  imageSliderRouter
+);
+app.use(`/${RouterEnum.cart}`, checkRole([UserTypeEnum.USER]), CartRouter);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });

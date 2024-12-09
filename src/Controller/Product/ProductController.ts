@@ -15,9 +15,14 @@ import {
   findAllProducts,
   findAllSaleProducts,
   findProductById,
+  findProductByPriceRange,
+  findProductBySort,
   prepareProductUpdates,
+  productSearch,
+  ratioCalculatePrice,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
+import { scheduleProductUpdate } from "../../Utils/scheduledBull";
 export const CreateProduct = asyncHandler(
   async (req: Request, res: Response) => {
     const {
@@ -51,6 +56,7 @@ export const CreateProduct = asyncHandler(
           mediaId: extractMediaId(image),
         };
       }) || [];
+    const finalPrices = await ratioCalculatePrice(price, salePrice);
     const productData: ProductInterFaceModel = {
       productName,
       slug: slugify(productName),
@@ -58,16 +64,22 @@ export const CreateProduct = asyncHandler(
       price,
       availableItems,
       salePrice,
+      discount: finalPrices?.discount,
+      discountPercentage: finalPrices?.discountPercentage,
+      isSale: finalPrices?.isSale,
       expiredSale,
       category: category._id,
       defaultImage: { mediaUrl, mediaId },
       albumImages: processedAlbumImages,
       createdBy: req.body.currentUser!.userInfo._id,
       createdAt: moment().valueOf(),
-      updatedAt: moment().valueOf(),
     };
     const product = await createProduct(productData);
-    res
+    if(expiredSale){
+      console.log("======here============");
+      scheduleProductUpdate(product._id.toString(), expiredSale);
+    }
+    return res
       .status(201)
       .json(new ApiResponse(201, { product }, SuccessMessage.PRODUCT_CREATED));
   }
@@ -96,7 +108,7 @@ export const updateProduct = asyncHandler(
     ) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    const productData = {
+    const productData: Partial<ProductInterFaceModel> = {
       productName,
       productDescription,
       price,
@@ -104,12 +116,31 @@ export const updateProduct = asyncHandler(
       salePrice,
       expiredSale,
       category,
-      defaultImage,
-      albumImages,
     };
-    const updates = await prepareProductUpdates(productData, product);
+
+    let finalPrices;
+    if (price !== undefined || salePrice !== undefined) {
+      const currentPrice = price !== undefined ? price : product.price;
+      const currentSalePrice =
+        salePrice !== undefined ? salePrice : product.salePrice;
+      finalPrices = await ratioCalculatePrice(currentPrice, currentSalePrice);
+      productData.discount = finalPrices.discount;
+      productData.discountPercentage = finalPrices.discountPercentage;
+      productData.isSale = finalPrices.isSale;
+    }
+
+    const updates = await prepareProductUpdates(
+      productData,
+      product,
+      defaultImage,
+      albumImages
+    );
     if (updates) {
       await product.save();
+      if(expiredSale){
+        console.log("======here2============");
+        scheduleProductUpdate(productId, expiredSale);
+      }
       return res.json(
         new ApiResponse(200, { product }, SuccessMessage.PRODUCT_UPDATED)
       );
@@ -164,5 +195,26 @@ export const getAllSaleProducts = asyncHandler(
     const pageNumber = Number(page);
     const products = await findAllSaleProducts(pageNumber);
     return res.json(new ApiResponse(200, { products }, ""));
+  }
+);
+export const SearchProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { searchQuery } = req.query;
+    const products = await productSearch(searchQuery as string);
+    return res.json(new ApiResponse(200, { products }, "Success"));
+  }
+);
+export const sortProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { page, sort } = req.query;
+  const pageNumber = Number(page);
+  const products = await findProductBySort(sort as string, pageNumber);
+  return res.json(new ApiResponse(200, { products }, "Success"));
+});
+export const sortProductByPrice = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page, sort } = req.query;
+    const pageNumber = Number(page);
+    const products = await findProductByPriceRange(sort as string, pageNumber);
+    return res.json(new ApiResponse(200, { products }, "Success"));
   }
 );

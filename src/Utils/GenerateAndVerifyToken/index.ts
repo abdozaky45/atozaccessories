@@ -30,8 +30,6 @@ export const verifyToken = ({
   token,
   signature = process.env.TOKEN_SIGNATURE,
 }: VerifyTokenOptions): JwtPayload | null => {
-  console.log("tokenService===========>", token);
-  
   if (!signature) {
     throw new Error("Token signature is not defined");
   }
@@ -39,10 +37,8 @@ export const verifyToken = ({
   if (!token) {
     throw new Error("Token must be provided");
   }
-
   try {
     const decoded = jwt.verify(token, signature) as JwtPayload;
-    console.log("decodedService===========>", decoded);
     return decoded;
   } catch (error) {
     throw new Error("Invalid token or expired");

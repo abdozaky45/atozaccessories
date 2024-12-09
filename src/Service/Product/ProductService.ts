@@ -1,9 +1,13 @@
 import slugify from "slugify";
+import _ from "lodash";
+// @ts-ignore
 import ProductInterFaceModel from "../../Model/Product/ProductInterFaceModel";
 import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
+import Fuse from "fuse.js";
+import { sortProductEnum } from "../../Utils/SortProduct";
 
 export const createProduct = async (productData: ProductInterFaceModel) => {
   const product = await ProductModel.create(productData);
@@ -15,33 +19,35 @@ export const findProductById = async (id: string) => {
 };
 export const prepareProductUpdates = async (
   productData: any,
-  product: ProductInterFaceModel
+  product: ProductInterFaceModel,
+  defaultImage: string,
+  albumImages: string[]
 ) => {
-  let updates = true;
-  product.productName = productData.productName || product.productName;
-  product.slug = productData.productName
-    ? slugify(product.productName)
-    : product.slug;
-  product.productDescription =
-    productData.productDescription || product.productDescription;
-  product.availableItems = productData.availableItems || product.availableItems;
-  product.price = productData.price || product.price;
-  product.salePrice = productData.salePrice || product.salePrice;
-  product.expiredSale = productData.expiredSale || product.expiredSale;
-  product.category = productData.category || product.category;
+  let updates = false;
+  Object.keys(productData).forEach((key) => {
+    const field = key as keyof ProductInterFaceModel;
+    if (!_.isEqual(productData[field], product[field])) {
+      (product[field] as any) = productData[field];
+      updates = true;
+    }
+  });
   if (
-    productData.defaultImage &&
-    productData.defaultImage !== product.defaultImage.mediaUrl
+    productData.productName &&
+    productData.productName !== product.productName
   ) {
-    const mediaId = extractMediaId(productData.defaultImage);
+    product.slug = slugify(product.productName);
+    updates = true;
+  }
+  if (defaultImage && defaultImage !== product.defaultImage.mediaUrl) {
+    const mediaId = extractMediaId(defaultImage);
     if (mediaId !== product.defaultImage.mediaId) {
-      product.defaultImage.mediaUrl = productData.defaultImage;
+      product.defaultImage.mediaUrl = defaultImage;
       product.defaultImage.mediaId = mediaId;
     }
   }
 
-  if (productData.albumImages) {
-    productData.albumImages.forEach((imageUrl: string, index: number) => {
+  if (albumImages) {
+    albumImages.forEach((imageUrl: string, index: number) => {
       const existingImages = product.albumImages?.[index];
       if (existingImages && imageUrl !== existingImages.mediaUrl) {
         const mediaId = extractMediaId(imageUrl);
@@ -76,3 +82,78 @@ export const findAllSaleProducts = async (page: number) => {
   );
   return products;
 };
+export const ratioCalculatePrice = async (price: number, salePrice: number) => {
+  let discount = 0;
+  let discountPercentage = 0;
+  let isSale = false;
+  if (!salePrice || salePrice === 0) {
+    discount = 0;
+    discountPercentage = 0;
+    isSale = false;
+  } else if (salePrice < price) {
+    discount = price - salePrice;
+    discountPercentage = (discount / price) * 100;
+    isSale = true;
+  }
+  return { discount, discountPercentage, isSale };
+};
+export const productSearch = async (querySearch: string) => {
+  const products = await ProductModel.find({});
+  const fuse = new Fuse(products, {
+    keys: ["productName", "productDescription"],
+    threshold: 0.3,
+  });
+  const results = fuse.search(querySearch).map((result) => result.item);
+  return results;
+};
+export const findProductBySort = async (sortBy: string, page: number) => {
+  let sortCriteria = {};
+  switch (sortBy) {
+    case sortProductEnum.newest:
+      sortCriteria = { createdAt: -1 };
+      break;
+    case sortProductEnum.priceLowToHigh:
+      sortCriteria = { price: -1 };
+      break;
+    case sortProductEnum.priceHighToLow:
+      sortCriteria = { price: 1 };
+      break;
+    default:
+      sortCriteria = { createdAt: -1 };
+      break;
+  }
+  const products = await paginate(
+    ProductModel.find({}).sort(sortCriteria),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+};
+export const findProductByPriceRange=async(priceRange :string,page:number)=>{
+  let priceCriteria = {};
+  switch (priceRange) {
+    case sortProductEnum.priceUnder100:
+      priceCriteria = {price:{$lte:100}};
+      break;
+    case sortProductEnum.priceBetween100and500:
+      priceCriteria = {price:{$gte:100,$lte:500}};
+      break;
+    case sortProductEnum.priceBetween500and1000:
+      priceCriteria = {price:{$gte:500,$lte:1000}};
+      break;
+    case sortProductEnum.priceAbove1000:
+      priceCriteria = {price:{$gte:1000}};
+      break;
+    default:
+      priceCriteria = {};
+      break;
+  }
+  const products = await paginate(
+    ProductModel.find(priceCriteria),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+}

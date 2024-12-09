@@ -29,5 +29,6 @@ enum ErrorMessages {
   ALL_FIELDS_REQUIRED = "Please provide all required fields",
   PRODUCT_NOT_FOUND= "Product not found",
   IMAGE_NOT_FOUND = "Image not found",
+  CART_NOT_FOUND = "Cart not found",
 }
 export default ErrorMessages;
