@@ -25,8 +25,6 @@ const productWorker = new Worker(
   "productQueue",
   async (job) => {
     const { productId } = job.data;
-    console.log("Processing job:", job);
-
     const product = await ProductModel.findById(productId);
     if (product) {
       product.expiredSale = 0;
@@ -43,29 +41,33 @@ const productWorker = new Worker(
 );
 
 const scheduleProductUpdate = async (productId: string, delayInMs: number) => {
-  const existingJob: Job | undefined = await productQueue.getJob(productId);
-
+  const jobId = `product_${productId}`;
+  const existingJob: Job | undefined = await productQueue.getJob(jobId);
+  console.log("Existing job for productId:", existingJob);
   if (existingJob) {
     console.log(`Removing existing job for productId: ${productId}`);
     await existingJob.remove();
   }
-
-  await productQueue.add(
-    productId, 
+  const currentTime = Date.now();
+  const delayToUse = delayInMs < currentTime ? 0 : delayInMs
+   await productQueue.add(
+    jobId,
     { productId },
     {
-      delay: delayInMs, 
-      attempts: 3, 
-      removeOnComplete: true, 
-      removeOnFail: true, 
+      jobId,
+      delay: delayToUse,
+      attempts: 3,
+      removeOnComplete: true,
+      removeOnFail: true,
     }
   );
-
-  console.log(`Scheduled job for productId: ${productId} with delay: ${delayInMs}ms`);
+  console.log(
+    `Scheduled job for productId: ${productId} with delay: ${delayInMs}ms`
+  );
 };
-
-const productQueueEvents = new QueueEvents("productQueue", { connection: redis });
-
+const productQueueEvents = new QueueEvents("productQueue", {
+  connection: redis,
+});
 productQueueEvents.on("completed", (event) => {
   console.log(`Job ${event.jobId} completed successfully`);
 });
@@ -73,4 +75,4 @@ productQueueEvents.on("completed", (event) => {
 productQueueEvents.on("failed", (event) => {
   console.error(`Job ${event.jobId} failed with reason: ${event.failedReason}`);
 });
-export { scheduleProductUpdate };
+export { scheduleProductUpdate, productQueue };

@@ -21,6 +21,7 @@
     "@aws-sdk/client-s3": "^3.699.0",
     "@aws-sdk/client-sns": "^3.699.0",
     "@aws-sdk/s3-request-presigner": "^3.699.0",
+    "agenda": "^5.0.0",
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.1",
     "bull": "^4.16.4",
