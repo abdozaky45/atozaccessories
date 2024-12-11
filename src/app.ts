@@ -16,7 +16,7 @@ import publicRouter from "./Router/PublicRouters/PublicRouter";
 import AwsRouter from "./Router/Aws/AwsRouter";
 import ProductRouter from "./Router/Product/ProductRouter";
 import imageSliderRouter from "./Router/ImageSlider/ImageSliderRouter";
-import CartRouter from "./Router/Cart/CartRouter";
+import wishlist from "./Router/Wishlist/WishlistRouter";
 const app: Application = express();
 app.use(cors());
 app.use(express.json());
@@ -46,7 +46,11 @@ app.use(
   checkRole([UserTypeEnum.ADMIN]),
   imageSliderRouter
 );
-app.use(`/${RouterEnum.cart}`, checkRole([UserTypeEnum.USER]), CartRouter);
+app.use(
+  `/${RouterEnum.wishlist}`,
+  checkRole([UserTypeEnum.USER, UserTypeEnum.ADMIN]),
+  wishlist
+);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });

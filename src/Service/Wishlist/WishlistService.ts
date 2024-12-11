@@ -1,0 +1,52 @@
+import WishListModel from "../../Model/Wishlist/WishlistModel";
+import { paginate } from "../../Utils/Schemas";
+import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
+
+export const AddProductToFavorites = async (
+  user: string,
+  productId: string,
+  createdAt: number
+) => {
+  const product = await WishListModel.create({ user, productId, createdAt });
+  return product;
+};
+export const removeProductFromFavorites = async (
+  user: string,
+  productId: string
+) => {
+  const product = await WishListModel.findOneAndDelete({ user, productId });
+  return product;
+};
+export const getUserWishlist = async (user: string) => {
+  const product = await WishListModel.find({ user }).populate({
+    path: "productId",
+    select:
+      "productName price salePrice discount discountPercentage isSale defaultImage albumImages",
+  });
+  return product;
+};
+export const getAllWishlist = async (page: number) => {
+  let limit = 20;
+  page = !page || page < 1 || isNaN(page) ? 1 : page;
+  const skip = limit * (page - 1);
+  const totalItems = await WishListModel.countDocuments();
+  const totalPages = Math.ceil(totalItems / limit);
+  const products = await WishListModel.find({})
+    .populate({
+      path: "user",
+      select: "email phone",
+    })
+    .populate({
+      path: "productId",
+      select:
+        "productName price salePrice discount discountPercentage isSale defaultImage albumImages",
+    })
+    .skip(skip)
+    .limit(limit)
+    .exec();
+  return { totalItems, totalPages, currentPage: page, products };
+};
+export const getWishlistById = async (id: string) => {
+  const product = await WishListModel.findById(id);
+  return product;
+};
