@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import UserInterfaceModel from "./UserInterfaceModel";
+import AuthInterfaceModel from "./AuthInterfaceModel";
 import {
   EnumStringRole,
   EnumStringStatus,
@@ -12,7 +12,7 @@ import {
 import { statusType } from "../../Utils/StatusType";
 import { userType } from "../../Utils/UserType";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
-const userSchema = new Schema<UserInterfaceModel>({
+const userSchema = new Schema<AuthInterfaceModel>({
   email: RequiredUniqueEmail,
   phone: RequiredUniquePhone,
   activeCode:NotRequiredString,
@@ -21,5 +21,5 @@ const userSchema = new Schema<UserInterfaceModel>({
   role: EnumStringRole(userType),
   codeCreatedAt: NotRequiredNumber
 });
-const UserModel = model(SchemaTypesReference.User, userSchema);
-export default UserModel;
+const AuthModel = model(SchemaTypesReference.User, userSchema);
+export default AuthModel;

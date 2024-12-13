@@ -1,4 +1,4 @@
-export default interface UserInterfaceModel {
+export default interface AuthInterfaceModel {
   email: string;
   phone: string;
   activeCode: string;
