@@ -9,15 +9,15 @@ const RequiredUniqueString = {
   required: true,
   unique: true,
 };
-const NotRequiredUniqueEmail = {
+const RequiredUniqueEmail = {
   type: String,
-  required: false,
+  required: true,
   toLowerCase: true,
   trim: true,
 };
-const NotRequiredUniquePhone = {
+const RequiredUniquePhone = {
   type: String,
-  required: false,
+  required: true,
   trim: true,
 };
 const NotRequiredString = {
@@ -127,8 +127,8 @@ import { Query } from "mongoose";
 export async function paginate<T>(
   query: Query<T[], T>,
   page: number = 1,
-  categoryFields :string,
-  categories :string
+  fields :string,
+  path :string
 ): Promise<{
   data: T[];
   totalItems: number;
@@ -140,7 +140,7 @@ export async function paginate<T>(
   const skip = limit * (page - 1);
   const totalItems = await query.model.countDocuments(query.getFilter());
   const totalPages = Math.ceil(totalItems / limit);
-  const data = await query.skip(skip).limit(limit).populate(categories, categoryFields).exec();
+  const data = await query.skip(skip).limit(limit).populate(path, fields).exec();
   return { totalItems, totalPages, currentPage: page, data };
 }
 
@@ -154,8 +154,8 @@ export {
   RequiredUniqueString,
   RequiredUniqueNumber,
   NotRequiredTimeStamp,
-  NotRequiredUniqueEmail,
-  NotRequiredUniquePhone,
+  RequiredUniqueEmail,
+  RequiredUniquePhone,
   createdAtTokenModel,
   expiresAtTokenModel,
   ImageSchema,

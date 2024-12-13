@@ -1,6 +1,7 @@
 enum ErrorMessages {
   EMAIL_REQUIRED = "email is required",
   PHONE_REQUIRED = "phone is required",
+  PHONE_ALREADY_EXISTS = "phone already exists",
   EMAIL_NOT_SENT = "email not sent",
   EMAIL_NOT_FOUND = "email not found",
   EMAIL_REQUIRED_AND_ACTIVE_CODE = "email is required and active code is required",
@@ -29,6 +30,6 @@ enum ErrorMessages {
   ALL_FIELDS_REQUIRED = "Please provide all required fields",
   PRODUCT_NOT_FOUND= "Product not found",
   IMAGE_NOT_FOUND = "Image not found",
-  CART_NOT_FOUND = "Cart not found",
+  WISHLIST_NOT_FOUND = "wishlist not found",
 }
 export default ErrorMessages;

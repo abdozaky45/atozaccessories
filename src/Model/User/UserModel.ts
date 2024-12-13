@@ -6,15 +6,15 @@ import {
   NotRequiredBoolean,
   NotRequiredNumber,
   NotRequiredString,
-  NotRequiredUniqueEmail,
-  NotRequiredUniquePhone,
+  RequiredUniqueEmail,
+  RequiredUniquePhone,
 } from "../../Utils/Schemas";
 import { statusType } from "../../Utils/StatusType";
 import { userType } from "../../Utils/UserType";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<UserInterfaceModel>({
-  email: NotRequiredUniqueEmail,
-  phone: NotRequiredUniquePhone,
+  email: RequiredUniqueEmail,
+  phone: RequiredUniquePhone,
   activeCode:NotRequiredString,
   isConfirmed: NotRequiredBoolean,
   status: EnumStringStatus(statusType),

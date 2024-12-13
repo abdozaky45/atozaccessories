@@ -6,6 +6,6 @@ enum RouterEnum {
   public = "public",
   aws = "aws",
   imageSlider = "slider",
-  cart = "cart"
+  wishlist = "wishlist"
 }
 export default RouterEnum;

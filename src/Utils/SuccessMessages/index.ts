@@ -15,10 +15,7 @@ enum SuccessMessage {
   IMAGE_SLIDER_CREATED = "Image slider created successfully",
   IMAGE_DELETED = "Image deleted successfully",
   IMAGE_SLIDER_FETCHED = "Image slider fetched successfully",
-  CART_UPDATED = "Cart updated successfully",
-  ADD_PRODUCT_TO_CART = "Product added to cart successfully",
-  CART_FOUND = "Cart found",
-  QUANTITY_CART_UPDATED = "Quantity updated successfully",
-  CART_CLEARED = "Cart cleared successfully",
+  WISHLIST_FOUND_UPDATED = "wishlist updated successfully",
+  ADD_PRODUCT_TO_WISHLIST = "Product added to wishlist successfully",
 }
 export default SuccessMessage;
