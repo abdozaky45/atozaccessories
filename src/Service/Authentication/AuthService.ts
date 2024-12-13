@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { sendEmail } from "../../Utils/Nodemailer/SendEmail";
-import AuthModel from "../../Model/User/AuthModel";
+import AuthModel from "../../Model/User/auth/AuthModel";
 import { activeCodeTemplate } from "../../Utils/Nodemailer/SendCodeTemplate";
 import { StatusEnum } from "../../Utils/StatusType";
 import TokenModel from "../../Model/Token/TokenModel";

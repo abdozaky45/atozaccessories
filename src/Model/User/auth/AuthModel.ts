@@ -8,10 +8,10 @@ import {
   NotRequiredString,
   RequiredUniqueEmail,
   RequiredUniquePhone,
-} from "../../Utils/Schemas";
-import { statusType } from "../../Utils/StatusType";
-import { userType } from "../../Utils/UserType";
-import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
+} from "../../../Utils/Schemas";
+import { statusType } from "../../../Utils/StatusType";
+import { userType } from "../../../Utils/UserType";
+import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<AuthInterfaceModel>({
   email: RequiredUniqueEmail,
   phone: RequiredUniquePhone,
