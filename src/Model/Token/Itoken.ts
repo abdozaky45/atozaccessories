@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-export default interface TokenInterfaceModel {
+export default interface Itoken {
   refreshToken: string;
   accessToken: string;
   userAgent: string;

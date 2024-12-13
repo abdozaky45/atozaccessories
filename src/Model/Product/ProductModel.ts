@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import ProductInterFaceModel from "./ProductInterFaceModel";
+import Iproduct from "./Iproduct";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import {
   ImageSchema,
@@ -10,7 +10,7 @@ import {
   RequiredString,
 } from "../../Utils/Schemas";
 import { NextFunction } from "express";
-const ProductSchema = new Schema<ProductInterFaceModel>(
+const ProductSchema = new Schema<Iproduct>(
   {
     productName: RequiredString,
     productDescription: RequiredString,

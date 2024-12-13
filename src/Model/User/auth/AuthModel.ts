@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import AuthInterfaceModel from "./AuthInterfaceModel";
+import Iauth from "./Iauth";
 import {
   EnumStringRole,
   EnumStringStatus,
@@ -12,7 +12,7 @@ import {
 import { statusType } from "../../../Utils/StatusType";
 import { userType } from "../../../Utils/UserType";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
-const userSchema = new Schema<AuthInterfaceModel>({
+const userSchema = new Schema<Iauth>({
   email: RequiredUniqueEmail,
   phone: RequiredUniquePhone,
   activeCode:NotRequiredString,

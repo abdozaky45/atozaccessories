@@ -1,8 +1,8 @@
 import { Schema, model } from "mongoose";
-import {WishlistInterfaceModel} from "./WishlistInterfaceModel";
+import {Iwishlist} from "./Iwishlist";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import { RefType, RequiredNumber } from "../../Utils/Schemas";
-const WishlistSchema = new Schema<WishlistInterfaceModel>(
+const WishlistSchema = new Schema<Iwishlist>(
   {
     user: RefType(SchemaTypesReference.User, true),
     productId: RefType(SchemaTypesReference.Product, true),

@@ -1,4 +1,4 @@
-export default interface AuthInterfaceModel {
+export default interface Iauth {
   email: string;
   phone: string;
   activeCode: string;

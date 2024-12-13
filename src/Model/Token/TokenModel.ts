@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import TokenInterfaceModel from "./TokenInterfaceModel";
+import Itoken from "./Itoken";
 import {
   createdAtTokenModel,
   expiresAtTokenModel,
@@ -7,7 +7,7 @@ import {
   RequiredString,
 } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
-const TokenSchema = new Schema<TokenInterfaceModel>({
+const TokenSchema = new Schema<Itoken>({
   accessToken: RequiredString,
   refreshToken: RequiredString,
   user: RefType(SchemaTypesReference.User, true),

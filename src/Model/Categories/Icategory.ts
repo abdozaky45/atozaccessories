@@ -3,7 +3,7 @@ interface categoryImage {
     mediaUrl: string;
     mediaId: string;
   }
-  export default interface CategoryInterFaceModel {
+  export default interface ICategory {
     categoryName: string;
     image: categoryImage;
     slug: string;

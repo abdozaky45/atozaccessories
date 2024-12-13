@@ -1,8 +1,8 @@
 import {Schema , model} from "mongoose";
-import CategoryInterFaceModel from "./CategoryInterFaceModel";
+import ICategory from "./Icategory";
 import { ImageSchema, RefType, RequiredNumber, RequiredString } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
-const CategorySchema = new Schema<CategoryInterFaceModel>({
+const CategorySchema = new Schema<ICategory>({
     categoryName:RequiredString,
     slug:RequiredString,
     image:ImageSchema,
