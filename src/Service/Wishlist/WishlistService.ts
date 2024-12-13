@@ -33,8 +33,7 @@ export const getAllWishlist = async (page: number) => {
   const totalPages = Math.ceil(totalItems / limit);
   const products = await WishListModel.find({})
     .populate({
-      path: "user",
-      select: "email phone",
+      path: "user"
     })
     .populate({
       path: "productId",
@@ -46,7 +45,14 @@ export const getAllWishlist = async (page: number) => {
     .exec();
   return { totalItems, totalPages, currentPage: page, products };
 };
-export const getWishlistById = async (id: string) => {
-  const product = await WishListModel.findById(id);
+export const getWishlistById = async (userId: string, wishlistId: string) => {
+  const product = await WishListModel.findOne({
+    _id: wishlistId,
+    user: userId,
+  }).populate({
+    path: "productId",
+    select:
+      "productName price salePrice discount discountPercentage isSale defaultImage albumImages",
+  });
   return product;
 };

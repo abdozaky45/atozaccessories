@@ -24,12 +24,12 @@ export const createWishlist = asyncHandler(
           new ApiResponse(200, { wishlist }, SuccessMessage.ADD_PRODUCT_TO_WISHLIST)
         );
     }
-  
 );
 export const getWishlistByUserId = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
+    const {wishlistId} = req.params;
     const userId = req.body.currentUser.userInfo._id;
-    const wishlist = await  wishlistService.getWishlistById(userId);
+    const wishlist = await  wishlistService.getWishlistById(userId,wishlistId);
     if (!wishlist) throw new ApiError(404, ErrorMessages.WISHLIST_NOT_FOUND);
     return res
       .status(200)
@@ -60,7 +60,9 @@ export const getAllUserWishlist = asyncHandler(
 );
 export const getAllWishlistProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {page} = req.query;
+    const page = req.query.page;
+    console.log("page",page);
+    
     const pageNumber = Number(page);
     const wishlist = await wishlistService.getAllWishlist(pageNumber);
     if (!wishlist) throw new ApiError(404, ErrorMessages.WISHLIST_NOT_FOUND);
