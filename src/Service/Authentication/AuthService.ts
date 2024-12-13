@@ -47,17 +47,14 @@ export const CreateNewAccount = async ({
   activeCode,
   codeCreatedAt,
 }: {
-  email: string | null;
-  phone: string | null;
+  email:string;
+  phone:string;
   activeCode: string;
   codeCreatedAt: number;
 }) => {
-  const newEmail = email || '';
-  const newPhone = phone || '';
-
   const user = await UserModel.create({
-    email: newEmail,
-    phone: newPhone,
+    email: email,
+    phone: phone,
     activeCode,
     codeCreatedAt,
   });

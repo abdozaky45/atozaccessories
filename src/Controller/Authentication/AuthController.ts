@@ -22,15 +22,19 @@ import {
 import ErrorMessages from "../../Utils/Error";
 import SuccessMessage from "../../Utils/SuccessMessages";
 import { sendSMS } from "../../Service/Aws/Sns_Simple Notification Service/SendSMS";
-import { log } from "console";
+
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email } = req.body;
-    if (!email) {
+    const { email, phone } = req.body;
+    if (!email || !phone) {
       throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
     }
     const activeCode = generateSixDigitCode();
     const hashCode = await hashActiveCode(activeCode);
+    const checkPhone = await findUserByPhone(phone);
+    if (checkPhone) {
+      throw new ApiError(400, ErrorMessages.PHONE_ALREADY_EXISTS);
+    }
     const user = await findUserByEmail(email);
     if (user) {
       user.activeCode = hashCode;
@@ -39,7 +43,7 @@ export const registerWithEmail = asyncHandler(
     } else {
       await CreateNewAccount({
         email,
-        phone: null,
+        phone,
         activeCode: hashCode,
         codeCreatedAt: moment().valueOf(),
       });
@@ -50,32 +54,6 @@ export const registerWithEmail = asyncHandler(
           .status(200)
           .json(new ApiResponse(200, { email }, SuccessMessage.EMAIL_SENT))
       : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
-  }
-);
-export const registerWithPhone = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { phone } = req.body;
-    if (!phone) {
-      throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
-    }
-    const activeCode = generateSixDigitCode();
-    const hashCode = await hashActiveCode(activeCode);
-    const user = await findUserByPhone(phone);
-    if (user) {
-      user.activeCode = hashCode;
-      await user.save();
-    } else {
-      await CreateNewAccount({
-        email: null,
-        phone,
-        activeCode: hashCode,
-        codeCreatedAt: moment().valueOf(),
-      });
-    }
-    await sendSMS(phone, activeCode);
-    return res
-      .status(200)
-      .json(new ApiResponse(200, {}, SuccessMessage.OTP_SEND));
   }
 );
 export const activeAccount = asyncHandler(
@@ -160,25 +138,6 @@ export const sendNewActiveCodeWithEmail = asyncHandler(
       : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
   }
 );
-export const sendNewActiveCodeWithPhone = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { phone } = req.body;
-    if (!phone) {
-      throw new ApiError(400, ErrorMessages.PHONE_NOT_FOUND);
-    }
-    const user = await findUserByPhone(phone);
-    if (!user) {
-      throw new ApiError(400, ErrorMessages.PHONE_NOT_FOUND);
-    }
-    const activeCode = generateSixDigitCode();
-    const hashCode = await hashActiveCode(activeCode);
-    user.codeCreatedAt = moment().valueOf();
-    user.activeCode = hashCode;
-    await user.save();
-    await sendSMS(phone, activeCode);
-    return res.status(200).json(new ApiResponse(200, {}, SuccessMessage.OTP_SEND));
-  }
-);
 export const refreshedToken = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { refreshToken } = req.cookies;
@@ -227,3 +186,48 @@ export const refreshedToken = asyncHandler(
       );
   }
 );
+// export const sendNewActiveCodeWithPhone = asyncHandler(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const { phone } = req.body;
+//     if (!phone) {
+//       throw new ApiError(400, ErrorMessages.PHONE_NOT_FOUND);
+//     }
+//     const user = await findUserByPhone(phone);
+//     if (!user) {
+//       throw new ApiError(400, ErrorMessages.PHONE_NOT_FOUND);
+//     }
+//     const activeCode = generateSixDigitCode();
+//     const hashCode = await hashActiveCode(activeCode);
+//     user.codeCreatedAt = moment().valueOf();
+//     user.activeCode = hashCode;
+//     await user.save();
+//     await sendSMS(phone, activeCode);
+//     return res.status(200).json(new ApiResponse(200, {}, SuccessMessage.OTP_SEND));
+//   }
+// );
+// export const registerWithPhone = asyncHandler(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const { phone } = req.body;
+//     if (!phone) {
+//       throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
+//     }
+//     const activeCode = generateSixDigitCode();
+//     const hashCode = await hashActiveCode(activeCode);
+//     const user = await findUserByPhone(phone);
+//     if (user) {
+//       user.activeCode = hashCode;
+//       await user.save();
+//     } else {
+//       await CreateNewAccount({
+//         email: null,
+//         phone,
+//         activeCode: hashCode,
+//         codeCreatedAt: moment().valueOf(),
+//       });
+//     }
+//     await sendSMS(phone, activeCode);
+//     return res
+//       .status(200)
+//       .json(new ApiResponse(200, {}, SuccessMessage.OTP_SEND));
+//   }
+// );

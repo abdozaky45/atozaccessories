@@ -1,6 +1,7 @@
 enum ErrorMessages {
   EMAIL_REQUIRED = "email is required",
   PHONE_REQUIRED = "phone is required",
+  PHONE_ALREADY_EXISTS = "phone already exists",
   EMAIL_NOT_SENT = "email not sent",
   EMAIL_NOT_FOUND = "email not found",
   EMAIL_REQUIRED_AND_ACTIVE_CODE = "email is required and active code is required",

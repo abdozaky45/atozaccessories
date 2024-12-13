@@ -9,15 +9,15 @@ const RequiredUniqueString = {
   required: true,
   unique: true,
 };
-const NotRequiredUniqueEmail = {
+const RequiredUniqueEmail = {
   type: String,
-  required: false,
+  required: true,
   toLowerCase: true,
   trim: true,
 };
-const NotRequiredUniquePhone = {
+const RequiredUniquePhone = {
   type: String,
-  required: false,
+  required: true,
   trim: true,
 };
 const NotRequiredString = {
@@ -154,8 +154,8 @@ export {
   RequiredUniqueString,
   RequiredUniqueNumber,
   NotRequiredTimeStamp,
-  NotRequiredUniqueEmail,
-  NotRequiredUniquePhone,
+  RequiredUniqueEmail,
+  RequiredUniquePhone,
   createdAtTokenModel,
   expiresAtTokenModel,
   ImageSchema,
