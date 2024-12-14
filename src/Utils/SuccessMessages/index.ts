@@ -1,5 +1,6 @@
 enum SuccessMessage {
   EMAIL_SENT = "email sent successfully",
+  USER_CREATED = "User created successfully",
   OTP_SEND="OTP sent successfully",
   SUCCESS_ACCOUNT = "account activated successfully",
   TOKEN_REFRESHED = "token refreshed",

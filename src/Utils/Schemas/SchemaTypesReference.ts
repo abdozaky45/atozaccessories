@@ -5,5 +5,6 @@ enum SchemaTypesReference {
   Product = "product",
   imageSlider= "imageSlider",
   Wishlist = "wishlist",
+  UserInformation = "userInformation",
 }
 export default SchemaTypesReference;

@@ -6,7 +6,6 @@ export default interface Iuser {
   lastName: string;
   address: string;
   apartmentSuite?: string;
-  city: string;
   governorate: string;
   postalCode: string;
   primaryPhone: string;

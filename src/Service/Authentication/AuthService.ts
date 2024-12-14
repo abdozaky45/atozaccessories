@@ -43,18 +43,15 @@ export const findUserById = async (_id: Types.ObjectId) => {
 };
 export const CreateNewAccount = async ({
   email,
-  phone,
   activeCode,
   codeCreatedAt,
 }: {
   email:string;
-  phone:string;
   activeCode: string;
   codeCreatedAt: number;
 }) => {
   const user = await AuthModel.create({
-    email: email,
-    phone: phone,
+    email,
     activeCode,
     codeCreatedAt,
   });

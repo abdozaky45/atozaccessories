@@ -21,20 +21,14 @@ import {
 } from "../../Utils/GenerateAndVerifyToken";
 import ErrorMessages from "../../Utils/Error";
 import SuccessMessage from "../../Utils/SuccessMessages";
-import { sendSMS } from "../../Service/Aws/Sns_Simple Notification Service/SendSMS";
-
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, phone } = req.body;
-    if (!email || !phone) {
+    const { email} = req.body;
+    if (!email) {
       throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
     }
     const activeCode = generateSixDigitCode();
     const hashCode = await hashActiveCode(activeCode);
-    const checkPhone = await findUserByPhone(phone);
-    if (checkPhone) {
-      throw new ApiError(400, ErrorMessages.PHONE_ALREADY_EXISTS);
-    }
     const user = await findUserByEmail(email);
     if (user) {
       user.activeCode = hashCode;
@@ -43,7 +37,6 @@ export const registerWithEmail = asyncHandler(
     } else {
       await CreateNewAccount({
         email,
-        phone,
         activeCode: hashCode,
         codeCreatedAt: moment().valueOf(),
       });
