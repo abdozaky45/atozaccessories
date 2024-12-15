@@ -18,5 +18,8 @@ enum SuccessMessage {
   IMAGE_SLIDER_FETCHED = "Image slider fetched successfully",
   WISHLIST_FOUND_UPDATED = "wishlist updated successfully",
   ADD_PRODUCT_TO_WISHLIST = "Product added to wishlist successfully",
+  USER_UPDATED="User updated successfully",
+  USER_DELETED="User deleted successfully",
+  USER_FOUND="User found successfully",
 }
 export default SuccessMessage;

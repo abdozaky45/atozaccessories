@@ -4,23 +4,22 @@ import {
   EnumStringRequired,
   NotRequiredString,
   RefType,
-  RequiredNumber,
+  RequiredDefaultStringCity,
   RequiredString,
 } from "../../../Utils/Schemas";
 import { governorateArray } from "../../../Utils/Governorate";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<Iuser>({
   user: RefType(SchemaTypesReference.User, true),
-  country: RequiredString,
+  country:RequiredDefaultStringCity,
   firstName: RequiredString,
   lastName: RequiredString,
   address: RequiredString,
-  apartmentSuite: String,
+  apartmentSuite: NotRequiredString,
   governorate: EnumStringRequired(governorateArray),
-  postalCode: RequiredString,
+  postalCode: NotRequiredString,
   primaryPhone: RequiredString,
   secondaryPhone: NotRequiredString,
-  createdAt: RequiredNumber,
-});
+},{timestamps:true});
 const UserModel = model(SchemaTypesReference.UserInformation, userSchema);
 export default UserModel;

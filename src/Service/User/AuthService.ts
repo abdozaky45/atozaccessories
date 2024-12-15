@@ -6,9 +6,9 @@ export const createUser = async (userData: Iuser) => {
   const user = await UserModel.create(userData);
   return user;
 };
-export const updateUserInformation = async (id: string, userData: Iuser) => {
+export const updateUserInformation = async (_id:Types.ObjectId, userData: Iuser) => {
   const updatedUser = await UserModel.findByIdAndUpdate(
-    id,
+    _id,
     { $set: userData },
     { new: true }
   );

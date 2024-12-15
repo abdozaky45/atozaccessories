@@ -32,5 +32,6 @@ enum ErrorMessages {
   IMAGE_NOT_FOUND = "Image not found",
   WISHLIST_NOT_FOUND = "wishlist not found",
   VALIDATION_ERROR = "Validation error",
+  USER_NOT_FOUND= "user not found"
 }
 export default ErrorMessages;
