@@ -14,7 +14,6 @@ import { userType } from "../../../Utils/UserType";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<Iauth>({
   email: RequiredUniqueEmail,
-  phone: RequiredUniquePhone,
   activeCode:NotRequiredString,
   isConfirmed: NotRequiredBoolean,
   status: EnumStringStatus(statusType),

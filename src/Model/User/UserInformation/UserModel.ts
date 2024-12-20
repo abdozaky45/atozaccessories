@@ -7,7 +7,7 @@ import {
   RequiredDefaultStringCity,
   RequiredString,
 } from "../../../Utils/Schemas";
-import { governorateArray } from "../../../Utils/Governorate";
+import { governorateArray } from "../../../Utils/Governorate/GovernorateEnum";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<Iuser>({
   user: RefType(SchemaTypesReference.User, true),

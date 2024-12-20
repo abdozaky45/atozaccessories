@@ -1,6 +1,5 @@
 enum governorate {
-  // Upper Egypt (Said) - 75 EGP
-  Fayoum = "Fayoum", 
+  Fayoum = "Fayoum",
   Minya = "Minya",
   Sohag = "Sohag",
   BeniSuef = "Beni Suef",
@@ -8,7 +7,6 @@ enum governorate {
   Qena = "Qena",
   Aswan = "Aswan",
   Luxor = "Luxor",
-  // Delta and Canal - 65 EGP
   Qalyubia = "Qalyubia",
   Dakahlia = "Dakahlia",
   Monufia = "Monufia",
@@ -20,8 +18,6 @@ enum governorate {
   Suez = "Suez",
   Ismailia = "Ismailia",
   Damietta = "Damietta",
-
-  // Giza Suburbs - 55 EGP
   AlSaf = "Al Saf",
   AlBadrashein = "Al Badrashein",
   AlAyat = "Al Ayat",
@@ -39,10 +35,8 @@ enum governorate {
   SaftAlLaban = "Saft Al Laban",
   AlOmraniya = "Al Omraniya",
   AlMariouteya = "Al Mariouteya",
-  // Cairo and Giza - 50 EGP
   Cairo = "Cairo",
   Giza = "Giza",
-  // New Cities - 55 EGP
   ElShorouk = "El Shorouk",
   ElMostakbal = "El Mostakbal",
   ElRehab = "El Rehab",
@@ -53,4 +47,4 @@ enum governorate {
 }
 
 const governorateArray = Object.values(governorate);
-export { governorateArray , governorate };
+export { governorateArray, governorate };

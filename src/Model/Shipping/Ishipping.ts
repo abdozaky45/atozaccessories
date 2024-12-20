@@ -1,4 +1,4 @@
 export default interface IShipping {
-  governorate: string;
-  shippingCost: number;
+  category: string;
+  Cost: number;
 }
