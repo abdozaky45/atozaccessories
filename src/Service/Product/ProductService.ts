@@ -1,7 +1,7 @@
 import slugify from "slugify";
 import _ from "lodash";
 // @ts-ignore
-import ProductInterFaceModel from "../../Model/Product/ProductInterFaceModel";
+import Iproduct from "../../Model/Product/Iproduct";
 import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
@@ -9,7 +9,7 @@ import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import Fuse from "fuse.js";
 import { sortProductEnum } from "../../Utils/SortProduct";
 
-export const createProduct = async (productData: ProductInterFaceModel) => {
+export const createProduct = async (productData: Iproduct) => {
   const product = await ProductModel.create(productData);
   return product;
 };
@@ -19,13 +19,13 @@ export const findProductById = async (id: string) => {
 };
 export const prepareProductUpdates = async (
   productData: any,
-  product: ProductInterFaceModel,
+  product: Iproduct,
   defaultImage: string,
   albumImages: string[]
 ) => {
   let updates = false;
   Object.keys(productData).forEach((key) => {
-    const field = key as keyof ProductInterFaceModel;
+    const field = key as keyof Iproduct;
     if (!_.isEqual(productData[field], product[field])) {
       (product[field] as any) = productData[field];
       updates = true;

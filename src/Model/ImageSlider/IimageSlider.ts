@@ -3,7 +3,7 @@ interface imageSlider {
   mediaUrl: string;
   mediaId: string;
 }
-export default interface ImageSliderInterface {
+export default interface IimageSlider {
   image: imageSlider;
   createdBy: Types.ObjectId | string;
 }

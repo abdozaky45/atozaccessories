@@ -1,5 +1,6 @@
 import { Schema, Types } from "mongoose";
 import moment from "../DateAndTime";
+import { Query } from "mongoose";
 const RequiredString = {
   type: String,
   required: true,
@@ -8,6 +9,11 @@ const RequiredUniqueString = {
   type: String,
   required: true,
   unique: true,
+};
+const RequiredDefaultStringCity = {
+  type: String,
+  default: "Egypt",
+  required: true
 };
 const RequiredUniqueEmail = {
   type: String,
@@ -122,8 +128,6 @@ const EnumStringStatus = (enumValues: Array<string>) => {
     default: "offline",
   };
 };
-import { Query } from "mongoose";
-
 export async function paginate<T>(
   query: Query<T[], T>,
   page: number = 1,
@@ -158,6 +162,7 @@ export {
   RequiredUniquePhone,
   createdAtTokenModel,
   expiresAtTokenModel,
+  RequiredDefaultStringCity,
   ImageSchema,
   RequiredSpecificNumber,
   RefType,

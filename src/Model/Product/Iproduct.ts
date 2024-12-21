@@ -7,7 +7,7 @@ interface ProductAlbumImages {
     mediaUrl: string;
     mediaId: string;
 }
-export default interface ProductInterFaceModel {
+export default interface Iproduct {
   productName: string;
   productDescription: string;
   price: number;

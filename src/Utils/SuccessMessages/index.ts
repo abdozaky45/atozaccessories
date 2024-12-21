@@ -1,5 +1,6 @@
 enum SuccessMessage {
   EMAIL_SENT = "email sent successfully",
+  USER_CREATED = "User created successfully",
   OTP_SEND="OTP sent successfully",
   SUCCESS_ACCOUNT = "account activated successfully",
   TOKEN_REFRESHED = "token refreshed",
@@ -17,5 +18,11 @@ enum SuccessMessage {
   IMAGE_SLIDER_FETCHED = "Image slider fetched successfully",
   WISHLIST_FOUND_UPDATED = "wishlist updated successfully",
   ADD_PRODUCT_TO_WISHLIST = "Product added to wishlist successfully",
+  USER_UPDATED="User updated successfully",
+  USER_DELETED="User deleted successfully",
+  USER_FOUND="User found successfully",
+  SHIPPING_CREATED="Shipping created successfully",
+  SHIPPING_UPDATED="Shipping updated successfully",
+  SHIPPING_DELETED="Shipping deleted successfully",
 }
 export default SuccessMessage;

@@ -16,7 +16,8 @@ import publicRouter from "./Router/PublicRouters/PublicRouter";
 import AwsRouter from "./Router/Aws/AwsRouter";
 import ProductRouter from "./Router/Product/ProductRouter";
 import imageSliderRouter from "./Router/ImageSlider/ImageSliderRouter";
-import wishlist from "./Router/Wishlist/WishlistRouter";
+import wishlistRouter from "./Router/Wishlist/WishlistRouter";
+import shippingRouter from "./Router/Shipping/ShippingRouter";
 const app: Application = express();
 app.use(cors());
 app.use(express.json());
@@ -49,8 +50,9 @@ app.use(
 app.use(
   `/${RouterEnum.wishlist}`,
   checkRole([UserTypeEnum.USER, UserTypeEnum.ADMIN]),
-  wishlist
+  wishlistRouter
 );
+app.use(`/${RouterEnum.shipping}`, checkRole([UserTypeEnum.ADMIN, UserTypeEnum.USER]), shippingRouter);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });

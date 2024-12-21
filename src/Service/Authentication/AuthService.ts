@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { sendEmail } from "../../Utils/Nodemailer/SendEmail";
-import UserModel from "../../Model/User/UserModel";
+import AuthModel from "../../Model/User/auth/AuthModel";
 import { activeCodeTemplate } from "../../Utils/Nodemailer/SendCodeTemplate";
 import { StatusEnum } from "../../Utils/StatusType";
 import TokenModel from "../../Model/Token/TokenModel";
@@ -30,31 +30,28 @@ export const sendActivationEmail = async (
   }
 };
 export const findUserByEmail = async (email: string) => {
-  const user = await UserModel.findOne({ email });
+  const user = await AuthModel.findOne({ email });
   return user;
 };
 export const findUserByPhone = async (phone: string) => {
-  const user = await UserModel.findOne({ phone });
+  const user = await AuthModel.findOne({ phone });
   return user;
 };
 export const findUserById = async (_id: Types.ObjectId) => {
-  const user = await UserModel.findById(_id);
+  const user = await AuthModel.findById(_id);
   return user;
 };
 export const CreateNewAccount = async ({
   email,
-  phone,
   activeCode,
   codeCreatedAt,
 }: {
   email:string;
-  phone:string;
   activeCode: string;
   codeCreatedAt: number;
 }) => {
-  const user = await UserModel.create({
-    email: email,
-    phone: phone,
+  const user = await AuthModel.create({
+    email,
     activeCode,
     codeCreatedAt,
   });
@@ -62,7 +59,7 @@ export const CreateNewAccount = async ({
   return user;
 };
 export const updateUserAndDeleteActiveCode = async (searchKey: string) => {
-  const user = await UserModel.findOneAndUpdate(
+  const user = await AuthModel.findOneAndUpdate(
    {$or:[{ email :searchKey}, { phone:searchKey }]},
     {
       isConfirmed: true,
@@ -100,7 +97,7 @@ export const SaveAccessToken = async (
   return token;
 };
 export const findOneUserById = async (id: Types.ObjectId) => {
-  const user = await UserModel.findById(id);
+  const user = await AuthModel.findById(id);
   return user;
 };
 export const findUserByAccessTokenAndUserId = async (
