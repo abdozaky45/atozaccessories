@@ -51,30 +51,24 @@ export const registerWithEmail = asyncHandler(
 );
 export const activeAccount = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, phone, activeCode } = req.body;
-    if (!activeCode) {
-      throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
+    const { email, activeCode } = req.body;
+    if (!email || !activeCode) {
+      throw new ApiError(400, ErrorMessages.EMAIL_REQUIRED_AND_ACTIVE_CODE);
     }
-    if ((email && phone) || (!email && phone))
-      throw new ApiError(
-        400,
-        ErrorMessages.PLEASE_PROVIDE_EITHER_AN_EMAIL_ADDRESS_OR_A_PHONE_NUMBER_BUT_NOT_BOTH
-      );
-    const user = email
-      ? await findUserByEmail(email)
-      : await findUserByPhone(phone);
-    if (!user) throw new ApiError(400, ErrorMessages.EMAIL_OR_PHONE_NOT_FOUND);
+    const user = await findUserByEmail(email);
+    if (!user) {
+      throw new ApiError(400, ErrorMessages.EMAIL_NOT_FOUND);
+    }
     const currentTime = moment().valueOf();
-    const createdAt = user!.codeCreatedAt;
+    const createdAt = user.codeCreatedAt;
     if (currentTime - createdAt > 15 * 60 * 1000) {
       throw new ApiError(400, ErrorMessages.ACTIVE_CODE_EXPIRED);
     }
-    const isMatch = await compareActiveCode(activeCode, user!.activeCode);
+    const isMatch = await compareActiveCode(activeCode, user.activeCode);
     if (!isMatch) {
       throw new ApiError(400, ErrorMessages.ACTIVE_CODE_NOT_MATCH);
     }
-    const searchKey = email || phone;
-    const updateUser = await updateUserAndDeleteActiveCode(searchKey);
+    const updateUser = await updateUserAndDeleteActiveCode(email);
     const accessToken = generateAccessToken({
       payload: {
         _id: updateUser?._id,

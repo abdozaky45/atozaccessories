@@ -1,5 +1,4 @@
 import { model, Schema } from "mongoose";
-import Iauth from "./Iauth";
 import {
   EnumStringRole,
   EnumStringStatus,
@@ -12,7 +11,8 @@ import {
 import { statusType } from "../../../Utils/StatusType";
 import { userType } from "../../../Utils/UserType";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
-const userSchema = new Schema<Iauth>({
+import IUserAuthentication from "./IUserAuthentication";
+const userSchema = new Schema<IUserAuthentication>({
   email: RequiredUniqueEmail,
   activeCode:NotRequiredString,
   isConfirmed: NotRequiredBoolean,

@@ -1,4 +1,4 @@
-export default interface Iauth {
+export default interface IUserAuthentication {
   email: string;
   activeCode: string;
   isConfirmed: boolean;
