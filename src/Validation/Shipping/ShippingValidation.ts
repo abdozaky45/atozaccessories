@@ -5,7 +5,7 @@ export const createShipping = baseSchema.concat(
     joi
         .object({
             category: joi.string().valid(...ShippingCategoryArray).required(),
-            Cost: joi.number().required(),
+            cost: joi.number().required(),
         })
         .required()
 );
@@ -14,7 +14,14 @@ export const updateShipping = baseSchema.concat(
         .object({
             id: joi.string().required(),
             category: joi.string().valid(...ShippingCategoryArray).optional(),
-            Cost: joi.number().optional(),
+            cost: joi.number().optional(),
         })
         .required()
 );
+export const validateShippingById = baseSchema.concat(
+    joi.object({
+        id: joi.string().required(),
+    })
+);
+
+

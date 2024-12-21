@@ -21,5 +21,8 @@ enum SuccessMessage {
   USER_UPDATED="User updated successfully",
   USER_DELETED="User deleted successfully",
   USER_FOUND="User found successfully",
+  SHIPPING_CREATED="Shipping created successfully",
+  SHIPPING_UPDATED="Shipping updated successfully",
+  SHIPPING_DELETED="Shipping deleted successfully",
 }
 export default SuccessMessage;
