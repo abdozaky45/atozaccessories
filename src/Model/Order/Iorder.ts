@@ -1,10 +1,25 @@
-export default interface Iorder {
-    order_code: number;
-    product_id: number;
-    quantity: number;
-    price: number;
-    total_price: number;
-    created_at: string;
-    updated_at: string;
+import { Types } from "mongoose";
+
+interface Invoice {
+    secure_url?: string;
+    public_id?: string;
 }
-// It is in progress and is still under work and is not being relied upon now
+interface ProductOrder {
+    productId: Types.ObjectId;
+    quantity?: number;
+    itemPrice?: number;
+    totalPrice?: number;
+}
+
+interface IOrder {
+    orderCode: string;
+    user: Types.ObjectId | string;
+    userInformation: Types.ObjectId | string;
+    shipping: Types.ObjectId | string;
+    products: ProductOrder[];
+    invoice?: Invoice;
+    price: number;
+    status: string;
+}
+export default IOrder;
+
