@@ -1,8 +1,8 @@
 import { model, Schema, Types } from 'mongoose';
-import IOrder from './Iorder';
 import { EnumStringRequired, RefType, RequiredNumber, RequiredUniqueString } from '../../Utils/Schemas';
 import SchemaTypesReference from '../../Utils/Schemas/SchemaTypesReference';
 import { orderStatusArray } from '../../Utils/OrderStatusType';
+import { IOrder } from './Iorder';
 const OrderSchema = new Schema<IOrder>({
     orderCode: RequiredUniqueString,
     user: RefType(SchemaTypesReference.User, true),

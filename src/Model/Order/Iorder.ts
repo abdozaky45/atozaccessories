@@ -21,5 +21,4 @@ interface IOrder {
     price: number;
     status: string;
 }
-export default IOrder;
-
+export {IOrder , ProductOrder};
