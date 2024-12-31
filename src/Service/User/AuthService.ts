@@ -6,24 +6,24 @@ export const createUser = async (userData: Iuser) => {
   const user = await UserModel.create(userData);
   return user;
 };
-export const updateUserInformation = async (_id:Types.ObjectId, userData: Iuser) => {
+export const updateUserInformation = async (_id: Types.ObjectId, userData: Iuser) => {
   const updatedUser = await UserModel.findByIdAndUpdate(
-    _id,
+   _id,
     { $set: userData },
     { new: true }
   );
   return updatedUser;
 };
-export const findUserInformationById = async (id: string) => {
-  const user = await UserModel.findById(id);
+export const findUserInformationById = async (id: Types.ObjectId | string) => {
+  const user = await UserModel.findOne({user: id});
   return user;
 };
-export const deleteUserInformation = async (id: string) => {
-  const deletedUser = await UserModel.findByIdAndDelete(id);
+export const deleteUserInformation = async (_id: Types.ObjectId | string) => {
+  const deletedUser = await UserModel.findByIdAndDelete(_id);
   return deletedUser;
 };
-export const getAllUserInformation = async (user: string) => {
-  const users = await UserModel.find({ user });
+export const getAllUserInformation = async () => {
+  const users = await UserModel.find();
   return users;
 };
 export const deleteUserTokens = async (
@@ -33,3 +33,4 @@ export const deleteUserTokens = async (
   const tokens = await TokenModel.findOneAndDelete({ user, accessToken });
   return tokens;
 };
+

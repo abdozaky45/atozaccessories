@@ -23,19 +23,19 @@ import ErrorMessages from "../../Utils/Error";
 import SuccessMessage from "../../Utils/SuccessMessages";
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email} = req.body;
+    const { email } = req.body;
     if (!email) {
       throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
     }
     const activeCode = generateSixDigitCode();
     const hashCode = await hashActiveCode(activeCode);
-    const user = await findUserByEmail(email);
+    let user = await findUserByEmail(email);
     if (user) {
       user.activeCode = hashCode;
       user.codeCreatedAt = moment().valueOf();
       await user.save();
     } else {
-      await CreateNewAccount({
+      user = await CreateNewAccount({
         email,
         activeCode: hashCode,
         codeCreatedAt: moment().valueOf(),
@@ -44,8 +44,8 @@ export const registerWithEmail = asyncHandler(
     const isSend = await sendActivationEmail(email, activeCode);
     return isSend
       ? res
-          .status(200)
-          .json(new ApiResponse(200, { email }, SuccessMessage.EMAIL_SENT))
+        .status(200)
+        .json(new ApiResponse(200, { id: user._id, email }, SuccessMessage.EMAIL_SENT))
       : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
   }
 );
@@ -120,8 +120,8 @@ export const sendNewActiveCodeWithEmail = asyncHandler(
     const isSend = await sendActivationEmail(email, activeCode);
     return isSend
       ? res
-          .status(200)
-          .json(new ApiResponse(200, {}, SuccessMessage.EMAIL_SENT))
+        .status(200)
+        .json(new ApiResponse(200, {}, SuccessMessage.EMAIL_SENT))
       : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
   }
 );

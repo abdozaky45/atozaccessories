@@ -27,7 +27,7 @@ export const addUserInformation = asyncHandler(
 export const updateUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const {_id} = req.body.currentUser.userInfo;
-    const checkUser = await userService.findUserInformationById(req.params.id);
+    const checkUser = await userService.findUserInformationById(_id);
     if (!checkUser) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
     }
@@ -52,30 +52,27 @@ export const updateUserInformation = asyncHandler(
 export const deleteUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const {_id} = req.body.currentUser.userInfo;
-    const checkUser = await userService.findUserInformationById(req.params.id);
+    const checkUser = await userService.findUserInformationById(_id);
     if (!checkUser) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
     }
     if(_id.toString() !== checkUser.user.toString()){
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    const user = await userService.deleteUserInformation(req.params.id);
+    const user = await userService.deleteUserInformation(checkUser._id);
     return res.json(new ApiResponse(200, {}, SuccessMessage.USER_DELETED));
   }
 );
 export const getAllUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {_id} = req.body.currentUser.userInfo;
-    const user = await userService.getAllUserInformation(_id);
-    if (!user) {
-      return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
-    }
-    return res.json(new ApiResponse(200, {user}, SuccessMessage.USER_FOUND));
+    const users = await userService.getAllUserInformation();
+    return res.json(new ApiResponse(200, {users}, SuccessMessage.USER_FOUND));
   }
 );
 export const getUserInformationById = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = await userService.findUserInformationById(req.params.id);
+    const {_id} = req.body.currentUser.userInfo;
+    const user = await userService.findUserInformationById(_id);
     if (!user) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
     }
