@@ -27,7 +27,6 @@ export const createUser = baseSchema.concat(
 export const updateUser = baseSchema.concat(
   joi
     .object({
-      id: joi.string().required(),
       firstName: joi.string().min(3).max(50).optional(),
       lastName: joi.string().min(3).max(50).optional(),
       address: joi.string().min(3).max(200).optional(),

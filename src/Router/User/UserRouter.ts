@@ -10,13 +10,12 @@ userRouter.post(
   UserController.addUserInformation
 );
 userRouter.patch(
-  "/update-user-information/:id",
+  "/update-user-information",
   Validation(userValidation.updateUser),
   UserController.updateUserInformation
 );
 userRouter.delete(
-  "/delete-user-information/:id",
-  Validation(userValidation.CustomUserValidation),
+  "/delete-user-information",
   UserController.deleteUserInformation
 );
 userRouter.get(
@@ -25,8 +24,7 @@ userRouter.get(
   UserController.getAllUserInformation
 );
 userRouter.get(
-  "/user-information/:id",
-  Validation(userValidation.CustomUserValidation),
+  "/user-information",
   UserController.getUserInformationById
 );
 userRouter.post("/logout", UserController.logout);
