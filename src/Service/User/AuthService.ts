@@ -33,3 +33,4 @@ export const deleteUserTokens = async (
   const tokens = await TokenModel.findOneAndDelete({ user, accessToken });
   return tokens;
 };
+
