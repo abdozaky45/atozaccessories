@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import Iproduct from "./Iproduct";
+import IProduct from "./Iproduct";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import {
   ImageSchema,
@@ -10,7 +10,7 @@ import {
   RequiredString,
 } from "../../Utils/Schemas";
 import { NextFunction } from "express";
-const ProductSchema = new Schema<Iproduct>(
+const ProductSchema = new Schema<IProduct>(
   {
     productName: RequiredString,
     productDescription: RequiredString,
@@ -34,7 +34,7 @@ const ProductSchema = new Schema<Iproduct>(
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 ProductSchema.methods.isStock = function (requiredQuantity: number) {
-  return this.availableItems >= requiredQuantity ? true : false;
+  return this.availableItems >= requiredQuantity;
 };
 const ProductModel = model(SchemaTypesReference.Product, ProductSchema);
 export default ProductModel;

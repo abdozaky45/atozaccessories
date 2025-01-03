@@ -6,7 +6,7 @@ import {
   extractMediaId,
   findCategoryById,
 } from "../../Service/CategoryService/CategoryService";
-import Iproduct from "../../Model/Product/Iproduct";
+import IProduct from "../../Model/Product/Iproduct";
 import slugify from "slugify";
 import moment from "../../../src/Utils/DateAndTime";
 import {
@@ -57,7 +57,7 @@ export const CreateProduct = asyncHandler(
         };
       }) || [];
     const finalPrices = await ratioCalculatePrice(price, salePrice);
-    const productData: Iproduct = {
+    const productData: IProduct = {
       productName,
       slug: slugify(productName),
       productDescription,
@@ -108,7 +108,7 @@ export const updateProduct = asyncHandler(
     ) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    const productData: Partial<Iproduct> = {
+    const productData: Partial<IProduct> = {
       productName,
       productDescription,
       price,

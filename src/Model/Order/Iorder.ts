@@ -1,23 +1,19 @@
 import { Types } from "mongoose";
-
-interface Invoice {
-    secure_url?: string;
-    public_id?: string;
-}
+import Iuser from "../User/UserInformation/Iuser";
+import IShipping from "../Shipping/IShipping";
 interface ProductOrder {
     productId: Types.ObjectId;
+    productName?: string;
     quantity?: number;
     itemPrice?: number;
     totalPrice?: number;
 }
 
 interface IOrder {
-    orderCode: string;
     user: Types.ObjectId | string;
-    userInformation: Types.ObjectId | string;
-    shipping: Types.ObjectId | string;
+    userInformation: Types.ObjectId | string | Iuser;
+    shipping: Types.ObjectId | string | IShipping;
     products: ProductOrder[];
-    invoice?: Invoice;
     price: number;
     status: string;
 }

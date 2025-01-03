@@ -1,12 +1,27 @@
-export const orderInvoiceTemplate = ( customerName: string,
-    restaurantName: string,
-    items: { name: string; quantity: number; price: number }[],
-    deliveryFee: number,
-    serviceFee: number,
-    total: number,
-    orderNumber: string,
-    orderDate: string,
-    paymentMethod: string)=> `<!DOCTYPE html>
+export const generateInvoice = (
+    {
+        customerName,
+        restaurantName,
+        items,
+        Shipping,
+        total,
+        subTotal,
+        discount,
+        orderNumber,
+        orderDate,
+        paymentMethod
+    }: {
+        customerName: string;
+        restaurantName: string;
+        items: {productId?:string, productName: string; quantity: number; itemPrice: number , totalPrice?:number }[];
+        Shipping: number;
+        total: number;
+        subTotal: number;
+        discount: number;
+        orderNumber: string;
+        orderDate: string;
+        paymentMethod: string;
+    }) => `<!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
@@ -49,33 +64,31 @@ export const orderInvoiceTemplate = ( customerName: string,
               <!-- Items -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 ${items
-                  .map(
-                    (item) => `
+        .map(
+            (item) => `
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: #666666; font-size: 14px; margin-right: 8px;">(${
-                        item.quantity
-                      })</span>
-                      <span style="color: #1A1A1A; font-size: 14px;">${
-                        item.name
-                      }</span>
+                      <span style="color: #666666; font-size: 14px; margin-right: 8px;">(${item.quantity
+                })</span>
+                      <span style="color: #1A1A1A; font-size: 14px;">${item.productName
+                }</span>
                     </td>
                     <td align="right" style="color: #1A1A1A; font-size: 14px; padding: 8px 0;">
-                      ${item.price.toFixed(2)}
+                      ${item.itemPrice.toFixed(2)}
                     </td>
                   </tr>
                 `
-                  )
-                  .join("")}
+        )
+        .join("")}
               </table>
 
               <!-- Fees -->
               <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #E5E5E5; padding: 16px 0;">
                 <tr>
                   <td style="color: #666666; font-size: 14px; padding: 4px 0;">Shipping</td>
-                  <td align="right" style="color: #1A1A1A; font-size: 14px;">${deliveryFee.toFixed(
-                    2
-                  )}</td>
+                  <td align="right" style="color: #1A1A1A; font-size: 14px;">${Shipping.toFixed(
+            2
+        )}</td>
                 </tr>
               </table>
 
@@ -84,7 +97,7 @@ export const orderInvoiceTemplate = ( customerName: string,
                 <tr>
                   <td style="color: #1A1A1A; font-weight: 500;">Sub Total</td>
                   <td align="right" style="color: #1A1A1A; font-weight: 500;">
-                    EGP ${total.toFixed(2)}
+                    EGP ${subTotal.toFixed(2)}
                   </td>
                 </tr>
               </table>
@@ -92,7 +105,7 @@ export const orderInvoiceTemplate = ( customerName: string,
                 <tr>
                   <td style="color: #1A1A1A; font-weight: 500;">Discount</td>
                   <td align="right" style="color: #1A1A1A; font-weight: 500;">
-                    EGP ${total.toFixed(2)}
+                    EGP ${discount.toFixed(2)}
                   </td>
                 </tr>
               </table>
