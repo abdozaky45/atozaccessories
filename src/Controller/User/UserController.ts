@@ -27,6 +27,7 @@ export const addUserInformation = asyncHandler(
 export const updateUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const {_id} = req.body.currentUser.userInfo;
+    const {userId} = req.params;
     const checkUser = await userService.findUserInformationById(_id);
     if (!checkUser) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
@@ -45,13 +46,14 @@ export const updateUserInformation = asyncHandler(
       secondaryPhone: req.body.secondaryPhone,
       user:_id
     };
-    const user = await userService.updateUserInformation(checkUser._id, userData);
+    const user = await userService.updateUserInformation(userId, userData);
     return res.json(new ApiResponse(200, {user}, SuccessMessage.USER_UPDATED));
   }
 );
 export const deleteUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const {_id} = req.body.currentUser.userInfo;
+    const {userId} = req.params;
     const checkUser = await userService.findUserInformationById(_id);
     if (!checkUser) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
@@ -59,7 +61,7 @@ export const deleteUserInformation = asyncHandler(
     if(_id.toString() !== checkUser.user.toString()){
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    const user = await userService.deleteUserInformation(checkUser._id);
+    const user = await userService.deleteUserInformation(userId);
     return res.json(new ApiResponse(200, {}, SuccessMessage.USER_DELETED));
   }
 );
@@ -72,7 +74,7 @@ export const getAllUserInformation = asyncHandler(
 export const getUserInformationById = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const {_id} = req.body.currentUser.userInfo;
-    const user = await userService.findUserInformationById(_id);
+    const user = await userService.getAllUserInformationRelatedToUser(_id);
     if (!user) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
     }

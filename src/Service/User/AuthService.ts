@@ -6,7 +6,7 @@ export const createUser = async (userData: Iuser) => {
   const user = await UserModel.create(userData);
   return user;
 };
-export const updateUserInformation = async (_id: Types.ObjectId, userData: Iuser) => {
+export const updateUserInformation = async (_id: Types.ObjectId | string, userData: Iuser) => {
   const updatedUser = await UserModel.findByIdAndUpdate(
    _id,
     { $set: userData },
@@ -17,6 +17,10 @@ export const updateUserInformation = async (_id: Types.ObjectId, userData: Iuser
 export const findUserInformationById = async (id: Types.ObjectId | string) => {
   const user = await UserModel.findOne({user: id});
   return user;
+};
+export const getAllUserInformationRelatedToUser = async (user: Types.ObjectId | string) => {
+  const users = await UserModel.find({user});
+  return users;
 };
 export const deleteUserInformation = async (_id: Types.ObjectId | string) => {
   const deletedUser = await UserModel.findByIdAndDelete(_id);
