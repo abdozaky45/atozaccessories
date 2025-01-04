@@ -97,7 +97,5 @@ class OrderController {
       order: orderData,
     });
   });
-
-
 }
 export default new OrderController();
