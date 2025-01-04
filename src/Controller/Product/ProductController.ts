@@ -6,7 +6,7 @@ import {
   extractMediaId,
   findCategoryById,
 } from "../../Service/CategoryService/CategoryService";
-import IProduct from "../../Model/Product/Iproduct";
+import IProduct from "../../Model/Product/IProduct";
 import slugify from "slugify";
 import moment from "../../../src/Utils/DateAndTime";
 import {

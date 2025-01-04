@@ -1,7 +1,7 @@
 import slugify from "slugify";
 import _ from "lodash";
 // @ts-ignore
-import IProduct from "../../Model/Product/Iproduct";
+import IProduct from "../../Model/Product/IProduct";
 import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";

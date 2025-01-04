@@ -8,7 +8,7 @@ import { sendEmail } from '../../Utils/Nodemailer/SendEmail';
 import { generateInvoice } from '../../Utils/Nodemailer/SendInvoice';
 import UserModel from '../../Model/User/UserInformation/UserModel';
 import { ProductOrder } from '../../Model/Order/Iorder';
-import IProduct from '../../Model/Product/Iproduct';
+import IProduct from '../../Model/Product/IProduct';
 import { ObjectId } from 'mongoose';
 
 class OrderController {
@@ -20,7 +20,7 @@ class OrderController {
             return res.status(404).json({ message: 'Shipping method not found' });
         }
 
-        const userInformation = await UserModel.findOne({ user: userId });
+        const userInformation = await UserModel.findById(userId);
         if (!userInformation) {
             return res.status(404).json({ message: 'User information not found' });
         }

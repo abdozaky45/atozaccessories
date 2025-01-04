@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import IProduct from "./Iproduct";
+import IProduct from "./IProduct";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import {
   ImageSchema,
