@@ -34,5 +34,7 @@ enum ErrorMessages {
   VALIDATION_ERROR = "Validation error",
   USER_NOT_FOUND= "user not found",
   SHIPPING_NOT_FOUND = "Shipping not found",
+  USER_INFORMATION_NOT_FOUND = "User information not found",
+  ORDER_NOT_FOUND = "Order not found",
 }
 export default ErrorMessages;

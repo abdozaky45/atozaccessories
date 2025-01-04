@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { asyncHandler } from '../../Utils/ErrorHandling';
+import { ApiError, ApiResponse, asyncHandler } from '../../Utils/ErrorHandling';
 import OrderModel from '../../Model/Order/OrderModel';
 import ProductModel from '../../Model/Product/ProductModel';
 import ShippingModel from '../../Model/Shipping/ShippingModel';
@@ -7,22 +7,27 @@ import ShippingModel from '../../Model/Shipping/ShippingModel';
 import { sendEmail } from '../../Utils/Nodemailer/SendEmail';
 import { generateInvoice } from '../../Utils/Nodemailer/SendInvoice';
 import UserModel from '../../Model/User/UserInformation/UserModel';
-import { ProductOrder } from '../../Model/Order/Iorder';
+import { IOrder, ProductOrder } from '../../Model/Order/Iorder';
 import IProduct from '../../Model/Product/IProduct';
 import { ObjectId } from 'mongoose';
 import SchemaTypesReference from '../../Utils/Schemas/SchemaTypesReference';
+import ShippingService from '../../Service/Shipping/ShippingService';
+import { findUserInformationById } from '../../Service/User/AuthService';
+import OrderService from '../../Service/Order/OrderService';
+import ErrorMessages from '../../Utils/Error';
+import SuccessMessage from '../../Utils/SuccessMessages';
+import { orderStatusType } from '../../Utils/OrderStatusType';
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { products, shippingId, userId } = req.body;
-    const shipping = await ShippingModel.findById(shippingId);
+    const shipping = await ShippingService.getShippingById(shippingId);
     if (!shipping) {
-      return res.status(404).json({ message: 'Shipping method not found' });
+      throw new ApiError(404, ErrorMessages.SHIPPING_NOT_FOUND);
     }
-
-    const userInformation = await UserModel.findById(userId);
+    const userInformation = await findUserInformationById(userId);
     if (!userInformation) {
-      return res.status(404).json({ message: 'User information not found' });
+      throw new ApiError(404, ErrorMessages.USER_INFORMATION_NOT_FOUND);
     }
     const productIds = products.map((product: ProductOrder) => product.productId);
     const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
@@ -36,13 +41,11 @@ class OrderController {
     for (const product of products) {
       const foundProduct = productRecord[product.productId];
       if (!foundProduct) {
-        return res.status(404).json({ message: `Product not found: ${product.productId}` });
+        throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
       }
       const productWithId = foundProduct as IProduct & { _id: ObjectId };
       if (productWithId.availableItems < product.quantity) {
-        return res.status(400).json({
-          message: `Not enough stock for product: ${productWithId.productName}. Available: ${productWithId.availableItems}, Requested: ${product.quantity}`,
-        });
+        throw new ApiError(400, `Not enough stock for product: ${productWithId.productName}. Available: ${productWithId.availableItems}, Requested: ${product.quantity}`);
       }
       const itemTotalPrice = productWithId.price * product.quantity;
       orderProducts.push({
@@ -64,16 +67,19 @@ class OrderController {
       shippingCost = 0;
     }
     const finalPrice = totalPrice - discount + shippingCost;
-    const newOrder = await OrderModel.create({
+    const orderCreate: Omit<IOrder, 'status'> = {
       user: userId,
       userInformation: userInformation._id,
       shipping: shipping._id,
       products: orderProducts,
       price: finalPrice,
-    });
+    }
+    const newOrder = await OrderService.createOrder(
+      orderCreate
+    )
     const orderData = await newOrder.populate([
-      { path: SchemaTypesReference.Shipping , select: '-_id category cost' }, 
-      { path: SchemaTypesReference.UserInformation , select: '-_id country address primaryPhone governorate' }, 
+      { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
+      { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
     ]);
     const invoice = generateInvoice({
       customerName: `${userInformation.firstName} ${userInformation.lastName}`,
@@ -92,10 +98,71 @@ class OrderController {
       subject: 'Your Order Invoice',
       html: invoice,
     });
-    return res.status(201).json({
-      message: "Thank you for your order. We'll send you a confirmation email shortly.",
-      order: orderData,
-    });
+    return res.json(new ApiResponse(200, { order: orderData }, SuccessMessage.ORDER_CREATED));
+  });
+  updateOrderStatus = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { orderId, status } = req.body;
+const order = await OrderService.getOrderById(orderId);
+if (!order)
+  throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
+const productIds = order.products.map((product: ProductOrder) => product.productId);
+const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
+const productRecord: Record<string, IProduct> = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
+  acc[product._id.toString()] = product as IProduct;
+  return acc;
+}, {});
+if (status === orderStatusType.confirmed) {
+  for (const orderProduct of order.products) {
+    const product = productRecord[orderProduct.productId.toString()];
+    if (product && orderProduct.quantity !== undefined) {
+      if (product.soldItems === undefined) product.soldItems = 0;
+      if (product.availableItems === undefined) product.availableItems = 0;
+  
+      product.soldItems += orderProduct.quantity;
+      product.availableItems -= orderProduct.quantity;
+      await (product as any).save();
+    }
+  }
+}
+order.status = status;
+await order.save();
+return res.json(new ApiResponse(200, { order }, SuccessMessage.ORDER_UPDATED));
   });
 }
 export default new OrderController();
+// const updateOrderStatus = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+//   const { orderId, status } = req.body;
+  
+//   const order = await OrderService.getOrderById(orderId);
+//   if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
+  
+//   if (status === orderStatusType.cancelled) {
+//     if ([orderStatusType.shipped, orderStatusType.delivered].includes(order.status)) {
+//       return res.status(400).json({ message: 'Cannot cancel an order that is shipped or delivered.' });
+//     }
+    
+//     if (order.status === orderStatusType.confirmed) {
+//       // Revert stock changes
+//       const productIds = order.products.map((product: ProductOrder) => product.productId);
+//       const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
+//       const productRecord: Record<string, IProduct> = foundProducts.reduce((acc, product) => {
+//         acc[product._id.toString()] = product as IProduct;
+//         return acc;
+//       }, {});
+      
+//       for (const orderProduct of order.products) {
+//         const product = productRecord[orderProduct.productId.toString()];
+//         if (product && orderProduct.quantity !== undefined) {
+//           product.soldItems = (product.soldItems ?? 0) - orderProduct.quantity;
+//           product.availableItems = (product.availableItems ?? 0) + orderProduct.quantity;
+//           await product.save();
+//         }
+//       }
+//     }
+//   }
+  
+//   order.status = status;
+//   await order.save();
+  
+//   return res.status(200).json({ message: 'Order status updated successfully', order });
+// });

@@ -15,7 +15,7 @@ export const updateUserInformation = async (_id: Types.ObjectId | string, userDa
   return updatedUser;
 };
 export const findUserInformationById = async (id: Types.ObjectId | string) => {
-  const user = await UserModel.findOne({user: id});
+  const user = await UserModel.findById(id);
   return user;
 };
 export const getAllUserInformationRelatedToUser = async (user: Types.ObjectId | string) => {
