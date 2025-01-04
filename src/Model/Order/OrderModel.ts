@@ -8,6 +8,7 @@ const OrderSchema = new Schema<IOrder>({
     userInformation: RefType(SchemaTypesReference.UserInformation, true),
     shipping: RefType(SchemaTypesReference.Shipping, true),
     products: [{
+        _id: false,
         productId: {
             type: Types.ObjectId,
             ref: SchemaTypesReference.Product,

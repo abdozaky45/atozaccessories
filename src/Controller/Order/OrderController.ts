@@ -10,6 +10,7 @@ import UserModel from '../../Model/User/UserInformation/UserModel';
 import { ProductOrder } from '../../Model/Order/Iorder';
 import IProduct from '../../Model/Product/IProduct';
 import { ObjectId } from 'mongoose';
+import SchemaTypesReference from '../../Utils/Schemas/SchemaTypesReference';
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -70,6 +71,10 @@ class OrderController {
       products: orderProducts,
       price: finalPrice,
     });
+    const orderData = await newOrder.populate([
+      { path: SchemaTypesReference.Shipping , select: '-_id category cost' }, 
+      { path: SchemaTypesReference.UserInformation , select: '-_id country address primaryPhone governorate' }, 
+    ]);
     const invoice = generateInvoice({
       customerName: `${userInformation.firstName} ${userInformation.lastName}`,
       restaurantName: 'atozaccesories',
@@ -88,11 +93,11 @@ class OrderController {
       html: invoice,
     });
     return res.status(201).json({
-      message: 'Order created successfully',
-      order: newOrder,
-      invoice: invoice,
+      message: "Thank you for your order. We'll send you a confirmation email shortly.",
+      order: orderData,
     });
   });
-  
+
+
 }
 export default new OrderController();
