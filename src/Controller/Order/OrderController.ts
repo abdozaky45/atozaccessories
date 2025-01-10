@@ -1,12 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError, ApiResponse, asyncHandler } from '../../Utils/ErrorHandling';
-import OrderModel from '../../Model/Order/OrderModel';
-import ProductModel from '../../Model/Product/ProductModel';
-import ShippingModel from '../../Model/Shipping/ShippingModel';
-
 import { sendEmail } from '../../Utils/Nodemailer/SendEmail';
 import { generateInvoice } from '../../Utils/Nodemailer/SendInvoice';
-import UserModel from '../../Model/User/UserInformation/UserModel';
 import { IOrder, ProductOrder } from '../../Model/Order/Iorder';
 import IProduct from '../../Model/Product/IProduct';
 import { ObjectId } from 'mongoose';
@@ -17,6 +12,8 @@ import OrderService from '../../Service/Order/OrderService';
 import ErrorMessages from '../../Utils/Error';
 import SuccessMessage from '../../Utils/SuccessMessages';
 import { orderStatusType } from '../../Utils/OrderStatusType';
+import { retrieveProducts, updateStock } from '../../Service/Product/ProductService';
+import { UserTypeEnum } from '../../Utils/UserType';
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -30,7 +27,7 @@ class OrderController {
       throw new ApiError(404, ErrorMessages.USER_INFORMATION_NOT_FOUND);
     }
     const productIds = products.map((product: ProductOrder) => product.productId);
-    const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
+    const foundProducts = await retrieveProducts(productIds);
     const productRecord: Record<string, IProduct> = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
       acc[product._id.toString()] = product as IProduct;
       return acc;
@@ -102,67 +99,44 @@ class OrderController {
   });
   updateOrderStatus = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { orderId, status } = req.body;
-const order = await OrderService.getOrderById(orderId);
-if (!order)
-  throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
-const productIds = order.products.map((product: ProductOrder) => product.productId);
-const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
-const productRecord: Record<string, IProduct> = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
-  acc[product._id.toString()] = product as IProduct;
-  return acc;
-}, {});
-if (status === orderStatusType.confirmed) {
-  for (const orderProduct of order.products) {
-    const product = productRecord[orderProduct.productId.toString()];
-    if (product && orderProduct.quantity !== undefined) {
-      if (product.soldItems === undefined) product.soldItems = 0;
-      if (product.availableItems === undefined) product.availableItems = 0;
+    const userRole = req.body.currentUser.userInfo.role;
+    const order = await OrderService.getOrderById(orderId);
+    if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
   
-      product.soldItems += orderProduct.quantity;
-      product.availableItems -= orderProduct.quantity;
-      await (product as any).save();
+    const productIds = order.products.map((product: ProductOrder) => product.productId);
+    const foundProducts = await retrieveProducts(productIds);
+    const productRecord: Record<string, IProduct > = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
+      acc[product._id.toString()] = product;
+      return acc;
+    }, {} as Record<string, IProduct>);
+    if (status === orderStatusType.confirmed) {
+      if (userRole !== UserTypeEnum.ADMIN) {
+       throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
+      }
+      await updateStock(order.products, productRecord, false);
+    } 
+    else if (status === orderStatusType.cancelled) {
+      if (userRole !== UserTypeEnum.USER) {
+        throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
+      }
+      if ([orderStatusType.shipped, orderStatusType.delivered, orderStatusType.ordered].includes(order.status as orderStatusType)) {
+        throw new ApiError(400, ErrorMessages.NOT_CANCELLED);
+      }
+      
+      if (order.status === orderStatusType.confirmed) {
+        await updateStock(order.products, productRecord, true);
+      }
     }
-  }
-}
-order.status = status;
-await order.save();
-return res.json(new ApiResponse(200, { order }, SuccessMessage.ORDER_UPDATED));
+    else if ([orderStatusType.shipped, orderStatusType.delivered, orderStatusType.ordered, orderStatusType.deleted].includes(status)) {
+      if (userRole !== UserTypeEnum.ADMIN) {
+        throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
+      }
+    }
+    order.status = status;
+    await order.save();
+  
+    return res.json(new ApiResponse(200, { order }, SuccessMessage.ORDER_UPDATED));
   });
+  
 }
 export default new OrderController();
-// const updateOrderStatus = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-//   const { orderId, status } = req.body;
-  
-//   const order = await OrderService.getOrderById(orderId);
-//   if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
-  
-//   if (status === orderStatusType.cancelled) {
-//     if ([orderStatusType.shipped, orderStatusType.delivered].includes(order.status)) {
-//       return res.status(400).json({ message: 'Cannot cancel an order that is shipped or delivered.' });
-//     }
-    
-//     if (order.status === orderStatusType.confirmed) {
-//       // Revert stock changes
-//       const productIds = order.products.map((product: ProductOrder) => product.productId);
-//       const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
-//       const productRecord: Record<string, IProduct> = foundProducts.reduce((acc, product) => {
-//         acc[product._id.toString()] = product as IProduct;
-//         return acc;
-//       }, {});
-      
-//       for (const orderProduct of order.products) {
-//         const product = productRecord[orderProduct.productId.toString()];
-//         if (product && orderProduct.quantity !== undefined) {
-//           product.soldItems = (product.soldItems ?? 0) - orderProduct.quantity;
-//           product.availableItems = (product.availableItems ?? 0) + orderProduct.quantity;
-//           await product.save();
-//         }
-//       }
-//     }
-//   }
-  
-//   order.status = status;
-//   await order.save();
-  
-//   return res.status(200).json({ message: 'Order status updated successfully', order });
-// });

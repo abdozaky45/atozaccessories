@@ -36,5 +36,7 @@ enum ErrorMessages {
   SHIPPING_NOT_FOUND = "Shipping not found",
   USER_INFORMATION_NOT_FOUND = "User information not found",
   ORDER_NOT_FOUND = "Order not found",
+  NOT_PERMITTED = "You do not have permission",
+  NOT_CANCELLED = "This order cannot be cancelled at this stage",
 }
 export default ErrorMessages;
