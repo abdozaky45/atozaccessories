@@ -102,19 +102,19 @@ class OrderController {
     const userRole = req.body.currentUser.userInfo.role;
     const order = await OrderService.getOrderById(orderId);
     if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
-  
+
     const productIds = order.products.map((product: ProductOrder) => product.productId);
     const foundProducts = await retrieveProducts(productIds);
-    const productRecord: Record<string, IProduct > = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
+    const productRecord: Record<string, IProduct> = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
       acc[product._id.toString()] = product;
       return acc;
     }, {} as Record<string, IProduct>);
     if (status === orderStatusType.confirmed) {
       if (userRole !== UserTypeEnum.ADMIN) {
-       throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
+        throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
       }
       await updateStock(order.products, productRecord, false);
-    } 
+    }
     else if (status === orderStatusType.cancelled) {
       if (userRole !== UserTypeEnum.USER) {
         throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
@@ -122,7 +122,7 @@ class OrderController {
       if ([orderStatusType.shipped, orderStatusType.delivered, orderStatusType.ordered].includes(order.status as orderStatusType)) {
         throw new ApiError(400, ErrorMessages.NOT_CANCELLED);
       }
-      
+
       if (order.status === orderStatusType.confirmed) {
         await updateStock(order.products, productRecord, true);
       }
@@ -134,9 +134,23 @@ class OrderController {
     }
     order.status = status;
     await order.save();
-  
+
     return res.json(new ApiResponse(200, { order }, SuccessMessage.ORDER_UPDATED));
   });
-  
+  getUserOrders = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { _id } = req.body.currentUser.userInfo;
+    const orders = await OrderService.getUserOrders(_id);
+    return res.json(new ApiResponse(200, { orders }, SuccessMessage.ORDER_FETCHED));
+  });
+  getAllOrders = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const page = parseInt(req.query.page as string);
+    const { status } = req.query;
+    const { role } = req.body.currentUser.userInfo;
+    if (role !== UserTypeEnum.ADMIN) {
+      throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
+    }
+    const orders = await OrderService.getAllOrders(page, status as string);
+    return res.json(new ApiResponse(200, orders, SuccessMessage.ORDER_FETCHED));
+  });
 }
 export default new OrderController();

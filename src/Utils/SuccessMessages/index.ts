@@ -26,5 +26,6 @@ enum SuccessMessage {
   SHIPPING_DELETED="Shipping deleted successfully",
   ORDER_CREATED="Thank you for your order. We'll send you a confirmation email shortly.",
   ORDER_UPDATED="Order updated successfully",
+  ORDER_FETCHED="Orders fetched successfully",
 }
 export default SuccessMessage;
