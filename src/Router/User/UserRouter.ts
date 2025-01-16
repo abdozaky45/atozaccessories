@@ -10,12 +10,13 @@ userRouter.post(
   UserController.addUserInformation
 );
 userRouter.patch(
-  "/update-user-information",
+  "/update-user-information/:userId",
   Validation(userValidation.updateUser),
   UserController.updateUserInformation
 );
 userRouter.delete(
-  "/delete-user-information",
+  "/delete-user-information/:userId",
+  Validation(userValidation.CustomUserValidation),
   UserController.deleteUserInformation
 );
 userRouter.get(

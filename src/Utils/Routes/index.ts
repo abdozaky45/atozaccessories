@@ -8,5 +8,6 @@ enum RouterEnum {
   imageSlider = "slider",
   wishlist = "wishlist",
   shipping = "shipping",
+  order = "order",
 }
 export default RouterEnum;

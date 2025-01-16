@@ -27,6 +27,7 @@ export const createUser = baseSchema.concat(
 export const updateUser = baseSchema.concat(
   joi
     .object({
+      userId: joi.string().required(),
       firstName: joi.string().min(3).max(50).optional(),
       lastName: joi.string().min(3).max(50).optional(),
       address: joi.string().min(3).max(200).optional(),
@@ -50,7 +51,7 @@ export const updateUser = baseSchema.concat(
 export const CustomUserValidation = baseSchema.concat(
   joi
     .object({
-      id: joi.string().required(),
+      userId: joi.string().required(),
     })
     .required()
 );

@@ -6,7 +6,7 @@ import {
   extractMediaId,
   findCategoryById,
 } from "../../Service/CategoryService/CategoryService";
-import Iproduct from "../../Model/Product/Iproduct";
+import IProduct from "../../Model/Product/IProduct";
 import slugify from "slugify";
 import moment from "../../../src/Utils/DateAndTime";
 import {
@@ -17,6 +17,7 @@ import {
   findProductById,
   findProductByPriceRange,
   findProductBySort,
+  findProducts,
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
@@ -57,7 +58,7 @@ export const CreateProduct = asyncHandler(
         };
       }) || [];
     const finalPrices = await ratioCalculatePrice(price, salePrice);
-    const productData: Iproduct = {
+    const productData: IProduct = {
       productName,
       slug: slugify(productName),
       productDescription,
@@ -108,7 +109,7 @@ export const updateProduct = asyncHandler(
     ) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
-    const productData: Partial<Iproduct> = {
+    const productData: Partial<IProduct> = {
       productName,
       productDescription,
       price,
@@ -138,7 +139,6 @@ export const updateProduct = asyncHandler(
     if (updates) {
       await product.save();
       if(expiredSale){
-        console.log("======here2============");
         scheduleProductUpdate(productId, expiredSale);
       }
       return res.json(
@@ -218,3 +218,9 @@ export const sortProductByPrice = asyncHandler(
     return res.json(new ApiResponse(200, { products }, "Success"));
   }
 );
+export const sortProductByRangeAndPrice = asyncHandler(async (req: Request, res: Response) => {
+   const { page, sort, priceRange } = req.query;
+  const pageNumber = Number(page);
+  const products = await findProducts(sort as string, priceRange as string, pageNumber);
+  return res.json(new ApiResponse(200, { products }, "Success"));
+});

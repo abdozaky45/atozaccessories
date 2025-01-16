@@ -1,31 +1,32 @@
 import slugify from "slugify";
 import _ from "lodash";
-// @ts-ignore
-import Iproduct from "../../Model/Product/Iproduct";
+import IProduct from "../../Model/Product/IProduct";
 import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import Fuse from "fuse.js";
 import { sortProductEnum } from "../../Utils/SortProduct";
+import { Types } from "mongoose";
+import { ProductOrder } from "../../Model/Order/Iorder";
 
-export const createProduct = async (productData: Iproduct) => {
+export const createProduct = async (productData: IProduct) => {
   const product = await ProductModel.create(productData);
   return product;
 };
-export const findProductById = async (id: string) => {
+export const findProductById = async (id: string | Types.ObjectId) => {
   const product = await ProductModel.findById(id);
   return product;
 };
 export const prepareProductUpdates = async (
   productData: any,
-  product: Iproduct,
+  product: IProduct,
   defaultImage: string,
   albumImages: string[]
 ) => {
   let updates = false;
   Object.keys(productData).forEach((key) => {
-    const field = key as keyof Iproduct;
+    const field = key as keyof IProduct;
     if (!_.isEqual(productData[field], product[field])) {
       (product[field] as any) = productData[field];
       updates = true;
@@ -60,7 +61,7 @@ export const prepareProductUpdates = async (
   }
   return updates ? product : null;
 };
-export const deleteOneProduct = async (productId: string) => {
+export const deleteOneProduct = async (productId: string | Types.ObjectId) => {
   const product = await ProductModel.deleteOne({ _id: productId });
   return product;
 };
@@ -130,20 +131,20 @@ export const findProductBySort = async (sortBy: string, page: number) => {
   );
   return products;
 };
-export const findProductByPriceRange=async(priceRange :string,page:number)=>{
+export const findProductByPriceRange = async (priceRange: string, page: number) => {
   let priceCriteria = {};
   switch (priceRange) {
     case sortProductEnum.priceUnder100:
-      priceCriteria = {price:{$lte:100}};
+      priceCriteria = { price: { $lte: 100 } };
       break;
     case sortProductEnum.priceBetween100and500:
-      priceCriteria = {price:{$gte:100,$lte:500}};
+      priceCriteria = { price: { $gte: 100, $lte: 500 } };
       break;
     case sortProductEnum.priceBetween500and1000:
-      priceCriteria = {price:{$gte:500,$lte:1000}};
+      priceCriteria = { price: { $gte: 500, $lte: 1000 } };
       break;
     case sortProductEnum.priceAbove1000:
-      priceCriteria = {price:{$gte:1000}};
+      priceCriteria = { price: { $gte: 1000 } };
       break;
     default:
       priceCriteria = {};
@@ -157,3 +158,106 @@ export const findProductByPriceRange=async(priceRange :string,page:number)=>{
   );
   return products;
 }
+export const findProducts = async (sort: string, priceRange: string, page: number) => {
+  let sortCriteria = {};
+  let priceCriteria = {};
+  if (sort) {
+    switch (sort) {
+      case sortProductEnum.newest:
+        sortCriteria = { createdAt: -1 };
+        break;
+      case sortProductEnum.priceLowToHigh:
+        sortCriteria = { price: 1 };
+        break;
+      case sortProductEnum.priceHighToLow:
+        sortCriteria = { price: -1 };
+        break;
+      default:
+        sortCriteria = { createdAt: -1 };
+        break;
+    }
+  }
+  if (priceRange) {
+    switch (priceRange) {
+      case sortProductEnum.priceUnder100:
+        priceCriteria = { price: { $lte: 100 } };
+        break;
+      case sortProductEnum.priceBetween100and500:
+        priceCriteria = { price: { $gte: 100, $lte: 500 } };
+        break;
+      case sortProductEnum.priceBetween500and1000:
+        priceCriteria = { price: { $gte: 500, $lte: 1000 } };
+        break;
+      case sortProductEnum.priceAbove1000:
+        priceCriteria = { price: { $gte: 1000 } };
+        break;
+      default:
+        break;
+    }
+  }
+  const products = await paginate(
+    ProductModel.find(priceCriteria).sort(sortCriteria),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+};
+export const retrieveProducts = async (productIds: any) => {
+  const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
+  return foundProducts;
+}
+export const updateStock = async (
+  orderProducts: ProductOrder[],
+  productRecord: Record<string, IProduct & { _id: Types.ObjectId }> | any,
+  increaseStock: boolean
+) => {
+  const bulkOperations: any[] = [];
+  for (const orderProduct of orderProducts) {
+    let productIdString: string;
+
+    if (typeof orderProduct.productId === 'string') {
+      productIdString = orderProduct.productId;
+    } else if ('_id' in orderProduct.productId) {
+      productIdString = orderProduct.productId._id.toString();
+    } else {
+      console.error('Invalid productId type:', orderProduct.productId);
+      continue;
+    }
+    const product = productRecord[productIdString];
+    if (product && orderProduct.quantity !== undefined) {
+      const quantityChange = increaseStock ? orderProduct.quantity : -orderProduct.quantity;
+
+      if (increaseStock) {
+        product.soldItems = (product.soldItems ?? 0) - quantityChange;
+        product.availableItems = (product.availableItems ?? 0) + quantityChange;
+      } else {
+        product.soldItems = (product.soldItems ?? 0) + Math.abs(quantityChange);
+        product.availableItems = (product.availableItems ?? 0) - Math.abs(quantityChange);
+      }
+      bulkOperations.push({
+        updateOne: {
+          filter: { _id: product._id },
+          update: {
+            $set: {
+              soldItems: product.soldItems,
+              availableItems: product.availableItems,
+            },
+          },
+        },
+      });
+    } else {
+      console.log("Skipping Product due to missing data.");
+    }
+  }
+  if (bulkOperations.length > 0) {
+    try {
+      const x = await ProductModel.bulkWrite(bulkOperations);
+    } catch (error) {
+      console.error('Error performing bulk update:', error);
+    }
+  } else {
+    console.log("No operations to perform.");
+  }
+};
+
