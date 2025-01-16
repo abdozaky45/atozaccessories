@@ -158,6 +158,51 @@ export const findProductByPriceRange = async (priceRange: string, page: number) 
   );
   return products;
 }
+export const findProducts = async (sort: string, priceRange: string, page: number) => {
+  let sortCriteria = {};
+  let priceCriteria = {};
+  if (sort) {
+    switch (sort) {
+      case sortProductEnum.newest:
+        sortCriteria = { createdAt: -1 };
+        break;
+      case sortProductEnum.priceLowToHigh:
+        sortCriteria = { price: 1 };
+        break;
+      case sortProductEnum.priceHighToLow:
+        sortCriteria = { price: -1 };
+        break;
+      default:
+        sortCriteria = { createdAt: -1 };
+        break;
+    }
+  }
+  if (priceRange) {
+    switch (priceRange) {
+      case sortProductEnum.priceUnder100:
+        priceCriteria = { price: { $lte: 100 } };
+        break;
+      case sortProductEnum.priceBetween100and500:
+        priceCriteria = { price: { $gte: 100, $lte: 500 } };
+        break;
+      case sortProductEnum.priceBetween500and1000:
+        priceCriteria = { price: { $gte: 500, $lte: 1000 } };
+        break;
+      case sortProductEnum.priceAbove1000:
+        priceCriteria = { price: { $gte: 1000 } };
+        break;
+      default:
+        break;
+    }
+  }
+  const products = await paginate(
+    ProductModel.find(priceCriteria).sort(sortCriteria),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+};
 export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
   return foundProducts;

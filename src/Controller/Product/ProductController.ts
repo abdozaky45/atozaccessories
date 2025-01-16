@@ -17,6 +17,7 @@ import {
   findProductById,
   findProductByPriceRange,
   findProductBySort,
+  findProducts,
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
@@ -138,7 +139,6 @@ export const updateProduct = asyncHandler(
     if (updates) {
       await product.save();
       if(expiredSale){
-        console.log("======here2============");
         scheduleProductUpdate(productId, expiredSale);
       }
       return res.json(
@@ -218,3 +218,9 @@ export const sortProductByPrice = asyncHandler(
     return res.json(new ApiResponse(200, { products }, "Success"));
   }
 );
+export const sortProductByRangeAndPrice = asyncHandler(async (req: Request, res: Response) => {
+   const { page, sort, priceRange } = req.query;
+  const pageNumber = Number(page);
+  const products = await findProducts(sort as string, priceRange as string, pageNumber);
+  return res.json(new ApiResponse(200, { products }, "Success"));
+});
