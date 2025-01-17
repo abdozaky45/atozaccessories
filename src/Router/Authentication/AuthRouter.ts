@@ -1,9 +1,11 @@
 import { Router } from "express";
 const authenticationRouter = Router();
 import * as authenticationController from "../../Controller/Authentication/AuthController";
-authenticationRouter.post("/register-email", authenticationController.registerWithEmail);
-authenticationRouter.post("/active-account", authenticationController.activeAccount);
-authenticationRouter.post("/email-new-code", authenticationController.sendNewActiveCodeWithEmail);
+import { Validation } from "../../middleware/ValidationMiddleware";
+import * as AuthValidation from "../../Validation/User/Auth/AuthValidation";
+authenticationRouter.post("/register-email", Validation(AuthValidation.AuthValidationEmail), authenticationController.registerWithEmail);
+authenticationRouter.post("/active-account", Validation(AuthValidation.activeAccount), authenticationController.activeAccount);
+authenticationRouter.post("/email-new-code", Validation(AuthValidation.AuthValidationEmail), authenticationController.sendNewActiveCodeWithEmail);
 authenticationRouter.post("/refresh-token", authenticationController.refreshedToken);
 //authenticationRouter.post("/register-phone", authenticationController.registerWithPhone);
 //authenticationRouter.post("/phone-new-code", authenticationController.sendNewActiveCodeWithPhone);
