@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ApiError, ApiResponse, asyncHandler } from "../../Utils/ErrorHandling";
 import ErrorMessages from "../../Utils/Error";
-import moment from "../../../src/Utils/DateAndTime";
+import moment from "../../Utils/DateAndTime";
 import {
   createCategory,
   deleteCategory,

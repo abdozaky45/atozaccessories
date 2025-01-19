@@ -8,7 +8,7 @@ import {
 } from "../../Service/CategoryService/CategoryService";
 import IProduct from "../../Model/Product/IProduct";
 import slugify from "slugify";
-import moment from "../../../src/Utils/DateAndTime";
+import moment from "../../Utils/DateAndTime";
 import {
   createProduct,
   deleteOneProduct,
