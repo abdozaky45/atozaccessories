@@ -1,0 +1,34 @@
+import { baseSchema } from "../BaseSchema";
+import joi from "joi";
+export const createProductValidation = baseSchema.concat(
+    joi.object({
+        productName: joi.string().required(),
+        productDescription: joi.string().required(),
+        price: joi.number().required(),
+        availableItems: joi.number().required(),
+        categoryId: joi.number().optional(),
+        defaultImage: joi.string().required(),
+        salePrice: joi.number().optional(),
+        expiredSale: joi.number().optional(),
+        albumImages: joi.array().items(joi.string()).optional(),
+    }).required()
+);
+export const updateProductValidation = baseSchema.concat(
+    joi.object({
+        productId: joi.string().required(),
+        productName: joi.string().optional(),
+        productDescription: joi.string().optional(),
+        price: joi.number().optional(),
+        availableItems: joi.number().optional(),
+        categoryId: joi.number().optional(),
+        defaultImage: joi.string().optional(),
+        salePrice: joi.number().optional(),
+        expiredSale: joi.number().optional(),
+        albumImages: joi.array().items(joi.string()).optional(),
+    }).required()
+);
+export const deleteProductValidation = baseSchema.concat(
+    joi.object({
+        productId: joi.string().required(),
+    }).required()
+);

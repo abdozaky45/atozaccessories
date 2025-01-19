@@ -37,15 +37,6 @@ export const CreateProduct = asyncHandler(
       defaultImage,
       albumImages,
     } = req.body;
-    if (
-      !productName ||
-      !productDescription ||
-      !price ||
-      !availableItems ||
-      !categoryId ||
-      !defaultImage
-    )
-      throw new ApiError(400, ErrorMessages.ALL_FIELDS_REQUIRED);
     const category = await findCategoryById(categoryId);
     if (!category) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
     const mediaUrl = defaultImage;
