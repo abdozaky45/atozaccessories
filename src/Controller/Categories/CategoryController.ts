@@ -15,9 +15,6 @@ import SuccessMessage from "../../Utils/SuccessMessages";
 export const CreateNewCategory = asyncHandler(
   async (req: Request, res: Response) => {
     const { categoryName, imageUrl } = req.body;
-    if (!categoryName || !imageUrl) {
-      throw new ApiError(400, ErrorMessages.INVALID_CATEGORY_DATA);
-    }
     const mediaId =  extractMediaId(imageUrl);
     const category = await createCategory({
       categoryName,
