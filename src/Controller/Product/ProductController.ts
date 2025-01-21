@@ -24,6 +24,7 @@ import {
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
 import { scheduleProductUpdate } from "../../Utils/scheduledBull";
+import { getProductWishlist } from "../../Service/Wishlist/WishlistService";
 export const CreateProduct = asyncHandler(
   async (req: Request, res: Response) => {
     const {
@@ -167,9 +168,15 @@ export const deleteProduct = asyncHandler(
 export const getProductById = asyncHandler(
   async (req: Request, res: Response) => {
     const { productId } = req.params;
+    const { user } = req.query;
     const product = await findProductById(productId);
     if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
-    return res.json(new ApiResponse(200, { product }, ""));
+    let liked = false;
+    if(user){
+      const wishlistEntry = await getProductWishlist(productId,user as string);
+      liked = wishlistEntry ? true : false;
+    }
+    return res.json(new ApiResponse(200, { product ,liked}, ""));
   }
 );
 export const getAllProducts = asyncHandler(

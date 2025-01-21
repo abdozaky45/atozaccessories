@@ -9,4 +9,5 @@ OrderRouter.post("/create", Validation(orderValidation.createOrderValidation), O
 OrderRouter.patch("/update-status", Validation(orderValidation.updateOrderStatusValidation), OrderController.updateOrderStatus);
 OrderRouter.get("/get-user-orders", Validation(baseSchema), OrderController.getUserOrders);
 OrderRouter.get("/get-all-orders", Validation(orderValidation.getAllOrdersValidation), OrderController.getAllOrders);
+OrderRouter.get("/get-order/:orderId", Validation(orderValidation.getOrderByIdValidation), OrderController.getOrderById);
 export default OrderRouter;
