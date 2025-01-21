@@ -21,7 +21,7 @@ import shippingRouter from "./Router/Shipping/ShippingRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
 const app: Application = express();
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: '*',
   methods: '*',
   allowedHeaders: '*',
 };
