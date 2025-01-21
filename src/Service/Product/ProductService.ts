@@ -235,6 +235,12 @@ export const updateStock = async (
         product.soldItems = (product.soldItems ?? 0) + Math.abs(quantityChange);
         product.availableItems = (product.availableItems ?? 0) - Math.abs(quantityChange);
       }
+      if (product.availableItems <= 0) {
+        product.isSoldOut = true;
+      } else if (product.availableItems > 0 && increaseStock) {
+        product.isSoldOut = false;
+      }
+
       bulkOperations.push({
         updateOne: {
           filter: { _id: product._id },
@@ -242,6 +248,7 @@ export const updateStock = async (
             $set: {
               soldItems: product.soldItems,
               availableItems: product.availableItems,
+              isSoldOut: product.isSoldOut,
             },
           },
         },
@@ -250,9 +257,10 @@ export const updateStock = async (
       console.log("Skipping Product due to missing data.");
     }
   }
+
   if (bulkOperations.length > 0) {
     try {
-      const x = await ProductModel.bulkWrite(bulkOperations);
+      await ProductModel.bulkWrite(bulkOperations);
     } catch (error) {
       console.error('Error performing bulk update:', error);
     }
@@ -260,4 +268,3 @@ export const updateStock = async (
     console.log("No operations to perform.");
   }
 };
-
