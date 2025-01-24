@@ -19,16 +19,14 @@ jobs:
         node-version: 20
 
     - name: Install dependencies
-      run: yarn install
-
+      run: npm install
 
     - name: Build project
-      run: yarn build
-
+      run: npm run build
 
     - name: Create ZIP file
       run: zip -r deployment-package.zip package.json .platform dist
-    
+
     - name: List files
       run: ls -la
 
@@ -40,7 +38,6 @@ jobs:
         echo "EB_APP_NAME=${{ secrets.EB_APP_NAME }}" >> .env
         echo "EB_ENV_NAME=${{ secrets.EB_ENV_NAME }}" >> .env
        
-
     - name: Install AWS CLI
       run: |
         sudo apt-get update
@@ -56,5 +53,5 @@ jobs:
         application_name: ${{ secrets.EB_APP_NAME }}
         environment_name: ${{ secrets.EB_ENV_NAME }}
         region: ${{ secrets.AWS_REGION }}
-        version_label: "machine-genius -${{ github.run_number }}"
+        version_label: "machine-genius-${{ github.run_number }}"
         deployment_package: deployment-package.zip
