@@ -6,4 +6,5 @@ import * as ProductValidation from "../../Validation/Product/ProductValidation";
 ProductRouter.post("/create", Validation(ProductValidation.createProductValidation), ProductController.CreateProduct);
 ProductRouter.patch("/update/:productId", Validation(ProductValidation.updateProductValidation), ProductController.updateProduct);
 ProductRouter.delete("/delete/:productId", Validation(ProductValidation.deleteProductValidation), ProductController.deleteProduct);
+ProductRouter.get("/sold-out",Validation(ProductValidation.getProductBySoldOutValidation), ProductController.getProductBySoldOut);
 export default ProductRouter;
