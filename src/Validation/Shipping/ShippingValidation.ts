@@ -1,6 +1,6 @@
 import joi from "joi";
-import { baseSchema } from "../BaseSchema";
 import { ShippingCategoryArray } from "../../Utils/Governorate/shippingCategoryEnum";
+import { baseSchema } from "../baseSchema";
 export const createShipping = baseSchema.concat(
     joi
         .object({
@@ -23,5 +23,3 @@ export const validateShippingById = baseSchema.concat(
         id: joi.string().required(),
     })
 );
-
-

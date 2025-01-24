@@ -1,9 +1,9 @@
 import { IOrder, ProductOrder } from "../../Model/Order/Iorder";
 import OrderModel from "../../Model/Order/OrderModel";
 import { Types } from "mongoose";
-import IProduct from "../../Model/Product/IProduct";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import { paginate } from "../../Utils/Schemas";
+import IProduct from "../../Model/Product/Iproduct";
 class OrderService {
   async createOrder(orderData: Omit<IOrder, "status">) {
     const newOrder = await OrderModel.create({

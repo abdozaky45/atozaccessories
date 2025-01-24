@@ -3,7 +3,6 @@ import { ApiError, ApiResponse, asyncHandler } from '../../Utils/ErrorHandling';
 import { sendEmail } from '../../Utils/Nodemailer/SendEmail';
 import { generateInvoice } from '../../Utils/Nodemailer/SendInvoice';
 import { IOrder, ProductOrder } from '../../Model/Order/Iorder';
-import IProduct from '../../Model/Product/IProduct';
 import { ObjectId } from 'mongoose';
 import SchemaTypesReference from '../../Utils/Schemas/SchemaTypesReference';
 import ShippingService from '../../Service/Shipping/ShippingService';
@@ -14,6 +13,7 @@ import SuccessMessage from '../../Utils/SuccessMessages';
 import { orderStatusType } from '../../Utils/OrderStatusType';
 import { retrieveProducts, updateStock } from '../../Service/Product/ProductService';
 import { UserTypeEnum } from '../../Utils/UserType';
+import IProduct from '../../Model/Product/Iproduct';
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -28,6 +28,7 @@ class OrderController {
     }
     const productIds = products.map((product: ProductOrder) => product.productId);
     const foundProducts = await retrieveProducts(productIds);
+    
     const productRecord: Record<string, IProduct> = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
       acc[product._id.toString()] = product as IProduct;
       return acc;

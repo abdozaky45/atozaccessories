@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import { ApiError, ApiResponse, asyncHandler } from '../../Utils/ErrorHandling'
-import IShipping from '../../Model/Shipping/IShipping';
 import ShippingService from '../../Service/Shipping/ShippingService';
 import SuccessMessage from '../../Utils/SuccessMessages';
 import ErrorMessages from '../../Utils/Error';
+import IShipping from '../../Model/Shipping/Ishipping';
 export const createShipping = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
         const shippingData: IShipping = {

@@ -1,5 +1,5 @@
-import { baseSchema } from "../BaseSchema";
 import joi from "joi";
+import { baseSchema } from "../baseSchema";
 export const createCategoryValidation = baseSchema.concat(
     joi.object({
         categoryName: joi.string().required(),

@@ -6,7 +6,6 @@ import {
   extractMediaId,
   findCategoryById,
 } from "../../Service/CategoryService/CategoryService";
-import IProduct from "../../Model/Product/IProduct";
 import slugify from "slugify";
 import moment from "../../Utils/DateAndTime";
 import {
@@ -25,6 +24,7 @@ import {
 import SuccessMessage from "../../Utils/SuccessMessages";
 import { scheduleProductUpdate } from "../../Utils/scheduledBull";
 import { getProductWishlist } from "../../Service/Wishlist/WishlistService";
+import IProduct from "../../Model/Product/Iproduct";
 export const CreateProduct = asyncHandler(
   async (req: Request, res: Response) => {
     const {

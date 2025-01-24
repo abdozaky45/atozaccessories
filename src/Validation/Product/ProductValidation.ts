@@ -1,4 +1,4 @@
-import { baseSchema } from "../BaseSchema";
+import { baseSchema } from "../baseSchema";
 import joi from "joi";
 export const createProductValidation = baseSchema.concat(
     joi.object({

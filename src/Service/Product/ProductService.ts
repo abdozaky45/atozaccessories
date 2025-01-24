@@ -1,6 +1,5 @@
 import slugify from "slugify";
 import _ from "lodash";
-import IProduct from "../../Model/Product/IProduct";
 import ProductModel from "../../Model/Product/ProductModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
@@ -9,6 +8,7 @@ import Fuse from "fuse.js";
 import { sortProductEnum } from "../../Utils/SortProduct";
 import { Types } from "mongoose";
 import { ProductOrder } from "../../Model/Order/Iorder";
+import IProduct from "../../Model/Product/Iproduct";
 
 export const createProduct = async (productData: IProduct) => {
   const product = await ProductModel.create(productData);
@@ -212,7 +212,7 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   );
   return products;
 };
-export const retrieveProducts = async (productIds: any) => {
+export const retrieveProducts = async (productIds: any): Promise<(IProduct &{_id:Types.ObjectId})[]> => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
   return foundProducts;
 }

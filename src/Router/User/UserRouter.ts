@@ -2,7 +2,7 @@ import { Router } from "express";
 import * as UserController from "../../Controller/User/UserController";
 import { Validation } from "../../middleware/ValidationMiddleware";
 import * as userValidation from "../../Validation/User/UserInformation";
-import { baseSchema } from "../../Validation/BaseSchema";
+import { baseSchema } from "../../Validation/baseSchema";
 const userRouter = Router();
 userRouter.post(
   "/add-user-information",
