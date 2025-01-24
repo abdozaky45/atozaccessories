@@ -8,7 +8,6 @@ import {
   RequiredNumber,
   RequiredString,
 } from "../../Utils/Schemas";
-import { NextFunction } from "express";
 import IProduct from "./Iproduct";
 const ProductSchema = new Schema<IProduct>(
   {

@@ -212,7 +212,7 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   );
   return products;
 };
-export const retrieveProducts = async (productIds: any): Promise<(IProduct &{_id:Types.ObjectId})[]> => {
+export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
   return foundProducts;
 }
