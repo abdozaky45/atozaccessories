@@ -3,7 +3,6 @@ import { ApiError, ApiResponse, asyncHandler } from '../../Utils/ErrorHandling';
 import { sendEmail } from '../../Utils/Nodemailer/SendEmail';
 import { generateInvoice } from '../../Utils/Nodemailer/SendInvoice';
 import { IOrder, ProductOrder } from '../../Model/Order/Iorder';
-import { ObjectId } from 'mongoose';
 import SchemaTypesReference from '../../Utils/Schemas/SchemaTypesReference';
 import ShippingService from '../../Service/Shipping/ShippingService';
 import { findUserInformationById } from '../../Service/User/AuthService';
@@ -14,6 +13,7 @@ import { orderStatusType } from '../../Utils/OrderStatusType';
 import { retrieveProducts, updateStock } from '../../Service/Product/ProductService';
 import { UserTypeEnum } from '../../Utils/UserType';
 import IProduct from '../../Model/Product/Iproduct';
+import {Types} from 'mongoose';
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -41,7 +41,7 @@ class OrderController {
       if (!foundProduct) {
         throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
       }
-      const productWithId = foundProduct as IProduct & { _id: ObjectId };
+      const productWithId = foundProduct as IProduct & { _id:Types.ObjectId };
       if (productWithId.availableItems < product.quantity) {
         throw new ApiError(400, `Not enough stock for product: ${productWithId.productName}. Available: ${productWithId.availableItems}, Requested: ${product.quantity}`);
       }
