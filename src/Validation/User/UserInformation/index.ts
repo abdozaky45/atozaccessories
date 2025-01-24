@@ -19,7 +19,7 @@ export const createUser = baseSchema.concat(
         .required(),
       secondaryPhone: joi
         .string()
-        .pattern(/^\+20\d{10}$/)
+        .pattern(/^\+20\d{10}$/).allow("")
         .optional(),
     })
     .required()
