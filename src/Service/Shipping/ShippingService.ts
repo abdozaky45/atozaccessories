@@ -1,4 +1,4 @@
-import IShipping from "../../Model/Shipping/IShipping";
+import IShipping from "../../Model/Shipping/Ishipping";
 import ShippingModel from "../../Model/Shipping/ShippingModel";
 import { Types } from "mongoose";
 class ShippingService {
@@ -11,7 +11,7 @@ class ShippingService {
         const Shipping = await ShippingModel.find();
         return Shipping;
     }
-    async getShippingById(ShippingId: Types.ObjectId | string) {
+    async getShippingById(ShippingId: Types.ObjectId | string):Promise<(IShipping &{_id:Types.ObjectId}) | null> {
         const Shipping = await ShippingModel.findById(ShippingId);
         return Shipping;
     }

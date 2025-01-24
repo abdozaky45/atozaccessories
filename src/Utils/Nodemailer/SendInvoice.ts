@@ -1,27 +1,27 @@
 export const generateInvoice = (
-    {
-        customerName,
-        restaurantName,
-        items,
-        Shipping,
-        total,
-        subTotal,
-        discount,
-        orderNumber,
-        orderDate,
-        paymentMethod
-    }: {
-        customerName: string;
-        restaurantName: string;
-        items: {productId?:string, productName: string; quantity: number; itemPrice: number , totalPrice?:number }[];
-        Shipping: number;
-        total: number;
-        subTotal: number;
-        discount: number;
-        orderNumber: string;
-        orderDate: string;
-        paymentMethod: string;
-    }) => `<!DOCTYPE html>
+  {
+    customerName,
+    restaurantName,
+    items,
+    Shipping,
+    total,
+    subTotal,
+    discount,
+    orderNumber,
+    orderDate,
+    paymentMethod
+  }: {
+    customerName: string;
+    restaurantName: string;
+    items: { productId?: string, productName: string; quantity: number; itemPrice: number, totalPrice?: number }[];
+    Shipping: number;
+    total: number;
+    subTotal: number;
+    discount: number;
+    orderNumber: string;
+    orderDate: string;
+    paymentMethod: string;
+  }) => `<!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
@@ -64,22 +64,22 @@ export const generateInvoice = (
               <!-- Items -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 ${items
-        .map(
-            (item) => `
+    .map(
+      (item) => `
                   <tr>
                     <td style="padding: 8px 0;">
                       <span style="color: #666666; font-size: 14px; margin-right: 8px;">(${item.quantity
-                })</span>
+        })</span>
                       <span style="color: #1A1A1A; font-size: 14px;">${item.productName
-                }</span>
+        }</span>
                     </td>
                     <td align="right" style="color: #1A1A1A; font-size: 14px; padding: 8px 0;">
                       ${item.itemPrice.toFixed(2)}
                     </td>
                   </tr>
                 `
-        )
-        .join("")}
+    )
+    .join("")}
               </table>
 
               <!-- Fees -->
@@ -87,8 +87,8 @@ export const generateInvoice = (
                 <tr>
                   <td style="color: #666666; font-size: 14px; padding: 4px 0;">Shipping</td>
                   <td align="right" style="color: #1A1A1A; font-size: 14px;">${Shipping.toFixed(
-            2
-        )}</td>
+      2
+    )}</td>
                 </tr>
               </table>
 

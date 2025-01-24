@@ -1,6 +1,6 @@
 import joi from 'joi';
-import { baseSchema } from '../BaseSchema';
 import { orderStatusArray } from '../../Utils/OrderStatusType';
+import { baseSchema } from '../baseSchema';
 export const createOrderValidation = baseSchema.concat(
     joi.object({
         products: joi.array().items(

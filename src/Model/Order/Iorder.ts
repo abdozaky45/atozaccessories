@@ -1,7 +1,8 @@
 import { Types } from "mongoose";
 import Iuser from "../User/UserInformation/Iuser";
-import IShipping from "../Shipping/IShipping";
-import IProduct from "../Product/IProduct";
+import IProduct from "../Product/Iproduct";
+import IShipping from "../Shipping/Ishipping";
+
 interface ProductOrder {
     productId: Types.ObjectId | string | IProduct;
     productName?: string;
