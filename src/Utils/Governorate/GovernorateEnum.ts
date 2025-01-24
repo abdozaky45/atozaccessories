@@ -44,7 +44,7 @@ enum governorate {
   October = "October",
   SheikhZayed = "Sheikh Zayed",
   NewCairo = "New Cairo (El Tagamoat)",
-  Other = "Other",
+  Other = "Others",
 }
 
 const governorateArray = Object.values(governorate);
