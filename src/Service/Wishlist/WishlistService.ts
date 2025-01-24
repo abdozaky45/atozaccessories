@@ -1,6 +1,5 @@
 import WishListModel from "../../Model/Wishlist/WishlistModel";
-import { paginate } from "../../Utils/Schemas";
-import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
+import { Types } from "mongoose";
 
 export const AddProductToFavorites = async (
   user: string,
@@ -56,3 +55,10 @@ export const getWishlistById = async (userId: string, wishlistId: string) => {
   });
   return product;
 };
+export const getProductWishlist = async (productId: Types.ObjectId | string, user: Types.ObjectId | string) => {
+  const wishlistEntry = await WishListModel.findOne({
+    user,
+    productId
+  });
+  return wishlistEntry;
+}

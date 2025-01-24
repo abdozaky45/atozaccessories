@@ -41,9 +41,6 @@ export const getPresignedURL = asyncHandler(
 export const deleteImage = asyncHandler(async (req: Request, res: Response) => {
   const { fileName } = req.query;
   const bucketName = process.env.AWS_BUCKET_NAME!;
-  if (!fileName) {
-    throw new ApiError(400, ErrorMessages.INVALID_FILE_NAME);
-  }
   const aws_s3_service = new s3_service();
   const deletePresignedURL = await aws_s3_service.deletePresignedUrl({
     bucket: bucketName,

@@ -24,9 +24,6 @@ import SuccessMessage from "../../Utils/SuccessMessages";
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body;
-    if (!email) {
-      throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
-    }
     const activeCode = generateSixDigitCode();
     const hashCode = await hashActiveCode(activeCode);
     let user = await findUserByEmail(email);
@@ -52,9 +49,6 @@ export const registerWithEmail = asyncHandler(
 export const activeAccount = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, activeCode } = req.body;
-    if (!email || !activeCode) {
-      throw new ApiError(400, ErrorMessages.EMAIL_REQUIRED_AND_ACTIVE_CODE);
-    }
     const user = await findUserByEmail(email);
     if (!user) {
       throw new ApiError(400, ErrorMessages.EMAIL_NOT_FOUND);
@@ -105,9 +99,6 @@ export const activeAccount = asyncHandler(
 export const sendNewActiveCodeWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body;
-    if (!email) {
-      throw new ApiError(400, ErrorMessages.DATA_IS_REQUIRED);
-    }
     const user = await findUserByEmail(email);
     if (!user) {
       throw new ApiError(400, ErrorMessages.EMAIL_NOT_FOUND);
@@ -128,9 +119,6 @@ export const sendNewActiveCodeWithEmail = asyncHandler(
 export const refreshedToken = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { refreshToken } = req.cookies;
-    if (!refreshToken) {
-      throw new ApiError(400, ErrorMessages.REFRESH_TOKEN_REQUIRED);
-    }
     const checkToken = await findRefreshToken(refreshToken);
     if (!checkToken) {
       throw new ApiError(

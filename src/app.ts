@@ -20,7 +20,12 @@ import wishlistRouter from "./Router/Wishlist/WishlistRouter";
 import shippingRouter from "./Router/Shipping/ShippingRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
 const app: Application = express();
-app.use(cors());
+const corsOptions = {
+  origin: '*',
+  methods: '*',
+  allowedHeaders: '*',
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

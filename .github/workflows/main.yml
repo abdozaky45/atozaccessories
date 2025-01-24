@@ -1,0 +1,60 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main    
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: yarn install
+
+
+    - name: Build project
+      run: yarn build
+
+
+    - name: Create ZIP file
+      run: zip -r deployment-package.zip package.json .platform dist
+    
+    - name: List files
+      run: ls -la
+
+    - name: Set up environment variables
+      run: |
+        echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+        echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+        echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+        echo "EB_APP_NAME=${{ secrets.EB_APP_NAME }}" >> .env
+        echo "EB_ENV_NAME=${{ secrets.EB_ENV_NAME }}" >> .env
+       
+
+    - name: Install AWS CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip
+        pip3 install --upgrade awscli
+        pip3 install awsebcli
+
+    - name: Deploy to Elastic Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v16
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: ${{ secrets.EB_APP_NAME }}
+        environment_name: ${{ secrets.EB_ENV_NAME }}
+        region: ${{ secrets.AWS_REGION }}
+        version_label: "machine-genius -${{ github.run_number }}"
+        deployment_package: deployment-package.zip
