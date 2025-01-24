@@ -158,6 +158,15 @@ export const findProductByPriceRange = async (priceRange: string, page: number) 
   );
   return products;
 }
+export const findProductBySoldOut = async (page: number) => {
+  const products = await paginate(
+    ProductModel.find({isSoldOut:true}),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+}
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
   let sortCriteria = {};
   let priceCriteria = {};
