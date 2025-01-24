@@ -15,6 +15,7 @@ import {
   findAllSaleProducts,
   findProductById,
   findProductByPriceRange,
+  findProductBySoldOut,
   findProductBySort,
   findProducts,
   prepareProductUpdates,
@@ -221,4 +222,10 @@ export const sortProductByRangeAndPrice = asyncHandler(async (req: Request, res:
   const pageNumber = Number(page);
   const products = await findProducts(sort as string, priceRange as string, pageNumber);
   return res.json(new ApiResponse(200, { products }, "Success"));
+});
+export const getProductBySoldOut = asyncHandler(async (req: Request, res: Response) => {
+  const { page } = req.query;
+ const pageNumber = Number(page);
+ const products = await findProductBySoldOut(pageNumber);
+ return res.json(new ApiResponse(200, { products }, "Success"));
 });

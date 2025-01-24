@@ -32,3 +32,8 @@ export const deleteProductValidation = baseSchema.concat(
         productId: joi.string().required(),
     }).required()
 );
+export const getProductBySoldOutValidation = baseSchema.concat(
+    joi.object({
+        page: joi.string().required(),
+    }).required()
+);
