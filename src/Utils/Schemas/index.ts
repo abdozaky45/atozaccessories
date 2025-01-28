@@ -1,6 +1,7 @@
 import { Schema, Types } from "mongoose";
 import moment from "../DateAndTime";
 import { Query } from "mongoose";
+import { DeviceTypeArr } from "../DeviceType";
 const RequiredString = {
   type: String,
   required: true,
@@ -147,7 +148,11 @@ export async function paginate<T>(
   const data = await query.skip(skip).limit(limit).populate(path, fields).exec();
   return { totalItems, totalPages, currentPage: page, data };
 }
-
+const ImageSlider = {
+  mediaUrl: { type: String, required: true },
+  mediaId: { type: String, required: true },
+  mediaType: EnumStringRequired(DeviceTypeArr),
+};
 export {
   RequiredString,
   NotRequiredString,
@@ -164,6 +169,7 @@ export {
   expiresAtTokenModel,
   RequiredDefaultStringCity,
   ImageSchema,
+  ImageSlider,
   RequiredSpecificNumber,
   RefType,
   StringValidation,
