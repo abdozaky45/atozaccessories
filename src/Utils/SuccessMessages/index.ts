@@ -14,6 +14,7 @@ enum SuccessMessage {
   PRODUCT_NOT_UPDATED = "No changes to update",
   PRODUCT_DELETED = "Product deleted successfully",
   IMAGE_SLIDER_CREATED = "Image slider created successfully",
+  IMAGE_UPDATED = "Image updated successfully",
   IMAGE_DELETED = "Image deleted successfully",
   IMAGE_SLIDER_FETCHED = "Image slider fetched successfully",
   WISHLIST_FOUND_UPDATED = "wishlist updated successfully",

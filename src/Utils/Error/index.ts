@@ -30,6 +30,7 @@ enum ErrorMessages {
   ALL_FIELDS_REQUIRED = "Please provide all required fields",
   PRODUCT_NOT_FOUND= "Product not found",
   IMAGE_NOT_FOUND = "Image not found",
+  INVALID_UPDATE_HERO_SECTION = "Invalid update hero section",
   WISHLIST_NOT_FOUND = "wishlist not found",
   VALIDATION_ERROR = "Validation error",
   USER_NOT_FOUND= "user not found",

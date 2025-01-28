@@ -1,17 +1,24 @@
+import IimageSlider from "../../Model/ImageSlider/IimageSlider";
 import ImageSliderModel from "../../Model/ImageSlider/ImageSliderModel";
-export const createImageSlider =  async (mediaUrl:string,mediaId:string,createdBy:string) => {
-    const imageSlider = await ImageSliderModel.create({
-        image:{mediaUrl,mediaId},
-        createdBy
-    })
+import { Types } from "mongoose";
+export const createImageSlider = async (imageSliderData: IimageSlider) => {
+    const imageSlider = await ImageSliderModel.create(imageSliderData);
     return imageSlider;
 }
-export const findMediaId = async (_id:string) => {
+export const updateHeroSection = async (imageSliderData: Partial<IimageSlider>, id: Types.ObjectId | string) => {
+    const updatedHeroSection = await ImageSliderModel.findByIdAndUpdate(
+        id,
+        imageSliderData,
+        { new: true, runValidators: true }
+    );
+    return updatedHeroSection;
+}
+export const findMediaId = async (_id: string) => {
     const imageSlider = await ImageSliderModel.findById(_id);
     return imageSlider;
 }
 export const deleteImageSlider = async (_id: string) => {
-    const imageSlider = await ImageSliderModel.deleteOne({_id});
+    const imageSlider = await ImageSliderModel.deleteOne({ _id });
     return imageSlider;
 }
 export const getAllImageSlider = async () => {
