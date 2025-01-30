@@ -43,6 +43,10 @@ class OrderService {
     const orders = await OrderModel.find({ user: userId }).populate([
       { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
       { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
+      {
+        path: 'products.productId',
+        select: 'productName price description category image', 
+      }
     ]).sort({ createdAt: -1 });
     return orders;
   }
@@ -61,6 +65,10 @@ class OrderService {
         .populate([
             { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
             { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
+            {
+              path: 'products.productId',
+              select: 'productName price description category image', 
+            }
         ])
         .skip(skip)
         .limit(limit)
