@@ -2,7 +2,6 @@ import { IOrder, ProductOrder } from "../../Model/Order/Iorder";
 import OrderModel from "../../Model/Order/OrderModel";
 import { Types } from "mongoose";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
-import { paginate } from "../../Utils/Schemas";
 import IProduct from "../../Model/Product/Iproduct";
 class OrderService {
   async createOrder(orderData: Omit<IOrder, "status">) {
@@ -45,7 +44,7 @@ class OrderService {
       { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
       {
         path: 'products.productId',
-        select: 'productName price description category image', 
+        select: 'productName price description category defaultImage albumImages', 
       }
     ]).sort({ createdAt: -1 });
     return orders;
@@ -67,7 +66,7 @@ class OrderService {
             { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
             {
               path: 'products.productId',
-              select: 'productName price description category image', 
+              select: 'productName price description category defaultImage albumImages', 
             }
         ])
         .skip(skip)
