@@ -18,6 +18,7 @@ import {Types} from 'mongoose';
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { products, shippingId, userId } = req.body;
+    const {_id} = req.body.currentUser.userInfo;
     const shipping = await ShippingService.getShippingById(shippingId);
     if (!shipping) {
       throw new ApiError(404, ErrorMessages.SHIPPING_NOT_FOUND);
@@ -66,7 +67,7 @@ class OrderController {
     }
     const finalPrice = totalPrice - discount + shippingCost;
     const orderCreate: Omit<IOrder, 'status'> = {
-      user: userId,
+      user: _id,
       userInformation: userInformation._id,
       shipping: shipping._id,
       products: orderProducts,
