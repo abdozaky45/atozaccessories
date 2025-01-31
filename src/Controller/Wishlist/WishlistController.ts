@@ -13,6 +13,8 @@ export const createWishlist = asyncHandler(
       throw new ApiError(404, ErrorMessages.DATA_IS_REQUIRED);
     const Product = await findProductById(productId);
     if (!Product) throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
+    const ExistingWishlist = await wishlistService.getProductWishlist(productId, userId);
+    if (ExistingWishlist) throw new ApiError(404, ErrorMessages.WISHLIST_ALREADY_EXISTS);
       const wishlist = await wishlistService.AddProductToFavorites(
         userId,
         productId,
