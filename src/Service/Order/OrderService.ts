@@ -44,7 +44,7 @@ class OrderService {
       { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
       {
         path: 'products.productId',
-        select: 'productName price description category defaultImage albumImages', 
+        select: '-_id defaultImage', 
       }
     ]).sort({ createdAt: -1 });
     return orders;
@@ -66,7 +66,7 @@ class OrderService {
             { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
             {
               path: 'products.productId',
-              select: 'productName price description category defaultImage albumImages', 
+              select: '-_id defaultImage', 
             }
         ])
         .skip(skip)
