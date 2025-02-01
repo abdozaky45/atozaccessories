@@ -37,3 +37,7 @@ export const getProductBySoldOutValidation = baseSchema.concat(
         page: joi.string().required(),
     }).required()
 );
+export const getAllProductsByCategoryIdValidation = joi.object({
+    page: joi.string().required(),
+    categoryId: joi.string().required(),
+}).required()

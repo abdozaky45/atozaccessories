@@ -277,3 +277,12 @@ export const updateStock = async (
     console.log("No operations to perform.");
   }
 };
+export const findAllProductsByCategory = async (categoryId: string, page: number) => {
+  const products = await paginate(
+    ProductModel.find({ category: categoryId }).sort({ createdAt: -1 }),
+    page,
+    "-_id categoryName image slug",
+    SchemaTypesReference.Category
+  );
+  return products;
+}
