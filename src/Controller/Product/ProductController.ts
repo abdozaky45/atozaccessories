@@ -12,6 +12,7 @@ import {
   createProduct,
   deleteOneProduct,
   findAllProducts,
+  findAllProductsByCategory,
   findAllSaleProducts,
   findProductById,
   findProductByPriceRange,
@@ -229,3 +230,13 @@ export const getProductBySoldOut = asyncHandler(async (req: Request, res: Respon
  const products = await findProductBySoldOut(pageNumber);
  return res.json(new ApiResponse(200, { products }, "Success"));
 });
+export const getAllProductsByCategoryId = asyncHandler(async (req: Request, res: Response) => {
+const { categoryId } = req.params;
+const { page } = req.query;
+const pageNumber = Number(page);
+const checkCategory = await findCategoryById(categoryId);
+if (!checkCategory) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
+const products = await findAllProductsByCategory(categoryId, pageNumber);
+return res.json(new ApiResponse(200, { products }, ""));
+});
+
