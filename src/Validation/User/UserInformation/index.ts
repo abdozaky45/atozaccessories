@@ -7,20 +7,14 @@ export const createUser = baseSchema.concat(
       firstName: joi.string().min(3).max(50).required(),
       lastName: joi.string().min(3).max(50).required(),
       address: joi.string().min(3).max(200).required(),
-      apartmentSuite: joi.string().min(3).max(60).optional(),
+      apartmentSuite: joi.string().min(3).max(60).allow("").optional(),
       governorate: joi
         .string()
         .valid(...governorateArray)
         .required(),
-      postalCode: joi.string().min(3).max(6).optional(),
-      primaryPhone: joi
-        .string()
-        .pattern(/^\+20\d{10}$/)
-        .required(),
-      secondaryPhone: joi
-        .string()
-        .pattern(/^\+20\d{10}$/).allow("")
-        .optional(),
+      postalCode: joi.string().min(3).max(6).allow("").optional(),
+      primaryPhone: joi.string().pattern(/^\d{10,15}$/).required(),
+      secondaryPhone: joi.string().pattern(/^\d{10,15}$/).allow("").optional(),
     })
     .required()
 );
