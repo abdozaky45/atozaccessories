@@ -25,19 +25,19 @@ export const updateUser = baseSchema.concat(
       firstName: joi.string().min(3).max(50).optional(),
       lastName: joi.string().min(3).max(50).optional(),
       address: joi.string().min(3).max(200).optional(),
-      apartmentSuite: joi.string().min(3).max(60).optional(),
+      apartmentSuite: joi.string().min(3).max(60).optional().allow(""),
       governorate: joi
         .string()
         .valid(...governorateArray)
         .optional(),
-      postalCode: joi.string().min(3).max(6).optional(),
+      postalCode: joi.string().min(3).max(6).optional().allow(""),
       primaryPhone: joi
         .string()
         .pattern(/^(\+?2)?01\d{9}$/)
         .optional(),
       secondaryPhone: joi
         .string()
-        .pattern(/^(\+?2)?01\d{9}$/)
+        .pattern(/^(\+?2)?01\d{9}$/).allow("")
         .optional(),
     })
     .required()
