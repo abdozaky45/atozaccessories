@@ -13,8 +13,8 @@ export const createUser = baseSchema.concat(
         .valid(...governorateArray)
         .required(),
       postalCode: joi.string().min(3).max(6).allow("").optional(),
-      primaryPhone: joi.string().pattern(/^\d{10,15}$/).required(),
-      secondaryPhone: joi.string().pattern(/^\d{10,15}$/).allow("").optional(),
+      primaryPhone: joi.string().pattern(/^(\+?2)?01\d{9}$/).required(),
+      secondaryPhone: joi.string().pattern(/^(\+?2)?01\d{9}$/).allow("").optional(),
     })
     .required()
 );
@@ -33,11 +33,11 @@ export const updateUser = baseSchema.concat(
       postalCode: joi.string().min(3).max(6).optional(),
       primaryPhone: joi
         .string()
-        .pattern(/^\+20\d{10}$/)
+        .pattern(/^(\+?2)?01\d{9}$/)
         .optional(),
       secondaryPhone: joi
         .string()
-        .pattern(/^\+20\d{10}$/)
+        .pattern(/^(\+?2)?01\d{9}$/)
         .optional(),
     })
     .required()
