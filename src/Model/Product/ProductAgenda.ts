@@ -1,6 +1,5 @@
 import Agenda from "agenda";
 import ProductModel from "./ProductModel";
-import { tryCatch } from "bullmq";
 const setupAgenda = async (DB_URL: string) => {
   const agenda = new Agenda({ db: { address: DB_URL, collection: "jobs" } });
   agenda.define("update-expired-products", async () => {
@@ -16,6 +15,7 @@ const setupAgenda = async (DB_URL: string) => {
         product.salePrice = 0;
         product.discount = 0;
         product.discountPercentage = 0;
+        product.isSale = false;
         await product.save();
         console.log(`Product ${product._id} updated successfully`);
       }
