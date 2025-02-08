@@ -6,7 +6,7 @@ export const createProductValidation = baseSchema.concat(
         productDescription: joi.string().required(),
         price: joi.number().required(),
         availableItems: joi.number().required(),
-        categoryId: joi.string().optional(),
+        categoryId: joi.string().required(),
         defaultImage: joi.string().required(),
         salePrice: joi.number().optional(),
         expiredSale: joi.number().optional(),
