@@ -71,7 +71,6 @@ export const CreateProduct = asyncHandler(
     };
     const product = await createProduct(productData);
     if(expiredSale){
-      console.log("======here============");
       scheduleProductUpdate(product._id.toString(), expiredSale);
     }
     return res
@@ -88,14 +87,14 @@ export const updateProduct = asyncHandler(
       availableItems,
       salePrice,
       expiredSale,
-      category,
+      categoryId,
       defaultImage,
       albumImages,
     } = req.body;
     const { productId } = req.params;
     const product = await findProductById(productId);
     if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
-    const Category = await findCategoryById(category);
+    const Category = await findCategoryById(categoryId);
     if (!Category) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
     if (
       req.body.currentUser.userInfo._id.toString() !==
@@ -110,7 +109,7 @@ export const updateProduct = asyncHandler(
       availableItems,
       salePrice,
       expiredSale,
-      category,
+     category:categoryId,
     };
 
     let finalPrices;
