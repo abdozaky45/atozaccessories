@@ -9,6 +9,9 @@ import { sortProductEnum } from "../../Utils/SortProduct";
 import { Types } from "mongoose";
 import { ProductOrder } from "../../Model/Order/Iorder";
 import IProduct from "../../Model/Product/Iproduct";
+import UserModel from "../../Model/User/UserInformation/UserModel";
+import OrderModel from "../../Model/Order/OrderModel";
+import { orderStatusType } from "../../Utils/OrderStatusType";
 
 export const createProduct = async (productData: IProduct) => {
   const product = await ProductModel.create(productData);
@@ -286,3 +289,20 @@ export const findAllProductsByCategory = async (categoryId: string, page: number
   );
   return products;
 }
+export const getAnalytics = async () => {
+    const totalRevenue = await OrderModel.aggregate([
+      { $match: { status: orderStatusType.delivered } }, 
+      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+    ]);
+
+    const totalOrders = await OrderModel.countDocuments();
+    const totalCustomers = await UserModel.countDocuments();
+    const totalProducts = await ProductModel.countDocuments();
+
+    return {
+      totalRevenue: totalRevenue[0]?.total ?? 0,
+      totalOrders,
+      totalCustomers,
+      totalProducts,
+    };
+};  

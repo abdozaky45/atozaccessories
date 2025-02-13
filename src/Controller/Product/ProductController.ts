@@ -19,6 +19,7 @@ import {
   findProductBySoldOut,
   findProductBySort,
   findProducts,
+  getAnalytics,
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
@@ -238,4 +239,7 @@ if (!checkCategory) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
 const products = await findAllProductsByCategory(categoryId, pageNumber);
 return res.json(new ApiResponse(200, { products }, ""));
 });
-
+export const getAnalysis = asyncHandler(async (req: Request, res: Response) => {
+const analysis = await getAnalytics();
+return res.json(new ApiResponse(200, { analysis }, "Success"));
+});
