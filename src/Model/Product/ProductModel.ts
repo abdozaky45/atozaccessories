@@ -29,6 +29,7 @@ const ProductSchema = new Schema<IProduct>(
     defaultImage: ImageSchema,
     albumImages: { type: [ImageSchema], required: false },
     createdAt: RequiredNumber,
+    isDeleted: NotRequiredBoolean,
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
