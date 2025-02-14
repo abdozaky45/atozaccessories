@@ -9,5 +9,6 @@ interface categoryImage {
     slug: string;
     createdBy:Types.ObjectId | string;
     createdAt: number;
+    isDeleted?: boolean;
   }
   

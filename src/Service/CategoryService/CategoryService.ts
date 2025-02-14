@@ -68,10 +68,10 @@ export const prepareCategoryUpdates = async (
   return updated ? category : null;
 };
 export const deleteCategory = async (_id: string) => {
-  const category = await CategoryModel.deleteOne({ _id });
+  const category = await CategoryModel.findByIdAndUpdate(_id , {isDeleted:true});
   return category;
 };
 export const getAllCategories = async () => {
-  const categories = await CategoryModel.find({});
+  const categories = await CategoryModel.find({isDeleted:false}).select("-isDeleted -__v");
   return categories;
 };
