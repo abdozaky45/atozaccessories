@@ -23,7 +23,8 @@ import ErrorMessages from "../../Utils/Error";
 import SuccessMessage from "../../Utils/SuccessMessages";
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email } = req.body;
+    const email = req.body.email.toLowerCase();
+    console.log(email);
     const activeCode = generateSixDigitCode();
     const hashCode = await hashActiveCode(activeCode);
     let user = await findUserByEmail(email);

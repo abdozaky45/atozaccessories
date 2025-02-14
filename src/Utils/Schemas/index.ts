@@ -20,8 +20,9 @@ const RequiredUniqueEmail = {
   type: String,
   required: true,
   unique: true,
-  toLowerCase: true,
+  lowerCase: true,
   trim: true,
+  set: (email: string) => email.toLowerCase(),
 };
 const RequiredUniquePhone = {
   type: String,
