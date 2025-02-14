@@ -77,13 +77,12 @@ export const deleteOneCategory = asyncHandler(
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
     const result = await deleteCategory(req.params._id);
-    if (result.deletedCount === 0) {
+    if (!result) {
       throw new ApiError(
         404,
         ErrorMessages.CATEGORY_NOT_FOUND_OR_EALREADY_DELETED
       );
     }
-    await deletePresignedURL(Category.image.mediaId);
     return res.json(
       new ApiResponse(200, {}, SuccessMessage.CATEGORY_DELETED_SUCCESS)
     );
