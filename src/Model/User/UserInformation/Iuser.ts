@@ -10,5 +10,6 @@ export default interface Iuser {
   postalCode?: string;
   primaryPhone: string;
   secondaryPhone?: string;
+  isDeleted?: boolean;
   user: Types.ObjectId | string;
 }

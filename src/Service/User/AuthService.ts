@@ -15,19 +15,19 @@ export const updateUserInformation = async (_id: Types.ObjectId | string, userDa
   return updatedUser;
 };
 export const findUserInformationById = async (id: Types.ObjectId | string) => {
-  const user = await UserModel.findById(id);
+  const user = await UserModel.findById(id).select("-isDeleted");
   return user;
 };
 export const getAllUserInformationRelatedToUser = async (user: Types.ObjectId | string) => {
-  const users = await UserModel.find({user});
+  const users = await UserModel.find({user , isDeleted: false}).select("-isDeleted");
   return users;
 };
 export const deleteUserInformation = async (_id: Types.ObjectId | string) => {
-  const deletedUser = await UserModel.findByIdAndDelete(_id);
+  const deletedUser = await UserModel.findByIdAndUpdate(_id,{isDeleted:true},{new:true});
   return deletedUser;
 };
 export const getAllUserInformation = async () => {
-  const users = await UserModel.find();
+  const users = await UserModel.find({isDeleted: false}).select("-isDeleted");
   return users;
 };
 export const deleteUserTokens = async (
