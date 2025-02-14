@@ -35,6 +35,11 @@ export const prepareProductUpdates = async (
       updates = true;
     }
   });
+  if (productData.availableItems !== undefined) {
+    product.isSoldOut = product.availableItems <= 0; 
+    updates = true;
+}
+
   if (
     productData.productName &&
     productData.productName !== product.productName
