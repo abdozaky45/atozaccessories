@@ -2,6 +2,7 @@ import { Types, Schema, model } from "mongoose";
 import Iuser from "./Iuser";
 import {
   EnumStringRequired,
+  NotRequiredBoolean,
   NotRequiredString,
   RefType,
   RequiredDefaultStringCity,
@@ -11,7 +12,7 @@ import { governorateArray } from "../../../Utils/Governorate/GovernorateEnum";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<Iuser>({
   user: RefType(SchemaTypesReference.User, true),
-  country:RequiredDefaultStringCity,
+  country: RequiredDefaultStringCity,
   firstName: RequiredString,
   lastName: RequiredString,
   address: RequiredString,
@@ -20,6 +21,7 @@ const userSchema = new Schema<Iuser>({
   postalCode: NotRequiredString,
   primaryPhone: RequiredString,
   secondaryPhone: NotRequiredString,
-},{timestamps:true});
+  isDeleted: NotRequiredBoolean
+}, { timestamps: true });
 const UserModel = model(SchemaTypesReference.UserInformation, userSchema);
 export default UserModel;
