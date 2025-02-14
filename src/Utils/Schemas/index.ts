@@ -19,6 +19,7 @@ const RequiredDefaultStringCity = {
 const RequiredUniqueEmail = {
   type: String,
   required: true,
+  unique: true,
   toLowerCase: true,
   trim: true,
 };
