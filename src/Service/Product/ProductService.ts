@@ -36,9 +36,9 @@ export const prepareProductUpdates = async (
     }
   });
   if (productData.availableItems !== undefined) {
-    product.isSoldOut = product.availableItems <= 0; 
+    product.isSoldOut = product.availableItems <= 0;
     updates = true;
-}
+  }
 
   if (
     productData.productName &&
@@ -69,13 +69,13 @@ export const prepareProductUpdates = async (
   }
   return updates ? product : null;
 };
-export const deleteOneProduct = async (productId: string | Types.ObjectId) => {
-  const product = await ProductModel.deleteOne({ _id: productId });
+export const deleteOneProduct = async (_id: string | Types.ObjectId) => {
+  const product = await ProductModel.findByIdAndUpdate(_id, { isDeleted: true });
   return product;
 };
 export const findAllProducts = async (page: number) => {
   const products = await paginate(
-    ProductModel.find({}).sort({ createdAt: -1 }),
+    ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 }),
     page,
     "-_id categoryName image slug",
     SchemaTypesReference.Category
@@ -84,7 +84,7 @@ export const findAllProducts = async (page: number) => {
 };
 export const findAllSaleProducts = async (page: number) => {
   const products = await paginate(
-    ProductModel.find({ isSale: true }).sort({ createdAt: -1 }),
+    ProductModel.find({ isSale: true, isDeleted: false }).sort({ createdAt: -1 }),
     page,
     "-_id categoryName image slug",
     SchemaTypesReference.Category
@@ -107,7 +107,7 @@ export const ratioCalculatePrice = async (price: number, salePrice: number) => {
   return { discount, discountPercentage, isSale };
 };
 export const productSearch = async (querySearch: string) => {
-  const products = await ProductModel.find({});
+  const products = await ProductModel.find({ isDeleted: false });
   const fuse = new Fuse(products, {
     keys: ["productName", "productDescription"],
     threshold: 0.3,
@@ -132,7 +132,7 @@ export const findProductBySort = async (sortBy: string, page: number) => {
       break;
   }
   const products = await paginate(
-    ProductModel.find({}).sort(sortCriteria),
+    ProductModel.find({ isDeleted: false }).sort(sortCriteria),
     page,
     "-_id categoryName image slug",
     SchemaTypesReference.Category
@@ -140,7 +140,7 @@ export const findProductBySort = async (sortBy: string, page: number) => {
   return products;
 };
 export const findProductByPriceRange = async (priceRange: string, page: number) => {
-  let priceCriteria = {};
+  let priceCriteria: any = { isDeleted: false };
   switch (priceRange) {
     case sortProductEnum.priceUnder100:
       priceCriteria = { price: { $lte: 100 } };
@@ -168,7 +168,7 @@ export const findProductByPriceRange = async (priceRange: string, page: number) 
 }
 export const findProductBySoldOut = async (page: number) => {
   const products = await paginate(
-    ProductModel.find({isSoldOut:true}),
+    ProductModel.find({ isSoldOut: true, isDeleted: false }).sort({ createdAt: -1 }),
     page,
     "-_id categoryName image slug",
     SchemaTypesReference.Category
@@ -177,7 +177,7 @@ export const findProductBySoldOut = async (page: number) => {
 }
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
   let sortCriteria = {};
-  let priceCriteria = {};
+  let priceCriteria :any= { isDeleted: false };
   if (sort) {
     switch (sort) {
       case sortProductEnum.newest:
@@ -295,19 +295,19 @@ export const findAllProductsByCategory = async (categoryId: string, page: number
   return products;
 }
 export const getAnalytics = async () => {
-    const totalRevenue = await OrderModel.aggregate([
-      { $match: { status: orderStatusType.delivered } }, 
-      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
-    ]);
+  const totalRevenue = await OrderModel.aggregate([
+    { $match: { status: orderStatusType.delivered } },
+    { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+  ]);
 
-    const totalOrders = await OrderModel.countDocuments();
-    const totalCustomers = await UserModel.countDocuments();
-    const totalProducts = await ProductModel.countDocuments();
+  const totalOrders = await OrderModel.countDocuments();
+  const totalCustomers = await UserModel.countDocuments();
+  const totalProducts = await ProductModel.countDocuments();
 
-    return {
-      totalRevenue: totalRevenue[0]?.total ?? 0,
-      totalOrders,
-      totalCustomers,
-      totalProducts,
-    };
+  return {
+    totalRevenue: totalRevenue[0]?.total ?? 0,
+    totalOrders,
+    totalCustomers,
+    totalProducts,
+  };
 };  
