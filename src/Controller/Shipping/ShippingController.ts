@@ -6,7 +6,7 @@ import ErrorMessages from '../../Utils/Error';
 import IShipping from '../../Model/Shipping/Ishipping';
 export const createShipping = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const shippingData: IShipping = {
+        const shippingData: Omit<IShipping,"isDeleted"> = {
             category: req.body.category,
             cost: req.body.cost
         }
@@ -33,7 +33,7 @@ export const getShippingById = asyncHandler(
 );
 export const updateShipping = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const shippingData: IShipping = {
+        const shippingData:  Omit<IShipping,"isDeleted"> = {
             category: req.body.category,
             cost: req.body.cost
         }
