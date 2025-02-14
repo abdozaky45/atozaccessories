@@ -18,7 +18,7 @@ export const createProduct = async (productData: IProduct) => {
   return product;
 };
 export const findProductById = async (id: string | Types.ObjectId) => {
-  const product = await ProductModel.findById(id);
+  const product = ProductModel.findOne({ _id: id, isDeleted: false });
   return product;
 };
 export const prepareProductUpdates = async (
@@ -122,10 +122,10 @@ export const findProductBySort = async (sortBy: string, page: number) => {
       sortCriteria = { createdAt: -1 };
       break;
     case sortProductEnum.priceLowToHigh:
-      sortCriteria = { price: -1 };
+      sortCriteria = { price: 1 };
       break;
     case sortProductEnum.priceHighToLow:
-      sortCriteria = { price: 1 };
+      sortCriteria = { price: -1 };
       break;
     default:
       sortCriteria = { createdAt: -1 };
@@ -143,19 +143,19 @@ export const findProductByPriceRange = async (priceRange: string, page: number) 
   let priceCriteria: any = { isDeleted: false };
   switch (priceRange) {
     case sortProductEnum.priceUnder100:
-      priceCriteria = { price: { $lte: 100 } };
+      priceCriteria = { $and: [{ isDeleted: false }, { price: { $lte: 100 } }] };
       break;
     case sortProductEnum.priceBetween100and500:
-      priceCriteria = { price: { $gte: 100, $lte: 500 } };
+      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 100, $lte: 500 } }] };
       break;
     case sortProductEnum.priceBetween500and1000:
-      priceCriteria = { price: { $gte: 500, $lte: 1000 } };
+      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 500, $lte: 1000 } }] };
       break;
     case sortProductEnum.priceAbove1000:
-      priceCriteria = { price: { $gte: 1000 } };
+      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 1000 } }] };
       break;
     default:
-      priceCriteria = {};
+      priceCriteria = { isDeleted: false };
       break;
   }
   const products = await paginate(
@@ -177,7 +177,7 @@ export const findProductBySoldOut = async (page: number) => {
 }
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
   let sortCriteria = {};
-  let priceCriteria :any= { isDeleted: false };
+  let priceCriteria: any = { isDeleted: false };
   if (sort) {
     switch (sort) {
       case sortProductEnum.newest:
@@ -197,16 +197,16 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   if (priceRange) {
     switch (priceRange) {
       case sortProductEnum.priceUnder100:
-        priceCriteria = { price: { $lte: 100 } };
+        priceCriteria = { $and: [{ isDeleted: false }, { price: { $lte: 100 } }] };
         break;
       case sortProductEnum.priceBetween100and500:
-        priceCriteria = { price: { $gte: 100, $lte: 500 } };
+        priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 100, $lte: 500 } }] };
         break;
       case sortProductEnum.priceBetween500and1000:
-        priceCriteria = { price: { $gte: 500, $lte: 1000 } };
+        priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 500, $lte: 1000 } }] };
         break;
       case sortProductEnum.priceAbove1000:
-        priceCriteria = { price: { $gte: 1000 } };
+        priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 1000 } }] };
         break;
       default:
         break;
@@ -221,7 +221,7 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   return products;
 };
 export const retrieveProducts = async (productIds: any) => {
-  const foundProducts = await ProductModel.find({ _id: { $in: productIds } });
+  const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
   return foundProducts;
 }
 export const updateStock = async (
@@ -287,7 +287,7 @@ export const updateStock = async (
 };
 export const findAllProductsByCategory = async (categoryId: string, page: number) => {
   const products = await paginate(
-    ProductModel.find({ category: categoryId }).sort({ createdAt: -1 }),
+    ProductModel.find({ category: categoryId, isDeleted: false }).sort({ createdAt: -1 }),
     page,
     "-_id categoryName image slug",
     SchemaTypesReference.Category

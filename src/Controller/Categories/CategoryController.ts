@@ -9,7 +9,6 @@ import {
   findCategoryById,
   prepareCategoryUpdates,
   getAllCategories,
-  deletePresignedURL,
 } from "../../Service/CategoryService/CategoryService";
 import SuccessMessage from "../../Utils/SuccessMessages";
 export const CreateNewCategory = asyncHandler(
