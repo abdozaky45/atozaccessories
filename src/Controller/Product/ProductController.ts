@@ -71,7 +71,7 @@ export const CreateProduct = asyncHandler(
       createdAt: moment().valueOf(),
     };
     const product = await createProduct(productData);
-    if(expiredSale){
+    if (expiredSale) {
       scheduleProductUpdate(product._id.toString(), expiredSale);
     }
     return res
@@ -110,7 +110,7 @@ export const updateProduct = asyncHandler(
       availableItems,
       salePrice,
       expiredSale,
-     category:categoryId,
+      category: categoryId,
     };
 
     let finalPrices;
@@ -132,7 +132,7 @@ export const updateProduct = asyncHandler(
     );
     if (updates) {
       await product.save();
-      if(expiredSale){
+      if (expiredSale) {
         scheduleProductUpdate(productId, expiredSale);
       }
       return res.json(
@@ -154,15 +154,6 @@ export const deleteProduct = asyncHandler(
       product.createdBy.toString()
     )
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
-    const mediaIds = [
-      product.defaultImage.mediaId,
-      ...(product.albumImages?.map((image) => image.mediaId) || []),
-    ];
-    await Promise.all(
-      mediaIds.map(async (mediaId) => {
-        await deletePresignedURL(mediaId);
-      })
-    );
     await deleteOneProduct(productId);
     return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_DELETED));
   }
@@ -174,11 +165,11 @@ export const getProductById = asyncHandler(
     const product = await findProductById(productId);
     if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
     let liked = false;
-    if(user){
-      const wishlistEntry = await getProductWishlist(productId,user as string);
+    if (user) {
+      const wishlistEntry = await getProductWishlist(productId, user as string);
       liked = wishlistEntry ? true : false;
     }
-    return res.json(new ApiResponse(200, { product ,liked}, ""));
+    return res.json(new ApiResponse(200, { product, liked }, ""));
   }
 );
 export const getAllProducts = asyncHandler(
@@ -219,27 +210,27 @@ export const sortProductByPrice = asyncHandler(
   }
 );
 export const sortProductByRangeAndPrice = asyncHandler(async (req: Request, res: Response) => {
-   const { page, sort, priceRange } = req.query;
+  const { page, sort, priceRange } = req.query;
   const pageNumber = Number(page);
   const products = await findProducts(sort as string, priceRange as string, pageNumber);
   return res.json(new ApiResponse(200, { products }, "Success"));
 });
 export const getProductBySoldOut = asyncHandler(async (req: Request, res: Response) => {
   const { page } = req.query;
- const pageNumber = Number(page);
- const products = await findProductBySoldOut(pageNumber);
- return res.json(new ApiResponse(200, { products }, "Success"));
+  const pageNumber = Number(page);
+  const products = await findProductBySoldOut(pageNumber);
+  return res.json(new ApiResponse(200, { products }, "Success"));
 });
 export const getAllProductsByCategoryId = asyncHandler(async (req: Request, res: Response) => {
-const { categoryId } = req.params;
-const { page } = req.query;
-const pageNumber = Number(page);
-const checkCategory = await findCategoryById(categoryId);
-if (!checkCategory) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
-const products = await findAllProductsByCategory(categoryId, pageNumber);
-return res.json(new ApiResponse(200, { products }, ""));
+  const { categoryId } = req.params;
+  const { page } = req.query;
+  const pageNumber = Number(page);
+  const checkCategory = await findCategoryById(categoryId);
+  if (!checkCategory) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
+  const products = await findAllProductsByCategory(categoryId, pageNumber);
+  return res.json(new ApiResponse(200, { products }, ""));
 });
 export const getAnalysis = asyncHandler(async (req: Request, res: Response) => {
-const analysis = await getAnalytics();
-return res.json(new ApiResponse(200, { analysis }, "Success"));
+  const analysis = await getAnalytics();
+  return res.json(new ApiResponse(200, { analysis }, "Success"));
 });
