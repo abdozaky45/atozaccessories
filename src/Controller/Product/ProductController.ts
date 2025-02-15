@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { ApiError, ApiResponse, asyncHandler } from "../../Utils/ErrorHandling";
 import ErrorMessages from "../../Utils/Error";
 import {
-  deletePresignedURL,
   extractMediaId,
   findCategoryById,
 } from "../../Service/CategoryService/CategoryService";
@@ -25,7 +24,6 @@ import {
   ratioCalculatePrice,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
-import { scheduleProductUpdate } from "../../Utils/scheduledBull";
 import { getProductWishlist } from "../../Service/Wishlist/WishlistService";
 import IProduct from "../../Model/Product/Iproduct";
 export const CreateProduct = asyncHandler(

@@ -46,12 +46,12 @@ class OrderController {
       if (productWithId.availableItems < product.quantity) {
         throw new ApiError(400, `Not enough stock for product: ${productWithId.productName}. Available: ${productWithId.availableItems}, Requested: ${product.quantity}`);
       }
-      const itemTotalPrice = productWithId.price * product.quantity;
+      const itemTotalPrice = (productWithId.salePrice &&productWithId.salePrice> 0 ? productWithId.salePrice : productWithId.price  ) * product.quantity;
       orderProducts.push({
         productId: productWithId._id.toString(),
         productName: productWithId.productName,
         quantity: product.quantity,
-        itemPrice: productWithId.price,
+        itemPrice: (productWithId.salePrice &&productWithId.salePrice> 0 ? productWithId.salePrice : productWithId.price),
         totalPrice: itemTotalPrice,
       });
       totalPrice += itemTotalPrice;
