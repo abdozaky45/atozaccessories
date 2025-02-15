@@ -19,13 +19,10 @@ import imageSliderRouter from "./Router/ImageSlider/ImageSliderRouter";
 import wishlistRouter from "./Router/Wishlist/WishlistRouter";
 import shippingRouter from "./Router/Shipping/ShippingRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
+import { getCorsOptions } from "./config";
 const app: Application = express();
-const corsOptions = {
-  origin: '*',
-  methods: '*',
-  allowedHeaders: '*',
-};
-app.use(cors(corsOptions));
+
+app.use(cors(getCorsOptions()));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
