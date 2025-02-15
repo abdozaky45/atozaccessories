@@ -20,17 +20,19 @@ import wishlistRouter from "./Router/Wishlist/WishlistRouter";
 import shippingRouter from "./Router/Shipping/ShippingRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
 import { getCorsOptions } from "./config";
+import { blockScrapers, enforcePublicApiRestrictions } from "./middleware/Security";
+
 const app: Application = express();
 
-app.use(cors(getCorsOptions()));
 app.use(express.json());
+app.use(cors(getCorsOptions()));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.get("/", async (_, res) => {
   return res.json("Hello world!");
 });
 app.use(`/${RouterEnum.authentication}`, authenticationRouter);
-app.use(`/${RouterEnum.public}`, publicRouter);
+app.use(`/${RouterEnum.public}`, enforcePublicApiRestrictions, blockScrapers, publicRouter);
 app.use(checkAuthority);
 app.use(
   `/${RouterEnum.user}`,
