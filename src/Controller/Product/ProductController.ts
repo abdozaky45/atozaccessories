@@ -71,9 +71,6 @@ export const CreateProduct = asyncHandler(
       createdAt: moment().valueOf(),
     };
     const product = await createProduct(productData);
-    if (expiredSale) {
-      scheduleProductUpdate(product._id.toString(), expiredSale);
-    }
     return res
       .status(201)
       .json(new ApiResponse(201, { product }, SuccessMessage.PRODUCT_CREATED));
