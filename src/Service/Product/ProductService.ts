@@ -299,7 +299,6 @@ export const getAnalytics = async () => {
     { $match: { status: orderStatusType.delivered } },
     { $group: { _id: null, total: { $sum: '$price' } } }
   ]);
-console.log(totalRevenue);
   const totalOrders = await OrderModel.countDocuments();
   const totalCustomers = await UserModel.countDocuments();
   const totalProducts = await ProductModel.countDocuments();
