@@ -9,9 +9,9 @@ import { sortProductEnum } from "../../Utils/SortProduct";
 import { Types } from "mongoose";
 import { ProductOrder } from "../../Model/Order/Iorder";
 import IProduct from "../../Model/Product/Iproduct";
-import UserModel from "../../Model/User/UserInformation/UserModel";
 import OrderModel from "../../Model/Order/OrderModel";
 import { orderStatusType } from "../../Utils/OrderStatusType";
+import AuthModel from "../../Model/User/auth/AuthModel";
 
 export const createProduct = async (productData: IProduct) => {
   const product = await ProductModel.create(productData);
@@ -300,7 +300,7 @@ export const getAnalytics = async () => {
     { $group: { _id: null, total: { $sum: '$price' } } }
   ]);
   const totalOrders = await OrderModel.countDocuments();
-  const totalCustomers = await UserModel.countDocuments();
+  const totalCustomers = await AuthModel.countDocuments();
   const totalProducts = await ProductModel.countDocuments();
 
   return {
