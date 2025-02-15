@@ -123,9 +123,6 @@ export const updateProduct = asyncHandler(
     );
     if (updates) {
       await product.save();
-      if (expiredSale) {
-        scheduleProductUpdate(productId, expiredSale);
-      }
       return res.json(
         new ApiResponse(200, { product }, SuccessMessage.PRODUCT_UPDATED)
       );
