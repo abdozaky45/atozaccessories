@@ -15,7 +15,11 @@ class OrderService {
     return newOrder;
   }
   async getOrderById(orderId: Types.ObjectId | string) {
-    const order = await OrderModel.findById(orderId).populate('products.productId');
+    const order = await OrderModel.findById(orderId).populate([
+      { path: 'products.productId'},
+      { path: SchemaTypesReference.Shipping, select: 'category cost' },
+      { path: SchemaTypesReference.UserInformation, select: 'country address primaryPhone governorate' },
+    ]);
     return order;
   }
   async updateStock(
@@ -44,7 +48,7 @@ class OrderService {
       { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
       {
         path: 'products.productId',
-        select: 'defaultImage', 
+        select: 'defaultImage',
       }
     ]).sort({ createdAt: -1 });
     return orders;
@@ -55,27 +59,27 @@ class OrderService {
     const skip = limit * (page - 1);
     const filter: any = {};
     if (status) {
-        filter.status = status;
+      filter.status = status;
     }
-    
+
     const totalItems = await OrderModel.countDocuments(filter);
     const totalPages = Math.ceil(totalItems / limit);
     const orders = await OrderModel.find(filter)
-        .populate([
-            { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
-            { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
-            {
-              path: 'products.productId',
-              select: 'defaultImage', 
-            }
-        ])
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 })
-        .exec();
+      .populate([
+        { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
+        { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
+        {
+          path: 'products.productId',
+          select: 'defaultImage',
+        }
+      ])
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .exec();
 
     return { totalItems, totalPages, currentPage: page, orders };
-}
+  }
 }
 
 export default new OrderService;

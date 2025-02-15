@@ -86,7 +86,7 @@ export const findAllSaleProducts = async (page: number) => {
   const products = await paginate(
     ProductModel.find({ isSale: true, isDeleted: false }).sort({ createdAt: -1 }),
     page,
-    "-_id categoryName image slug",
+    "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
@@ -134,7 +134,7 @@ export const findProductBySort = async (sortBy: string, page: number) => {
   const products = await paginate(
     ProductModel.find({ isDeleted: false }).sort(sortCriteria),
     page,
-    "-_id categoryName image slug",
+    "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
@@ -170,7 +170,7 @@ export const findProductBySoldOut = async (page: number) => {
   const products = await paginate(
     ProductModel.find({ isSoldOut: true, isDeleted: false }).sort({ createdAt: -1 }),
     page,
-    "-_id categoryName image slug",
+    "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
@@ -215,7 +215,7 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   const products = await paginate(
     ProductModel.find(priceCriteria).sort(sortCriteria),
     page,
-    "-_id categoryName image slug",
+    "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
@@ -289,7 +289,7 @@ export const findAllProductsByCategory = async (categoryId: string, page: number
   const products = await paginate(
     ProductModel.find({ category: categoryId, isDeleted: false }).sort({ createdAt: -1 }),
     page,
-    "-_id categoryName image slug",
+    "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;

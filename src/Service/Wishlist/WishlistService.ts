@@ -40,7 +40,7 @@ export const getAllWishlist = async (page: number) => {
         "productName price salePrice discount discountPercentage isSale defaultImage albumImages soldItems availableItems",
      populate:{
       path: "category",
-      select: "categoryName"
+      select: "categoryName image slug" 
      }
     })
     .skip(skip)
