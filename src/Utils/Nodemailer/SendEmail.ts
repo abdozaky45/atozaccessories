@@ -2,7 +2,7 @@ import nodemailer, { SentMessageInfo } from 'nodemailer';
 
 interface EmailOptions {
   from?: string;
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
 }
