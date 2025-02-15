@@ -37,7 +37,7 @@ export const getAllWishlist = async (page: number) => {
     .populate({
       path: "productId",
       select:
-        "productName price salePrice discount discountPercentage isSale defaultImage albumImages",
+        "productName price salePrice discount discountPercentage isSale defaultImage albumImages soldItems availableItems",
     })
     .skip(skip)
     .limit(limit)
