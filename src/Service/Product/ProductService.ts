@@ -297,9 +297,9 @@ export const findAllProductsByCategory = async (categoryId: string, page: number
 export const getAnalytics = async () => {
   const totalRevenue = await OrderModel.aggregate([
     { $match: { status: orderStatusType.delivered } },
-    { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+    { $group: { _id: null, total: { $sum: '$price' } } }
   ]);
-
+console.log(totalRevenue);
   const totalOrders = await OrderModel.countDocuments();
   const totalCustomers = await UserModel.countDocuments();
   const totalProducts = await ProductModel.countDocuments();
