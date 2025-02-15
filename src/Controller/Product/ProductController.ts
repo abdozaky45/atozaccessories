@@ -97,12 +97,6 @@ export const updateProduct = asyncHandler(
     if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
     const Category = await findCategoryById(categoryId);
     if (!Category) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
-    if (
-      req.body.currentUser.userInfo._id.toString() !==
-      product.createdBy.toString()
-    ) {
-      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
-    }
     const productData: Partial<IProduct> = {
       productName,
       productDescription,
@@ -149,11 +143,6 @@ export const deleteProduct = asyncHandler(
     const { productId } = req.params;
     const product = await findProductById(productId);
     if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
-    if (
-      req.body.currentUser.userInfo._id.toString() !==
-      product.createdBy.toString()
-    )
-      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     await deleteOneProduct(productId);
     return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_DELETED));
   }
