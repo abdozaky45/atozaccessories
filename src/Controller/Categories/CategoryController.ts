@@ -33,12 +33,6 @@ export const updateCategory = asyncHandler(
     if (!Category) {
       throw new ApiError(404, ErrorMessages.CATEGORY_NOT_FOUND);
     }
-    if (
-      req.body.currentUser.userInfo._id.toString() !==
-      Category.createdBy.toString()
-    ) {
-      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
-    }
     const updates = await prepareCategoryUpdates(
       Category,
       req.body.categoryName,
@@ -68,12 +62,6 @@ export const deleteOneCategory = asyncHandler(
     const Category = await findCategoryById(req.params._id);
     if (!Category) {
       throw new ApiError(404, ErrorMessages.CATEGORY_NOT_FOUND);
-    }
-    if (
-      req.body.currentUser.userInfo._id.toString() !==
-      Category.createdBy.toString()
-    ) {
-      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
     const result = await deleteCategory(req.params._id);
     if (!result) {
