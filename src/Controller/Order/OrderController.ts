@@ -92,9 +92,15 @@ class OrderController {
       orderDate: new Date().toLocaleString(),
       paymentMethod: 'Cash on Delivery',
     });
+    const adminEmails = [process.env.ADMIN_ONE as string , process.env.ADMIN_TWO as string];
     await sendEmail({
       to: req.body.currentUser.userInfo.email,
       subject: 'Your Order Invoice',
+      html: invoice,
+    });
+    await sendEmail({
+      to: adminEmails,
+      subject: "🚀 New Order Placed - Action Required!",
       html: invoice,
     });
     return res.json(new ApiResponse(200, { order: orderData }, SuccessMessage.ORDER_CREATED));
