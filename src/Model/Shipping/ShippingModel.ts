@@ -1,9 +1,9 @@
 import { Schema, model } from "mongoose"
-import { NotRequiredBoolean, RequiredNumber, RequiredUniqueString } from "../../Utils/Schemas";
+import { NotRequiredBoolean, RequiredNumber, RequiredString } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import IShipping from "./Ishipping";
 const ShippingSchema = new Schema<IShipping>({
-    category: RequiredUniqueString,
+    category: RequiredString,
     cost: RequiredNumber,
     isDeleted:NotRequiredBoolean
 });
