@@ -101,7 +101,7 @@ class OrderController {
     await sendEmail({
       to: adminEmails,
       subject: "🚀 New Order Placed - Action Required!",
-      html: "hazemgamalatoz@gmail.com",
+      html: invoice,
     });
     return res.json(new ApiResponse(200, { order: orderData }, SuccessMessage.ORDER_CREATED));
   });
