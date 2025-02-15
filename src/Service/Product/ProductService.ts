@@ -77,7 +77,7 @@ export const findAllProducts = async (page: number) => {
   const products = await paginate(
     ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 }),
     page,
-    "-_id categoryName image slug",
+    "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
