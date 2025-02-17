@@ -9,33 +9,7 @@ import Iuser from "../../Model/User/UserInformation/Iuser";
 export const addUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.body.currentUser.userInfo._id;
-  const userData : Iuser ={
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    address: req.body.address,
-    apartmentSuite: req.body.apartmentSuite,
-    shipping: req.body.shipping,
-    postalCode: req.body.postalCode,
-    primaryPhone: req.body.primaryPhone,
-    secondaryPhone: req.body.secondaryPhone,
-    user:userId
-  };
-  const user = await userService.createUser(userData);
-  return res.json(new ApiResponse(200, {user}, SuccessMessage.USER_CREATED));
-  }
-);
-export const updateUserInformation = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const {_id} = req.body.currentUser.userInfo;
-    const {userId} = req.params;
-    const checkUser = await userService.findUserInformationById(userId);
-    if (!checkUser) {
-      return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
-    }
-    if(_id.toString() !== checkUser.user.toString()){
-      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
-    }
-    const userData : Iuser ={
+    const userData: Iuser = {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       address: req.body.address,
@@ -44,21 +18,49 @@ export const updateUserInformation = asyncHandler(
       postalCode: req.body.postalCode,
       primaryPhone: req.body.primaryPhone,
       secondaryPhone: req.body.secondaryPhone,
-      user:_id
+      user: userId
     };
-    const user = await userService.updateUserInformation(userId, userData);
-    return res.json(new ApiResponse(200, {user}, SuccessMessage.USER_UPDATED));
+    const result = await userService.createUser(userData);
+    const user = await userService.findUserInformationById(result._id);
+    return res.json(new ApiResponse(200, { user }, SuccessMessage.USER_CREATED));
   }
 );
-export const deleteUserInformation = asyncHandler(
+export const updateUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {_id} = req.body.currentUser.userInfo;
-    const {userId} = req.params;
+    const { _id } = req.body.currentUser.userInfo;
+    const { userId } = req.params;
     const checkUser = await userService.findUserInformationById(userId);
     if (!checkUser) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
     }
-    if(_id.toString() !== checkUser.user.toString()){
+    if (_id.toString() !== checkUser.user.toString()) {
+      throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
+    }
+    const userData: Iuser = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      address: req.body.address,
+      apartmentSuite: req.body.apartmentSuite,
+      shipping: req.body.shipping,
+      postalCode: req.body.postalCode,
+      primaryPhone: req.body.primaryPhone,
+      secondaryPhone: req.body.secondaryPhone,
+      user: _id
+    };
+    const result = await userService.updateUserInformation(userId, userData);
+    const user = await userService.findUserInformationById(result!._id);
+    return res.json(new ApiResponse(200, { user }, SuccessMessage.USER_UPDATED));
+  }
+);
+export const deleteUserInformation = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { _id } = req.body.currentUser.userInfo;
+    const { userId } = req.params;
+    const checkUser = await userService.findUserInformationById(userId);
+    if (!checkUser) {
+      return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
+    }
+    if (_id.toString() !== checkUser.user.toString()) {
       throw new ApiError(403, ErrorMessages.UNAUTHORIZED_ACCESS);
     }
     const user = await userService.deleteUserInformation(userId);
@@ -68,17 +70,17 @@ export const deleteUserInformation = asyncHandler(
 export const getAllUserInformation = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const users = await userService.getAllUserInformation();
-    return res.json(new ApiResponse(200, {users}, SuccessMessage.USER_FOUND));
+    return res.json(new ApiResponse(200, { users }, SuccessMessage.USER_FOUND));
   }
 );
 export const getUserInformationById = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {_id} = req.body.currentUser.userInfo;
+    const { _id } = req.body.currentUser.userInfo;
     const user = await userService.getAllUserInformationRelatedToUser(_id);
     if (!user) {
       return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
     }
-    return res.json(new ApiResponse(200, {user}, SuccessMessage.USER_FOUND));
+    return res.json(new ApiResponse(200, { user }, SuccessMessage.USER_FOUND));
   }
 );
 export const logout = asyncHandler(
