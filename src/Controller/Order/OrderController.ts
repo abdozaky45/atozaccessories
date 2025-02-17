@@ -4,7 +4,6 @@ import { sendEmail } from '../../Utils/Nodemailer/SendEmail';
 import { generateInvoice } from '../../Utils/Nodemailer/SendInvoice';
 import { IOrder, ProductOrder } from '../../Model/Order/Iorder';
 import SchemaTypesReference from '../../Utils/Schemas/SchemaTypesReference';
-import ShippingService from '../../Service/Shipping/ShippingService';
 import { findUserInformationById } from '../../Service/User/AuthService';
 import OrderService from '../../Service/Order/OrderService';
 import ErrorMessages from '../../Utils/Error';
@@ -118,7 +117,8 @@ class OrderController {
       if (userRole !== UserTypeEnum.ADMIN) {
         throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
       }
-      await updateStock(order.products, productRecord, false);
+      order.status = orderStatusType.confirmed;
+      await order.save();
     }
     else if (status === orderStatusType.cancelled) {
       if (userRole !== UserTypeEnum.USER) {
@@ -139,7 +139,7 @@ class OrderController {
     }
     if (status === orderStatusType.deleted) {
       await updateStock(order.products, productRecord, true);
-  }
+    }
     order.status = status;
     await order.save();
 
