@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import IShipping from "../../Shipping/Ishipping";
 
 export default interface Iuser {
   country?: string;
@@ -6,7 +7,7 @@ export default interface Iuser {
   lastName: string;
   address: string;
   apartmentSuite?: string;
-  governorate: string;
+  shipping: string | Types.ObjectId | IShipping | any;
   postalCode?: string;
   primaryPhone: string;
   secondaryPhone?: string;

@@ -13,23 +13,19 @@ import { orderStatusType } from '../../Utils/OrderStatusType';
 import { retrieveProducts, updateStock } from '../../Service/Product/ProductService';
 import { UserTypeEnum } from '../../Utils/UserType';
 import IProduct from '../../Model/Product/Iproduct';
-import {Types} from 'mongoose';
+import { Types } from 'mongoose';
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { products, shippingId, userId } = req.body;
-    const {_id} = req.body.currentUser.userInfo;
-    const shipping = await ShippingService.getShippingById(shippingId);
-    if (!shipping) {
-      throw new ApiError(404, ErrorMessages.SHIPPING_NOT_FOUND);
-    }
+    const { products, userId } = req.body;
+    const { _id } = req.body.currentUser.userInfo;
     const userInformation = await findUserInformationById(userId);
     if (!userInformation) {
       throw new ApiError(404, ErrorMessages.USER_INFORMATION_NOT_FOUND);
     }
     const productIds = products.map((product: ProductOrder) => product.productId);
     const foundProducts = await retrieveProducts(productIds);
-    
+
     const productRecord: Record<string, IProduct> = foundProducts.reduce((acc: Record<string, IProduct>, product) => {
       acc[product._id.toString()] = product as IProduct;
       return acc;
@@ -42,16 +38,16 @@ class OrderController {
       if (!foundProduct) {
         throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
       }
-      const productWithId = foundProduct as IProduct & { _id:Types.ObjectId };
+      const productWithId = foundProduct as IProduct & { _id: Types.ObjectId };
       if (productWithId.availableItems < product.quantity) {
         throw new ApiError(400, `Not enough stock for product: ${productWithId.productName}. Available: ${productWithId.availableItems}, Requested: ${product.quantity}`);
       }
-      const itemTotalPrice = (productWithId.salePrice &&productWithId.salePrice> 0 ? productWithId.salePrice : productWithId.price  ) * product.quantity;
+      const itemTotalPrice = (productWithId.salePrice && productWithId.salePrice > 0 ? productWithId.salePrice : productWithId.price) * product.quantity;
       orderProducts.push({
         productId: productWithId._id.toString(),
         productName: productWithId.productName,
         quantity: product.quantity,
-        itemPrice: (productWithId.salePrice &&productWithId.salePrice> 0 ? productWithId.salePrice : productWithId.price),
+        itemPrice: (productWithId.salePrice && productWithId.salePrice > 0 ? productWithId.salePrice : productWithId.price),
         totalPrice: itemTotalPrice,
       });
       totalPrice += itemTotalPrice;
@@ -61,7 +57,7 @@ class OrderController {
     if (totalPrice >= 1500) {
       discount = totalPrice * 0.10;
     }
-    let shippingCost = shipping.cost;
+    let shippingCost = userInformation.shipping.cost;
     if (totalPrice >= 1500 || totalQuantity >= 3) {
       shippingCost = 0;
     }
@@ -69,7 +65,7 @@ class OrderController {
     const orderCreate: Omit<IOrder, 'status'> = {
       user: _id,
       userInformation: userInformation._id,
-      shipping: shipping._id,
+      shipping: userInformation.shipping._id,
       products: orderProducts,
       price: finalPrice,
     }
@@ -92,7 +88,7 @@ class OrderController {
       orderDate: new Date().toLocaleString(),
       paymentMethod: 'Cash on Delivery',
     });
-    const adminEmails = [process.env.ADMIN_ONE as string , process.env.ADMIN_TWO as string];
+    const adminEmails = [process.env.ADMIN_ONE as string, process.env.ADMIN_TWO as string];
     await sendEmail({
       to: req.body.currentUser.userInfo.email,
       subject: 'Your Order Invoice',

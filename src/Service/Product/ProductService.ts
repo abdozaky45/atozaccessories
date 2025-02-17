@@ -122,10 +122,10 @@ export const findProductBySort = async (sortBy: string, page: number) => {
       sortCriteria = { createdAt: -1 };
       break;
     case sortProductEnum.priceLowToHigh:
-      sortCriteria = { price: 1 };
+      sortCriteria = { price: -1 };
       break;
     case sortProductEnum.priceHighToLow:
-      sortCriteria = { price: -1 };
+      sortCriteria = { price: 1 };
       break;
     default:
       sortCriteria = { createdAt: -1 };
