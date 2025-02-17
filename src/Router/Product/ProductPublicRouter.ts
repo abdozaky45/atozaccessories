@@ -11,6 +11,5 @@ ProductPublicRouter.get("/search-product",ProductController.SearchProducts);
 ProductPublicRouter.get("/sort-by",ProductController.sortProduct);
 ProductPublicRouter.get("/sort-by-price",ProductController.sortProductByPrice);
 ProductPublicRouter.get("/get-category/:categoryId",Validation(ProductValidation.getAllProductsByCategoryIdValidation), ProductController.getAllProductsByCategoryId);
-
 ProductPublicRouter.get("/",ProductController.sortProductByRangeAndPrice);
 export default ProductPublicRouter;
