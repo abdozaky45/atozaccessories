@@ -119,16 +119,16 @@ export const findProductBySort = async (sortBy: string, page: number) => {
   let sortCriteria = {};
   switch (sortBy) {
     case sortProductEnum.newest:
-      sortCriteria = { createdAt: -1 };
+      sortCriteria = { createdAt: -1 }; 
       break;
     case sortProductEnum.priceLowToHigh:
-      sortCriteria = { price: -1 };
+      sortCriteria = { price: -1 }; 
       break;
     case sortProductEnum.priceHighToLow:
-      sortCriteria = { price: 1 };
+      sortCriteria = { price: 1 }; 
       break;
     default:
-      sortCriteria = { createdAt: -1 };
+      sortCriteria = { createdAt: -1 }; 
       break;
   }
   const products = await paginate(
