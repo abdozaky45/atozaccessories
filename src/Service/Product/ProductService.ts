@@ -178,23 +178,24 @@ export const findProductBySoldOut = async (page: number) => {
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
   let sortCriteria = {};
   let priceCriteria: any = { isDeleted: false };
-  let salePriceSortCriteria = { salePrice: { $gt: 1 } }; 
+
   if (sort) {
     switch (sort) {
       case sortProductEnum.newest:
         sortCriteria = { createdAt: -1 };
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { price: 1 }; 
+        sortCriteria = { price: 1 };
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { price: -1 }; 
+        sortCriteria = { price: -1 };
         break;
       default:
         sortCriteria = { createdAt: -1 };
         break;
     }
   }
+
   if (priceRange) {
     switch (priceRange) {
       case sortProductEnum.priceUnder100:
@@ -213,16 +214,36 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         break;
     }
   }
-  const products = await paginate(
+
+  const saleProducts = await paginate(
     ProductModel.find({
-      $and: [priceCriteria, salePriceSortCriteria] 
+      $and: [{ ...priceCriteria }, { salePrice: { $gt: 1 } }]
     }).sort(sortCriteria),
     page,
     "categoryName image slug",
     SchemaTypesReference.Category
   );
-  return products;
+
+  const regularProducts = await paginate(
+    ProductModel.find({
+      $and: [{ ...priceCriteria }, { salePrice: { $lte: 1 } }]
+    }).sort(sortCriteria),
+    page,
+    "categoryName image slug",
+    SchemaTypesReference.Category
+  );
+
+  const allProducts = [...saleProducts.data, ...regularProducts.data];
+  
+  return {
+    data: allProducts,
+    totalItems: saleProducts.totalItems + regularProducts.totalItems,
+    totalPages: Math.ceil((saleProducts.totalItems + regularProducts.totalItems) / page),
+    currentPage: page,
+  };
 };
+
+
 
 export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
