@@ -178,16 +178,17 @@ export const findProductBySoldOut = async (page: number) => {
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
   let sortCriteria = {};
   let priceCriteria: any = { isDeleted: false };
+  let salePriceSortCriteria = { salePrice: { $gt: 1 } }; 
   if (sort) {
     switch (sort) {
       case sortProductEnum.newest:
         sortCriteria = { createdAt: -1 };
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { price: 1 };
+        sortCriteria = { price: 1 }; 
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { price: -1 };
+        sortCriteria = { price: -1 }; 
         break;
       default:
         sortCriteria = { createdAt: -1 };
@@ -213,13 +214,16 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
     }
   }
   const products = await paginate(
-    ProductModel.find(priceCriteria).sort(sortCriteria),
+    ProductModel.find({
+      $and: [priceCriteria, salePriceSortCriteria] 
+    }).sort(sortCriteria),
     page,
     "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
 };
+
 export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
   return foundProducts;
