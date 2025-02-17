@@ -99,6 +99,7 @@ class OrderController {
       subject: "🚀 New Order Placed - Action Required!",
       html: invoice,
     });
+    await updateStock(orderProducts, productRecord, false);
     return res.json(new ApiResponse(200, { order: orderData }, SuccessMessage.ORDER_CREATED));
   });
   updateOrderStatus = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -136,6 +137,9 @@ class OrderController {
         throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
       }
     }
+    if (status === orderStatusType.deleted) {
+      await updateStock(order.products, productRecord, true);
+  }
     order.status = status;
     await order.save();
 
