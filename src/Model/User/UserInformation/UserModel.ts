@@ -8,7 +8,6 @@ import {
   RequiredDefaultStringCity,
   RequiredString,
 } from "../../../Utils/Schemas";
-import { governorateArray } from "../../../Utils/Governorate/GovernorateEnum";
 import SchemaTypesReference from "../../../Utils/Schemas/SchemaTypesReference";
 const userSchema = new Schema<Iuser>({
   user: RefType(SchemaTypesReference.User, true),
@@ -17,7 +16,7 @@ const userSchema = new Schema<Iuser>({
   lastName: RequiredString,
   address: RequiredString,
   apartmentSuite: NotRequiredString,
-  governorate: EnumStringRequired(governorateArray),
+  shipping:  RefType(SchemaTypesReference.Shipping, true),
   postalCode: NotRequiredString,
   primaryPhone: RequiredString,
   secondaryPhone: NotRequiredString,

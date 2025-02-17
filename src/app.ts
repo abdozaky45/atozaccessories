@@ -30,7 +30,8 @@ app.get("/", async (_, res) => {
   return res.json("Hello world!");
 });
 app.use(`/${RouterEnum.authentication}`, authenticationRouter);
-app.use(`/${RouterEnum.public}`, enforcePublicApiRestrictions, blockScrapers, publicRouter);
+//app.use(`/${RouterEnum.public}`, enforcePublicApiRestrictions, blockScrapers, publicRouter);
+app.use(`/${RouterEnum.public}`, publicRouter);
 app.use(checkAuthority);
 app.use(
   `/${RouterEnum.user}`,

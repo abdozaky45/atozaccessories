@@ -9,7 +9,6 @@ export const createOrderValidation = baseSchema.concat(
                 quantity: joi.number().required(),
             })
         ).required(),
-        shippingId: joi.string().required(),
         userId: joi.string().required(),
     }).required()
 );
