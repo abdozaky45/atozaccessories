@@ -83,7 +83,7 @@ class OrderController {
       total: finalPrice,
       subTotal: totalPrice,
       discount,
-      orderNumber: newOrder._id.toString(),
+      orderNumber: newOrder._id.toString().slice(-8),
       orderDate: new Date().toLocaleString(),
       paymentMethod: 'Cash on Delivery',
     });
