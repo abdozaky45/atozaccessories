@@ -10,7 +10,7 @@ ProductPublicRouter.get("/get-all-sale",ProductController.getAllSaleProducts);
 ProductPublicRouter.get("/search-product",ProductController.SearchProducts);
 ProductPublicRouter.get("/sort-by",ProductController.sortProduct);
 ProductPublicRouter.get("/sort-by-price",ProductController.sortProductByPrice);
-ProductPublicRouter.get("/available-items",ProductController.getProductsAndAvailableItems);
+ProductPublicRouter.post("/available-items",ProductController.getProductsAndAvailableItems);
 ProductPublicRouter.get("/get-category/:categoryId",Validation(ProductValidation.getAllProductsByCategoryIdValidation), ProductController.getAllProductsByCategoryId);
 ProductPublicRouter.get("/",ProductController.sortProductByRangeAndPrice);
 export default ProductPublicRouter;
