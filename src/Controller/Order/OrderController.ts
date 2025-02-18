@@ -39,7 +39,7 @@ class OrderController {
       }
       const productWithId = foundProduct as IProduct & { _id: Types.ObjectId };
       if (productWithId.availableItems < product.quantity) {
-        throw new ApiError(400, `Not enough stock for product: ${productWithId.productName}. Available: ${productWithId.availableItems}, Requested: ${product.quantity}`);
+        throw new ApiError(400, `Not enough stock for product: ${productWithId.productName}`);
       }
       const itemTotalPrice = (productWithId.salePrice && productWithId.salePrice > 0 ? productWithId.salePrice : productWithId.price) * product.quantity;
       orderProducts.push({
