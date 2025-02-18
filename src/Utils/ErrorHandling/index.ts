@@ -13,7 +13,7 @@ export const globalErrorHandling = (
   console.log({ error: error, stack: error.stack, message: error.message });
 
   return res.status(error.cause || 400).json({
-    Success: false,
+    success: false,
     message: error.message,
     error: error.errors,
     stack: error.stack,
