@@ -13,6 +13,7 @@ import { retrieveProducts, updateStock } from '../../Service/Product/ProductServ
 import { UserTypeEnum } from '../../Utils/UserType';
 import IProduct from '../../Model/Product/Iproduct';
 import { Types } from 'mongoose';
+import moment from "../../Utils/DateAndTime"
 
 class OrderController {
   createOrder = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -83,8 +84,8 @@ class OrderController {
       total: finalPrice,
       subTotal: totalPrice,
       discount,
-      orderNumber: newOrder._id.toString(),
-      orderDate: new Date().toLocaleString(),
+      orderNumber: newOrder._id.toString().slice(-8),
+      orderDate: moment().tz("Africa/Cairo").format("YYYY-MM-DD HH:mm:ss"),
       paymentMethod: 'Cash on Delivery',
     });
     const adminEmails = [process.env.ADMIN_ONE as string, process.env.ADMIN_TWO as string];
@@ -139,7 +140,7 @@ class OrderController {
     if (status === orderStatusType.deleted) {
       if (order.status !== orderStatusType.cancelled) {
         await updateStock(order.products, productRecord, true);
-     }
+      }
     }
     order.status = status;
     await order.save();
