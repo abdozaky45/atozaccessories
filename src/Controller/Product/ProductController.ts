@@ -19,6 +19,7 @@ import {
   findProductBySort,
   findProducts,
   getAnalytics,
+  getAvailableItems,
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
@@ -214,4 +215,13 @@ export const getAllProductsByCategoryId = asyncHandler(async (req: Request, res:
 export const getAnalysis = asyncHandler(async (req: Request, res: Response) => {
   const analysis = await getAnalytics();
   return res.json(new ApiResponse(200, { analysis }, "Success"));
+});
+export const getProductsAndAvailableItems = asyncHandler(async (req: Request, res: Response) => {
+  const products = req.body.products;
+  const result = await getAvailableItems(products);
+  const response: Record<string, number> = {};
+  result.forEach(product => {
+        response[product._id.toString()] = product.availableItems;
+    });
+    return res.json(response);
 });

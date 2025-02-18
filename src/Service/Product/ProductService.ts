@@ -165,7 +165,7 @@ export const findProductByPriceRange = async (priceRange: string, page: number) 
     SchemaTypesReference.Category
   );
   return products;
-}
+};
 export const findProductBySoldOut = async (page: number) => {
   const products = await paginate(
     ProductModel.find({ isSoldOut: true, isDeleted: false }).sort({ createdAt: -1 }),
@@ -174,7 +174,7 @@ export const findProductBySoldOut = async (page: number) => {
     SchemaTypesReference.Category
   );
   return products;
-}
+};
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
   let sortCriteria = {};
   let priceCriteria: any = { isDeleted: false };
@@ -245,11 +245,10 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
     currentPage: page,
   };
 };
-
 export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
   return foundProducts;
-}
+};
 export const updateStock = async (
   orderProducts: ProductOrder[],
   productRecord: Record<string, IProduct & { _id: Types.ObjectId }> | any,
@@ -319,7 +318,7 @@ export const findAllProductsByCategory = async (categoryId: string, page: number
     SchemaTypesReference.Category
   );
   return products;
-}
+};
 export const getAnalytics = async () => {
   const totalRevenue = await OrderModel.aggregate([
     { $match: { status: orderStatusType.delivered } },
@@ -335,4 +334,8 @@ export const getAnalytics = async () => {
     totalCustomers,
     totalProducts,
   };
-};  
+};
+export const getAvailableItems = async (productIds: [string]) => {
+  const products = await ProductModel.find({ _id: { $in: productIds } }, { _id: 1, availableItems: 1 });
+  return products;
+}
