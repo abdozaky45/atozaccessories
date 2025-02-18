@@ -85,7 +85,7 @@ class OrderController {
       subTotal: totalPrice,
       discount,
       orderNumber: newOrder._id.toString().slice(-8),
-      orderDate: moment().tz("Africa/Cairo").format("YYYY-MM-DD HH:mm:ss"),
+      orderDate: `#${moment().tz("Africa/Cairo").format("YYYY-MM-DD HH:mm:ss")}`,
       paymentMethod: 'Cash on Delivery',
     });
     const adminEmails = [process.env.ADMIN_ONE as string, process.env.ADMIN_TWO as string];
