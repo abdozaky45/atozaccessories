@@ -124,13 +124,12 @@ class OrderController {
       if (userRole !== UserTypeEnum.USER) {
         throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
       }
-      if ([orderStatusType.shipped, orderStatusType.delivered, orderStatusType.ordered].includes(order.status as orderStatusType)) {
+      if (![orderStatusType.under_review, orderStatusType.confirmed].includes(order.status as orderStatusType)) {
         throw new ApiError(400, ErrorMessages.NOT_CANCELLED);
       }
-
-      if (order.status === orderStatusType.confirmed) {
-        await updateStock(order.products, productRecord, true);
-      }
+      await updateStock(order.products, productRecord, true);
+      order.status = orderStatusType.cancelled;
+      await order.save();
     }
     else if ([orderStatusType.shipped, orderStatusType.delivered, orderStatusType.ordered, orderStatusType.deleted].includes(status)) {
       if (userRole !== UserTypeEnum.ADMIN) {
