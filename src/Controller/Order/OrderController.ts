@@ -137,7 +137,9 @@ class OrderController {
       }
     }
     if (status === orderStatusType.deleted) {
-      await updateStock(order.products, productRecord, true);
+      if (order.status !== orderStatusType.cancelled) {
+        await updateStock(order.products, productRecord, true);
+     }
     }
     order.status = status;
     await order.save();
