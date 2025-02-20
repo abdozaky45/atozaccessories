@@ -28,6 +28,7 @@ export const prepareProductUpdates = async (
   albumImages: string[]
 ) => {
   let updates = false;
+
   Object.keys(productData).forEach((key) => {
     const field = key as keyof IProduct;
     if (!_.isEqual(productData[field], product[field])) {
@@ -35,40 +36,45 @@ export const prepareProductUpdates = async (
       updates = true;
     }
   });
+
   if (productData.availableItems !== undefined) {
-    product.isSoldOut = product.availableItems <= 0;
+    product.isSoldOut = productData.availableItems <= 0;
     updates = true;
   }
 
-  if (
-    productData.productName &&
-    productData.productName !== product.productName
-  ) {
+  if (productData.productName && productData.productName !== product.productName) {
     product.slug = slugify(product.productName);
     updates = true;
   }
+
   if (defaultImage && defaultImage !== product.defaultImage.mediaUrl) {
     const mediaId = extractMediaId(defaultImage);
     if (mediaId !== product.defaultImage.mediaId) {
       product.defaultImage.mediaUrl = defaultImage;
       product.defaultImage.mediaId = mediaId;
+      updates = true;
     }
   }
 
-  if (albumImages) {
-    albumImages.forEach((imageUrl: string, index: number) => {
-      const existingImages = product.albumImages?.[index];
-      if (existingImages && imageUrl !== existingImages.mediaUrl) {
-        const mediaId = extractMediaId(imageUrl);
-        if (mediaId !== existingImages.mediaId) {
-          existingImages.mediaUrl = imageUrl;
-          existingImages.mediaId = mediaId;
-        }
+  if (albumImages && Array.isArray(albumImages)) {
+    if (!product.albumImages) {
+      product.albumImages = []; 
+    }
+
+    albumImages.forEach((imageUrl: string) => {
+      const mediaId = extractMediaId(imageUrl);
+      if (mediaId) {
+        product.albumImages!.push({
+          mediaUrl: imageUrl,
+          mediaId: mediaId,
+        });
+        updates = true;
       }
     });
   }
   return updates ? product : null;
 };
+
 export const deleteOneProduct = async (_id: string | Types.ObjectId) => {
   const product = await ProductModel.findByIdAndUpdate(_id, { isDeleted: true });
   return product;
