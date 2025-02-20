@@ -176,8 +176,40 @@ export const findProductBySoldOut = async (page: number) => {
   return products;
 };
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
-  let sortCriteria = {};
-  let priceCriteria: any = { isDeleted: false };
+  const perPage = 20;
+  const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const skip = (currentPage - 1) * perPage;
+
+  const pipeline: any[] = [];
+
+  pipeline.push({ $match: { isDeleted: false } });
+
+  pipeline.push({
+    $addFields: {
+      totalPrice: { $add: ["$price", "$salePrice"] }
+    }
+  });
+
+  if (priceRange) {
+    let priceFilter = {};
+    switch (priceRange) {
+      case sortProductEnum.priceUnder100:
+        priceFilter = { $lte: 100 };
+        break;
+      case sortProductEnum.priceBetween100and500:
+        priceFilter = { $gte: 100, $lte: 500 };
+        break;
+      case sortProductEnum.priceBetween500and1000:
+        priceFilter = { $gte: 500, $lte: 1000 };
+        break;
+      case sortProductEnum.priceAbove1000:
+        priceFilter = { $gte: 1000 };
+        break;
+    }
+    pipeline.push({ $match: { totalPrice: priceFilter } });
+  }
+
+  let sortCriteria: any = { createdAt: -1 };
 
   if (sort) {
     switch (sort) {
@@ -190,57 +222,52 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
       case sortProductEnum.priceHighToLow:
         sortCriteria = { totalPrice: -1 };
         break;
-      default:
-        sortCriteria = { createdAt: -1 };
-        break;
     }
   }
+  pipeline.push({ $sort: sortCriteria });
 
-  if (priceRange) {
-    switch (priceRange) {
-      case sortProductEnum.priceUnder100:
-        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $lte: 100 } }] };
-        break;
-      case sortProductEnum.priceBetween100and500:
-        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $gte: 100, $lte: 500 } }] };
-        break;
-      case sortProductEnum.priceBetween500and1000:
-        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $gte: 500, $lte: 1000 } }] };
-        break;
-      case sortProductEnum.priceAbove1000:
-        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $gte: 1000 } }] };
-        break;
-      default:
-        break;
+  pipeline.push({
+    $lookup: {
+      from: "categories",
+      localField: "category",
+      foreignField: "_id",
+      as: "category"
     }
-  }
+  });
+  pipeline.push({ $unwind: "$category" });
 
-  const aggregationPipeline: any[] = [
-    { $addFields: { totalPrice: { $add: ["$price", "$salePrice"] } } },
-    { $match: priceCriteria }
-  ];
-
-  if (Object.keys(sortCriteria).length > 0) {
-    aggregationPipeline.push({ $sort: sortCriteria });
-  }
-
-  const aggregationResult = await ProductModel.aggregate(aggregationPipeline);
-  const products = await paginate(
-    ProductModel.find({ _id: { $in: aggregationResult.map(p => p._id) } }),
-    page,
-    "categoryName image slug",
-    SchemaTypesReference.Category
-  );
-
-
-  const totalItems = products.totalItems;
-  const totalPages = Math.ceil(totalItems / 20);
+  pipeline.push({
+    $project: {
+      categoryName: "$category.name",
+      image: "$defaultImage.mediaUrl",
+      slug: 1,
+      price: 1,
+      salePrice: 1,
+      totalPrice: 1,
+      createdAt: 1
+    }
+  });
+  pipeline.push({
+    $facet: {
+      data: [
+        { $skip: skip },
+        { $limit: perPage }
+      ],
+      totalItems: [
+        { $count: "count" }
+      ]
+    }
+  });
+  const result = await ProductModel.aggregate(pipeline).exec();
+  const data = result[0].data;
+  const totalItems = result[0].totalItems[0]?.count || 0;
+  const totalPages = Math.ceil(totalItems / perPage);
 
   return {
-    data: products.data,
+    data,
     totalItems,
     totalPages,
-    currentPage: page,
+    currentPage,
   };
 };
 
