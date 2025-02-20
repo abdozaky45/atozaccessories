@@ -119,16 +119,16 @@ export const findProductBySort = async (sortBy: string, page: number) => {
   let sortCriteria = {};
   switch (sortBy) {
     case sortProductEnum.newest:
-      sortCriteria = { createdAt: -1 }; 
+      sortCriteria = { createdAt: -1 };
       break;
     case sortProductEnum.priceLowToHigh:
-      sortCriteria = { price: -1 }; 
+      sortCriteria = { price: -1 };
       break;
     case sortProductEnum.priceHighToLow:
-      sortCriteria = { price: 1 }; 
+      sortCriteria = { price: 1 };
       break;
     default:
-      sortCriteria = { createdAt: -1 }; 
+      sortCriteria = { createdAt: -1 };
       break;
   }
   const products = await paginate(
@@ -176,38 +176,10 @@ export const findProductBySoldOut = async (page: number) => {
   return products;
 };
 export const findProducts = async (sort: string, priceRange: string, page: number) => {
-  const perPage = 20;
-  const skip = (page - 1) * perPage;
-  const pipeline: any[] = [];
-  pipeline.push({ $match: { isDeleted: false } });
-  pipeline.push({
-    $addFields: {
-      totalPrice: { $add: ["$price", "$salePrice"] }
-    }
-  });
-  let priceFilter = {};
-  switch (priceRange) {
-    case sortProductEnum.priceUnder100:
-      priceFilter = { $lte: 100 };
-      break;
-    case sortProductEnum.priceBetween100and500:
-      priceFilter = { $gte: 100, $lte: 500 };
-      break;
-    case sortProductEnum.priceBetween500and1000:
-      priceFilter = { $gte: 500, $lte: 1000 };
-      break;
-    case sortProductEnum.priceAbove1000:
-      priceFilter = { $gte: 1000 };
-      break;
-    default:
-      break;
-  }
-
-  if (priceRange) {
-    pipeline.push({ $match: { totalPrice: priceFilter } });
-  }
   let sortCriteria = {};
-  if (sort) { 
+  let priceCriteria: any = { isDeleted: false };
+
+  if (sort) {
     switch (sort) {
       case sortProductEnum.newest:
         sortCriteria = { createdAt: -1 };
@@ -219,56 +191,59 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         sortCriteria = { totalPrice: -1 };
         break;
       default:
-        sortCriteria = {}; 
+        sortCriteria = { createdAt: -1 };
         break;
     }
   }
 
-  if (Object.keys(sortCriteria).length > 0) {
-    pipeline.push({ $sort: sortCriteria });
+  if (priceRange) {
+    switch (priceRange) {
+      case sortProductEnum.priceUnder100:
+        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $lte: 100 } }] };
+        break;
+      case sortProductEnum.priceBetween100and500:
+        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $gte: 100, $lte: 500 } }] };
+        break;
+      case sortProductEnum.priceBetween500and1000:
+        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $gte: 500, $lte: 1000 } }] };
+        break;
+      case sortProductEnum.priceAbove1000:
+        priceCriteria = { $and: [{ isDeleted: false }, { totalPrice: { $gte: 1000 } }] };
+        break;
+      default:
+        break;
+    }
   }
-  pipeline.push({
-    $lookup: {
-      from: "categories",
-      localField: "category",
-      foreignField: "_id",
-      as: "category"
-    }
-  });
-  pipeline.push({ $unwind: "$category" });
-  pipeline.push({
-    $project: {
-      categoryName: "$category.name",
-      image: 1,
-      slug: 1,
-      price: 1,
-      salePrice: 1,
-      totalPrice: 1,
-      createdAt: 1
-    }
-  });
-  pipeline.push({
-    $facet: {
-      data: [
-        { $skip: skip },
-        { $limit: perPage }
-      ],
-      totalItems: [
-        { $count: "count" }
-      ]
-    }
-  });
-  const result = await ProductModel.aggregate(pipeline).exec();
-  const data = result[0].data;
-  const totalItems = result[0].totalItems[0]?.count || 0;
-  const totalPages = Math.ceil(totalItems / perPage);
+
+  const aggregationPipeline: any[] = [
+    { $addFields: { totalPrice: { $add: ["$price", "$salePrice"] } } },
+    { $match: priceCriteria }
+  ];
+
+  if (Object.keys(sortCriteria).length > 0) {
+    aggregationPipeline.push({ $sort: sortCriteria });
+  }
+
+  const aggregationResult = await ProductModel.aggregate(aggregationPipeline);
+  const products = await paginate(
+    ProductModel.find({ _id: { $in: aggregationResult.map(p => p._id) } }),
+    page,
+    "categoryName image slug",
+    SchemaTypesReference.Category
+  );
+
+
+  const totalItems = products.totalItems;
+  const totalPages = Math.ceil(totalItems / 20);
+
   return {
-    data,
+    data: products.data,
     totalItems,
     totalPages,
     currentPage: page,
   };
 };
+
 export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
   return foundProducts;
