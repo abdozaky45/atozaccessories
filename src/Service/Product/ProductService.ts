@@ -186,7 +186,9 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
 
   pipeline.push({
     $addFields: {
-      totalPrice: { $add: ["$price", "$salePrice"] }
+      finalPrice: {
+        $cond: { if: { $gt: ["$salePrice", 0] }, then: "$salePrice", else: "$price" }
+      }
     }
   });
 
@@ -206,7 +208,7 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         priceFilter = { $gte: 1000 };
         break;
     }
-    pipeline.push({ $match: { totalPrice: priceFilter } });
+    pipeline.push({ $match: { finalPrice: priceFilter } });
   }
 
   let sortCriteria: any = { createdAt: -1 };
@@ -217,10 +219,10 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         sortCriteria = { createdAt: -1 };
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { totalPrice: -1 };
+        sortCriteria = { finalPrice: 1 };
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { totalPrice: 1 };
+        sortCriteria = { finalPrice: -1 };
         break;
     }
   }
