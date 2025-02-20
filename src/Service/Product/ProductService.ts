@@ -235,18 +235,6 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
     }
   });
   pipeline.push({ $unwind: "$category" });
-
-  pipeline.push({
-    $project: {
-      categoryName: "$category.name",
-      image: "$defaultImage.mediaUrl",
-      slug: 1,
-      price: 1,
-      salePrice: 1,
-      totalPrice: 1,
-      createdAt: 1
-    }
-  });
   pipeline.push({
     $facet: {
       data: [
