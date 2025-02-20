@@ -217,10 +217,10 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         sortCriteria = { createdAt: -1 };
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { totalPrice: 1 };
+        sortCriteria = { totalPrice: -1 };
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { totalPrice: -1 };
+        sortCriteria = { totalPrice: 1 };
         break;
     }
   }
