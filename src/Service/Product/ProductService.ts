@@ -219,10 +219,10 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         sortCriteria = { createdAt: -1 };
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { finalPrice: 1 };
+        sortCriteria = { finalPrice: -1 };
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { finalPrice: -1 };
+        sortCriteria = { finalPrice: 1 };
         break;
     }
   }
