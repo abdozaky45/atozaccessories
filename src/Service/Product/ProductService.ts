@@ -185,10 +185,10 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
         sortCriteria = { createdAt: -1 }; 
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { price: -1 };
+        sortCriteria = { $expr: { $add: ["$price", "$salePrice"] } }; 
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { price: 1 }; 
+        sortCriteria = { $expr: { $add: ["$price", "$salePrice"] }, order: -1 }; 
         break;
       default:
         sortCriteria = { createdAt: -1 };
@@ -199,52 +199,40 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   if (priceRange) {
     switch (priceRange) {
       case sortProductEnum.priceUnder100:
-        priceCriteria = { $and: [{ isDeleted: false }, { price: { $lte: 100 } }] };
+        priceCriteria = { $and: [{ isDeleted: false }, { $expr: { $lte: [{ $add: ["$price", "$salePrice"] }, 100] } }] };
         break;
       case sortProductEnum.priceBetween100and500:
-        priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 100, $lte: 500 } }] };
+        priceCriteria = { $and: [{ isDeleted: false }, { $expr: { $gte: [{ $add: ["$price", "$salePrice"] }, 100] } }, { $expr: { $lte: [{ $add: ["$price", "$salePrice"] }, 500] } }] };
         break;
       case sortProductEnum.priceBetween500and1000:
-        priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 500, $lte: 1000 } }] };
+        priceCriteria = { $and: [{ isDeleted: false }, { $expr: { $gte: [{ $add: ["$price", "$salePrice"] }, 500] } }, { $expr: { $lte: [{ $add: ["$price", "$salePrice"] }, 1000] } }] };
         break;
       case sortProductEnum.priceAbove1000:
-        priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 1000 } }] };
+        priceCriteria = { $and: [{ isDeleted: false }, { $expr: { $gte: [{ $add: ["$price", "$salePrice"] }, 1000] } }] };
         break;
       default:
         break;
     }
   }
 
-  const saleProducts = await paginate(
-    ProductModel.find({
-      $and: [{ ...priceCriteria }, { salePrice: { $gt: 1 } }]
-    }).sort(sortCriteria),
+  const products = await paginate(
+    ProductModel.find(priceCriteria).sort(sortCriteria),
     page,
     "categoryName image slug",
     SchemaTypesReference.Category
   );
 
-  const regularProducts = await paginate(
-    ProductModel.find({
-      $and: [{ ...priceCriteria }, { salePrice: { $lte: 1 } }]
-    }).sort(sortCriteria),
-    page,
-    "categoryName image slug",
-    SchemaTypesReference.Category
-  );
-
-  const allProducts = [...saleProducts.data, ...regularProducts.data];
-
-  const totalItems = saleProducts.totalItems + regularProducts.totalItems;
+  const totalItems = products.totalItems;
   const totalPages = Math.ceil(totalItems / 20); 
 
   return {
-    data: allProducts,
+    data: products.data,
     totalItems,
     totalPages,
     currentPage: page,
   };
 };
+
 export const retrieveProducts = async (productIds: any) => {
   const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
   return foundProducts;
