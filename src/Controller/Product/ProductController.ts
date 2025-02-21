@@ -209,7 +209,7 @@ export const getAllProductsByCategoryId = asyncHandler(async (req: Request, res:
   const pageNumber = Number(page);
   const checkCategory = await findCategoryById(categoryId);
   if (!checkCategory) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
-  const products = await findAllProductsByCategory(categoryId,sort as string, priceRange as string, pageNumber);
+  const products = await findAllProductsByCategory(sort as string, priceRange as string, pageNumber,categoryId);
   return res.json(new ApiResponse(200, { products }, ""));
 });
 export const getAnalysis = asyncHandler(async (req: Request, res: Response) => {
