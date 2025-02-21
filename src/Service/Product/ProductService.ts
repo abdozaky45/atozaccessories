@@ -332,15 +332,95 @@ export const updateStock = async (
     console.log("No operations to perform.");
   }
 };
-export const findAllProductsByCategory = async (categoryId: string, page: number) => {
-  const products = await paginate(
-    ProductModel.find({ category: categoryId, isDeleted: false }).sort({ createdAt: -1 }),
-    page,
-    "categoryName image slug",
-    SchemaTypesReference.Category
-  );
-  return products;
+export const findAllProductsByCategory = async (categoryId: string, sort: string, priceRange: string, page: number) => {
+  const perPage = 20;
+  const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const skip = (currentPage - 1) * perPage;
+
+  const pipeline: any[] = [];
+
+  pipeline.push({ $match: { category: categoryId, isDeleted: false } });
+
+  pipeline.push({
+    $addFields: {
+      finalPrice: {
+        $cond: { if: { $gt: ["$salePrice", 0] }, then: "$salePrice", else: "$price" }
+      }
+    }
+  });
+
+  if (priceRange) {
+    let priceFilter = {};
+    switch (priceRange) {
+      case sortProductEnum.priceUnder100:
+        priceFilter = { $lte: 100 };
+        break;
+      case sortProductEnum.priceBetween100and500:
+        priceFilter = { $gte: 100, $lte: 500 };
+        break;
+      case sortProductEnum.priceBetween500and1000:
+        priceFilter = { $gte: 500, $lte: 1000 };
+        break;
+      case sortProductEnum.priceAbove1000:
+        priceFilter = { $gte: 1000 };
+        break;
+    }
+    pipeline.push({ $match: { finalPrice: priceFilter } });
+  }
+
+  let sortCriteria: any = { createdAt: -1 };
+
+  if (sort) {
+    switch (sort) {
+      case sortProductEnum.newest:
+        sortCriteria = { createdAt: -1 };
+        break;
+      case sortProductEnum.priceLowToHigh:
+        sortCriteria = { finalPrice: 1 };
+        break;
+      case sortProductEnum.priceHighToLow:
+        sortCriteria = { finalPrice: -1 };
+        break;
+    }
+  }
+  pipeline.push({ $sort: sortCriteria });
+
+  pipeline.push({
+    $lookup: {
+      from: "categories",
+      localField: "category",
+      foreignField: "_id",
+      as: "category"
+    }
+  });
+  pipeline.push({ $unwind: "$category" });
+
+  pipeline.push({
+    $facet: {
+      data: [
+        { $skip: skip },
+        { $limit: perPage },
+        { $project: { categoryName: 1, image: 1, slug: 1, finalPrice: 1 } }
+      ],
+      totalItems: [
+        { $count: "count" }
+      ]
+    }
+  });
+
+  const result = await ProductModel.aggregate(pipeline).exec();
+  const data = result[0].data;
+  const totalItems = result[0].totalItems[0]?.count || 0;
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  return {
+    data,
+    totalItems,
+    totalPages,
+    currentPage,
+  };
 };
+
 export const getAnalytics = async () => {
   const totalRevenue = await OrderModel.aggregate([
     { $match: { status: orderStatusType.delivered } },

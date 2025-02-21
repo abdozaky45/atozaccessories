@@ -205,11 +205,11 @@ export const getProductBySoldOut = asyncHandler(async (req: Request, res: Respon
 });
 export const getAllProductsByCategoryId = asyncHandler(async (req: Request, res: Response) => {
   const { categoryId } = req.params;
-  const { page } = req.query;
+  const { sort, priceRange ,page } = req.query;
   const pageNumber = Number(page);
   const checkCategory = await findCategoryById(categoryId);
   if (!checkCategory) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
-  const products = await findAllProductsByCategory(categoryId, pageNumber);
+  const products = await findAllProductsByCategory(categoryId,sort as string, priceRange as string, pageNumber);
   return res.json(new ApiResponse(200, { products }, ""));
 });
 export const getAnalysis = asyncHandler(async (req: Request, res: Response) => {
