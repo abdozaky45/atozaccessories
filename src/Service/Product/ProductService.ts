@@ -6,7 +6,7 @@ import { paginate } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import Fuse from "fuse.js";
 import { sortProductEnum } from "../../Utils/SortProduct";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { ProductOrder } from "../../Model/Order/Iorder";
 import IProduct from "../../Model/Product/Iproduct";
 import OrderModel from "../../Model/Order/OrderModel";
@@ -332,14 +332,24 @@ export const updateStock = async (
     console.log("No operations to perform.");
   }
 };
-export const findAllProductsByCategory = async (categoryId: string, sort: string, priceRange: string, page: number) => {
+
+export const findAllProductsByCategory = async (
+  sort: string,
+  priceRange: string,
+  page: number,
+  categoryId: string | Types.ObjectId
+) => {
+  if (!categoryId) {
+    throw new Error("categoryId is required");
+  }
+  
   const perPage = 20;
   const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
   const skip = (currentPage - 1) * perPage;
 
   const pipeline: any[] = [];
 
-  pipeline.push({ $match: { category: categoryId, isDeleted: false } });
+  pipeline.push({ $match: { isDeleted: false, category: new mongoose.Types.ObjectId(categoryId) } });
 
   pipeline.push({
     $addFields: {
@@ -376,10 +386,10 @@ export const findAllProductsByCategory = async (categoryId: string, sort: string
         sortCriteria = { createdAt: -1 };
         break;
       case sortProductEnum.priceLowToHigh:
-        sortCriteria = { finalPrice: 1 };
+        sortCriteria = { finalPrice: -1 };
         break;
       case sortProductEnum.priceHighToLow:
-        sortCriteria = { finalPrice: -1 };
+        sortCriteria = { finalPrice: 1 };
         break;
     }
   }
@@ -394,20 +404,18 @@ export const findAllProductsByCategory = async (categoryId: string, sort: string
     }
   });
   pipeline.push({ $unwind: "$category" });
-
   pipeline.push({
     $facet: {
       data: [
         { $skip: skip },
-        { $limit: perPage },
-        { $project: { categoryName: 1, image: 1, slug: 1, finalPrice: 1 } }
+        { $limit: perPage }
       ],
       totalItems: [
         { $count: "count" }
       ]
     }
   });
-
+  
   const result = await ProductModel.aggregate(pipeline).exec();
   const data = result[0].data;
   const totalItems = result[0].totalItems[0]?.count || 0;
@@ -420,6 +428,8 @@ export const findAllProductsByCategory = async (categoryId: string, sort: string
     currentPage,
   };
 };
+
+
 
 export const getAnalytics = async () => {
   const totalRevenue = await OrderModel.aggregate([
