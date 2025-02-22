@@ -154,12 +154,12 @@ class OrderController {
   });
   getAllOrders = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const page = parseInt(req.query.page as string);
-    const { status } = req.query;
+    const { status ,orderId } = req.query;
     const { role } = req.body.currentUser.userInfo;
     if (role !== UserTypeEnum.ADMIN) {
       throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
     }
-    const orders = await OrderService.getAllOrders(page, status as string);
+    const orders = await OrderService.getAllOrders(page, status as string,orderId as string);
     return res.json(new ApiResponse(200, orders, SuccessMessage.ORDER_FETCHED));
   });
   getOrderById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
