@@ -22,6 +22,7 @@ export const getAllOrdersValidation = baseSchema.concat(
     joi.object({
         page: joi.number().required(),
         status: joi.string().optional(),
+        orderId: joi.string().optional(),
     }).required()
 );
 export const getOrderByIdValidation = baseSchema.concat(

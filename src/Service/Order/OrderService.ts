@@ -53,7 +53,7 @@ class OrderService {
     ]).sort({ createdAt: -1 });
     return orders;
   }
-  async getAllOrders(page: number, status?: string) {
+  async getAllOrders(page: number, status?: string,orderId?: string) {
     let limit = 20;
     page = !page || page < 1 || isNaN(page) ? 1 : page;
     const skip = limit * (page - 1);
@@ -61,7 +61,14 @@ class OrderService {
     if (status) {
       filter.status = status;
     }
-
+    if (orderId) {
+      filter.$expr = {
+          $regexMatch: {
+              input: { $toString: "$_id" },
+              regex: orderId + "$"
+          }
+      };
+  }
     const totalItems = await OrderModel.countDocuments(filter);
     const totalPages = Math.ceil(totalItems / limit);
     const orders = await OrderModel.find(filter)
