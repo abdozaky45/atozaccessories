@@ -42,7 +42,10 @@ export const prepareProductUpdates = async (
     updates = true;
   }
 
-  if (productData.productName && productData.productName !== product.productName) {
+  if (
+    productData.productName &&
+    productData.productName !== product.productName
+  ) {
     product.slug = slugify(product.productName);
     updates = true;
   }
@@ -57,9 +60,9 @@ export const prepareProductUpdates = async (
   }
 
   if (albumImages && Array.isArray(albumImages)) {
-    if (!product.albumImages) {
-      product.albumImages = []; 
-    }
+    // if (!product.albumImages) {
+    product.albumImages = [];
+    // }
 
     albumImages.forEach((imageUrl: string) => {
       const mediaId = extractMediaId(imageUrl);
@@ -76,7 +79,9 @@ export const prepareProductUpdates = async (
 };
 
 export const deleteOneProduct = async (_id: string | Types.ObjectId) => {
-  const product = await ProductModel.findByIdAndUpdate(_id, { isDeleted: true });
+  const product = await ProductModel.findByIdAndUpdate(_id, {
+    isDeleted: true,
+  });
   return product;
 };
 export const findAllProducts = async (page: number) => {
@@ -90,7 +95,9 @@ export const findAllProducts = async (page: number) => {
 };
 export const findAllSaleProducts = async (page: number) => {
   const products = await paginate(
-    ProductModel.find({ isSale: true, isDeleted: false }).sort({ createdAt: -1 }),
+    ProductModel.find({ isSale: true, isDeleted: false }).sort({
+      createdAt: -1,
+    }),
     page,
     "categoryName image slug",
     SchemaTypesReference.Category
@@ -145,20 +152,31 @@ export const findProductBySort = async (sortBy: string, page: number) => {
   );
   return products;
 };
-export const findProductByPriceRange = async (priceRange: string, page: number) => {
+export const findProductByPriceRange = async (
+  priceRange: string,
+  page: number
+) => {
   let priceCriteria: any = { isDeleted: false };
   switch (priceRange) {
     case sortProductEnum.priceUnder100:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $lte: 100 } }] };
+      priceCriteria = {
+        $and: [{ isDeleted: false }, { price: { $lte: 100 } }],
+      };
       break;
     case sortProductEnum.priceBetween100and500:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 100, $lte: 500 } }] };
+      priceCriteria = {
+        $and: [{ isDeleted: false }, { price: { $gte: 100, $lte: 500 } }],
+      };
       break;
     case sortProductEnum.priceBetween500and1000:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 500, $lte: 1000 } }] };
+      priceCriteria = {
+        $and: [{ isDeleted: false }, { price: { $gte: 500, $lte: 1000 } }],
+      };
       break;
     case sortProductEnum.priceAbove1000:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 1000 } }] };
+      priceCriteria = {
+        $and: [{ isDeleted: false }, { price: { $gte: 1000 } }],
+      };
       break;
     default:
       priceCriteria = { isDeleted: false };
@@ -174,14 +192,20 @@ export const findProductByPriceRange = async (priceRange: string, page: number) 
 };
 export const findProductBySoldOut = async (page: number) => {
   const products = await paginate(
-    ProductModel.find({ isSoldOut: true, isDeleted: false }).sort({ createdAt: -1 }),
+    ProductModel.find({ isSoldOut: true, isDeleted: false }).sort({
+      createdAt: -1,
+    }),
     page,
     "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
 };
-export const findProducts = async (sort: string, priceRange: string, page: number) => {
+export const findProducts = async (
+  sort: string,
+  priceRange: string,
+  page: number
+) => {
   const perPage = 20;
   const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
   const skip = (currentPage - 1) * perPage;
@@ -193,9 +217,13 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
   pipeline.push({
     $addFields: {
       finalPrice: {
-        $cond: { if: { $gt: ["$salePrice", 0] }, then: "$salePrice", else: "$price" }
-      }
-    }
+        $cond: {
+          if: { $gt: ["$salePrice", 0] },
+          then: "$salePrice",
+          else: "$price",
+        },
+      },
+    },
   });
 
   if (priceRange) {
@@ -239,20 +267,15 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
       from: "categories",
       localField: "category",
       foreignField: "_id",
-      as: "category"
-    }
+      as: "category",
+    },
   });
   pipeline.push({ $unwind: "$category" });
   pipeline.push({
     $facet: {
-      data: [
-        { $skip: skip },
-        { $limit: perPage }
-      ],
-      totalItems: [
-        { $count: "count" }
-      ]
-    }
+      data: [{ $skip: skip }, { $limit: perPage }],
+      totalItems: [{ $count: "count" }],
+    },
   });
   const result = await ProductModel.aggregate(pipeline).exec();
   const data = result[0].data;
@@ -268,7 +291,10 @@ export const findProducts = async (sort: string, priceRange: string, page: numbe
 };
 
 export const retrieveProducts = async (productIds: any) => {
-  const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
+  const foundProducts = await ProductModel.find({
+    _id: { $in: productIds },
+    isDeleted: false,
+  });
   return foundProducts;
 };
 export const updateStock = async (
@@ -280,24 +306,27 @@ export const updateStock = async (
   for (const orderProduct of orderProducts) {
     let productIdString: string;
 
-    if (typeof orderProduct.productId === 'string') {
+    if (typeof orderProduct.productId === "string") {
       productIdString = orderProduct.productId;
-    } else if ('_id' in orderProduct.productId) {
+    } else if ("_id" in orderProduct.productId) {
       productIdString = orderProduct.productId._id.toString();
     } else {
-      console.error('Invalid productId type:', orderProduct.productId);
+      console.error("Invalid productId type:", orderProduct.productId);
       continue;
     }
     const product = productRecord[productIdString];
     if (product && orderProduct.quantity !== undefined) {
-      const quantityChange = increaseStock ? orderProduct.quantity : -orderProduct.quantity;
+      const quantityChange = increaseStock
+        ? orderProduct.quantity
+        : -orderProduct.quantity;
 
       if (increaseStock) {
         product.soldItems = (product.soldItems ?? 0) - quantityChange;
         product.availableItems = (product.availableItems ?? 0) + quantityChange;
       } else {
         product.soldItems = (product.soldItems ?? 0) + Math.abs(quantityChange);
-        product.availableItems = (product.availableItems ?? 0) - Math.abs(quantityChange);
+        product.availableItems =
+          (product.availableItems ?? 0) - Math.abs(quantityChange);
       }
       if (product.availableItems <= 0) {
         product.isSoldOut = true;
@@ -326,7 +355,7 @@ export const updateStock = async (
     try {
       await ProductModel.bulkWrite(bulkOperations);
     } catch (error) {
-      console.error('Error performing bulk update:', error);
+      console.error("Error performing bulk update:", error);
     }
   } else {
     console.log("No operations to perform.");
@@ -342,21 +371,30 @@ export const findAllProductsByCategory = async (
   if (!categoryId) {
     throw new Error("categoryId is required");
   }
-  
+
   const perPage = 20;
   const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
   const skip = (currentPage - 1) * perPage;
 
   const pipeline: any[] = [];
 
-  pipeline.push({ $match: { isDeleted: false, category: new mongoose.Types.ObjectId(categoryId) } });
+  pipeline.push({
+    $match: {
+      isDeleted: false,
+      category: new mongoose.Types.ObjectId(categoryId),
+    },
+  });
 
   pipeline.push({
     $addFields: {
       finalPrice: {
-        $cond: { if: { $gt: ["$salePrice", 0] }, then: "$salePrice", else: "$price" }
-      }
-    }
+        $cond: {
+          if: { $gt: ["$salePrice", 0] },
+          then: "$salePrice",
+          else: "$price",
+        },
+      },
+    },
   });
 
   if (priceRange) {
@@ -400,22 +438,17 @@ export const findAllProductsByCategory = async (
       from: "categories",
       localField: "category",
       foreignField: "_id",
-      as: "category"
-    }
+      as: "category",
+    },
   });
   pipeline.push({ $unwind: "$category" });
   pipeline.push({
     $facet: {
-      data: [
-        { $skip: skip },
-        { $limit: perPage }
-      ],
-      totalItems: [
-        { $count: "count" }
-      ]
-    }
+      data: [{ $skip: skip }, { $limit: perPage }],
+      totalItems: [{ $count: "count" }],
+    },
   });
-  
+
   const result = await ProductModel.aggregate(pipeline).exec();
   const data = result[0].data;
   const totalItems = result[0].totalItems[0]?.count || 0;
@@ -429,12 +462,10 @@ export const findAllProductsByCategory = async (
   };
 };
 
-
-
 export const getAnalytics = async () => {
   const totalRevenue = await OrderModel.aggregate([
     { $match: { status: orderStatusType.delivered } },
-    { $group: { _id: null, total: { $sum: '$price' } } }
+    { $group: { _id: null, total: { $sum: "$price" } } },
   ]);
   const totalOrders = await OrderModel.countDocuments();
   const totalCustomers = await AuthModel.countDocuments();
@@ -448,6 +479,9 @@ export const getAnalytics = async () => {
   };
 };
 export const getAvailableItems = async (productIds: [string]) => {
-  const products = await ProductModel.find({ _id: { $in: productIds } }, { _id: 1, availableItems: 1 });
+  const products = await ProductModel.find(
+    { _id: { $in: productIds } },
+    { _id: 1, availableItems: 1 }
+  );
   return products;
-}
+};

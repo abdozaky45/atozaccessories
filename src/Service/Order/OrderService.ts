@@ -16,9 +16,12 @@ class OrderService {
   }
   async getOrderById(orderId: Types.ObjectId | string) {
     const order = await OrderModel.findById(orderId).populate([
-      { path: 'products.productId'},
-      { path: SchemaTypesReference.Shipping, select: 'category cost' },
-      { path: SchemaTypesReference.UserInformation, select: 'country address primaryPhone governorate' },
+      { path: "products.productId" },
+      { path: SchemaTypesReference.Shipping, select: "category cost" },
+      {
+        path: SchemaTypesReference.UserInformation,
+        select: "country address primaryPhone governorate",
+      },
     ]);
     return order;
   }
@@ -30,30 +33,36 @@ class OrderService {
     for (const orderProduct of orderProducts) {
       const product = productRecord[orderProduct.productId.toString()];
       if (product && orderProduct.quantity !== undefined) {
-        const quantityChange = increaseStock ? orderProduct.quantity : -orderProduct.quantity;
+        const quantityChange = increaseStock
+          ? orderProduct.quantity
+          : -orderProduct.quantity;
         product.soldItems = (product.soldItems ?? 0) - quantityChange;
         product.availableItems = (product.availableItems ?? 0) + quantityChange;
         try {
           await (product as any).save();
         } catch (error) {
-          console.error('Error saving product:', error);
-
+          console.error("Error saving product:", error);
         }
       }
     }
-  };
+  }
   async getUserOrders(userId: Types.ObjectId | string) {
-    const orders = await OrderModel.find({ user: userId }).populate([
-      { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
-      { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
-      {
-        path: 'products.productId',
-        select: 'defaultImage',
-      }
-    ]).sort({ createdAt: -1 });
+    const orders = await OrderModel.find({ user: userId })
+      .populate([
+        { path: SchemaTypesReference.Shipping, select: "-_id category cost" },
+        {
+          path: SchemaTypesReference.UserInformation,
+          select: "-_id country address primaryPhone governorate",
+        },
+        {
+          path: "products.productId",
+          select: "defaultImage",
+        },
+      ])
+      .sort({ createdAt: -1 });
     return orders;
   }
-  async getAllOrders(page: number, status?: string,orderId?: string) {
+  async getAllOrders(page: number, status?: string, orderId?: string) {
     let limit = 20;
     page = !page || page < 1 || isNaN(page) ? 1 : page;
     const skip = limit * (page - 1);
@@ -63,22 +72,26 @@ class OrderService {
     }
     if (orderId) {
       filter.$expr = {
-          $regexMatch: {
-              input: { $toString: "$_id" },
-              regex: orderId + "$"
-          }
+        $regexMatch: {
+          input: { $toString: "$_id" },
+          regex: orderId + "$",
+        },
       };
-  }
+    }
     const totalItems = await OrderModel.countDocuments(filter);
     const totalPages = Math.ceil(totalItems / limit);
     const orders = await OrderModel.find(filter)
       .populate([
-        { path: SchemaTypesReference.Shipping, select: '-_id category cost' },
-        { path: SchemaTypesReference.UserInformation, select: '-_id country address primaryPhone governorate' },
+        { path: SchemaTypesReference.Shipping, select: "-_id category cost" },
         {
-          path: 'products.productId',
-          select: 'defaultImage',
-        }
+          path: SchemaTypesReference.UserInformation,
+          select:
+            "-_id firstName lastName country address primaryPhone governorate",
+        },
+        {
+          path: "products.productId",
+          select: "defaultImage",
+        },
       ])
       .skip(skip)
       .limit(limit)
@@ -89,4 +102,4 @@ class OrderService {
   }
 }
 
-export default new OrderService;
+export default new OrderService();
