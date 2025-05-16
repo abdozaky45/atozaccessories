@@ -20,7 +20,7 @@ import wishlistRouter from "./Router/Wishlist/WishlistRouter";
 import shippingRouter from "./Router/Shipping/ShippingRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
 import { getCorsOptions } from "./config";
-import { blockScrapers, enforcePublicApiRestrictions } from "./middleware/Security";
+//import { blockScrapers, enforcePublicApiRestrictions } from "./middleware/Security";
 const app: Application = express();
 app.use(express.json());
 app.use(cors());
