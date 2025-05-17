@@ -39,12 +39,44 @@ export const registerWithEmail = asyncHandler(
         codeCreatedAt: moment().valueOf(),
       });
     }
-    const isSend = await sendActivationEmail(email, activeCode);
-    return isSend
-      ? res
-        .status(200)
-        .json(new ApiResponse(200, { id: user._id, email }, SuccessMessage.EMAIL_SENT))
-      : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
+    const updateUser = await updateUserAndDeleteActiveCode(email);
+    const accessToken = generateAccessToken({
+      payload: {
+        _id: updateUser?._id,
+        role: updateUser?.role,
+        email: updateUser?.email,
+      },
+    });
+    const refreshToken = generateRefreshToken({
+      payload: {
+        _id: updateUser?._id,
+      },
+    });
+    const agent = req.headers["user-agent"] || "unknown";
+    await createNewAccessAndRefreshToken(
+      accessToken,
+      refreshToken,
+      updateUser!._id,
+      agent
+    );
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none", // front end domain to be added
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, { accessToken }, SuccessMessage.SUCCESS_ACCOUNT)
+      );
+    // const isSend = await sendActivationEmail(email, activeCode);
+    // return isSend
+    //   ? res
+    //     .status(200)
+    //     .json(new ApiResponse(200, { id: user._id, email }, SuccessMessage.EMAIL_SENT))
+    //   : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
   }
 );
 export const activeAccount = asyncHandler(
