@@ -5,7 +5,7 @@ const setupAgenda = async (DB_URL: string) => {
   agenda.define("update-expired-products", async () => {
     try {
       console.log("Checking for expired products...");
-      const now = new Date();
+      const now = new Date().valueOf();
       const expiredProducts = await ProductModel.find({
         expiredSale: { $lt: now },
       });
