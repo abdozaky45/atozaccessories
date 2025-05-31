@@ -23,7 +23,9 @@ import { getCorsOptions } from "./config";
 //import { blockScrapers, enforcePublicApiRestrictions } from "./middleware/Security";
 const app: Application = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: '*',
+}));
 // app.use(cors(getCorsOptions()));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
