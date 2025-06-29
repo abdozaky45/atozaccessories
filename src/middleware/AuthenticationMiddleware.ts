@@ -14,7 +14,16 @@ const checkAuthority = asyncHandler(
       return next();
     }
     const token = authorization.split(" ")[1];
-    const decoded = verifyToken({ token });
+    let decoded;
+    try {
+      decoded = verifyToken({ token });
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token or expired",
+      });
+    }
+
     if (!decoded?._id) {
       throw new ApiError(401, ErrorMessages.INVALID_PAYLOAD);
     }

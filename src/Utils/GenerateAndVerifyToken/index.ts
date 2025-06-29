@@ -13,7 +13,6 @@ export const generateAccessToken = ({
   signature = process.env.TOKEN_SIGNATURE,
 }: TokenOptions = {}): string => {
   const token = jwt.sign(payload, signature as string, {
-    expiresIn: '7d',
   });
   return token;
 };
