@@ -8,7 +8,10 @@ const checkAuthority = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { authorization } = req.headers;
     if (!authorization) {
-      throw new ApiError(401, ErrorMessages.UNAUTHORIZED_ERROR);
+    return res.status(401).json({
+        success: false,
+        message: "no token provided or in-valid Bearer Key",
+      });
     }
     if (req.originalUrl.startsWith("/public")) {
       return next();
@@ -43,11 +46,9 @@ const checkAuthority = asyncHandler(
 const checkRole = (requiredRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const { currentUser } = req.body;
-
     if (!requiredRoles.includes(currentUser.userInfo.role)) {
       throw new ApiError(403, ErrorMessages.ROLE_ERROR);
     }
-
     next();
   };
 };
