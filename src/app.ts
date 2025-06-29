@@ -26,7 +26,9 @@ app.use(express.json());
 app.use(cors({
   origin: '*',
 }));
-// app.use(cors(getCorsOptions()));
+app.options('*', cors());
+
+//  app.use(cors(getCorsOptions()));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.get("/", async (_, res) => {
