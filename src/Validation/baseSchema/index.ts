@@ -8,7 +8,6 @@ export const baseSchema = joi.object({
         role: joi.string().required(),
         email: joi.string().email().required(),
         iat: joi.number().required(),
-        exp: joi.number().required(),
       }).required(),
       token: joi.string().required(),
     })
