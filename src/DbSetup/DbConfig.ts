@@ -7,7 +7,7 @@ const DbConnection = async () => {
     mongoose.set("strictQuery",false);
       await connect(Db_Connection);
       console.log("DB Connected");
-      await setupAgenda(Db_Connection)
+     // await setupAgenda(Db_Connection)
    }
    catch (error) {
       console.log(error);

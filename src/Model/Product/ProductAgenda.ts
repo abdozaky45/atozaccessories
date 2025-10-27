@@ -23,7 +23,7 @@ const setupAgenda = async (DB_URL: string) => {
       console.error("Error updating expired products:", error);
     }
   });
-  await agenda.start();
-  await agenda.every("1 week", "update-expired-products");
+  // await agenda.start();
+  // await agenda.every("1 week", "update-expired-products");
 };
 export default setupAgenda;
