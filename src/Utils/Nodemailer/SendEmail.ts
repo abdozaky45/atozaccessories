@@ -1,36 +1,34 @@
-import nodemailer, { SentMessageInfo } from 'nodemailer';
+import { Resend } from 'resend';
 
 interface EmailOptions {
   from?: string;
   to: string | string[];
   subject: string;
   html: string;
+  text?: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
 }
 
 export const sendEmail = async ({
-  from = process.env.EMAIL,
+  from = process.env.RESEND_FROM ?? 'A to Z Accessory <onboarding@resend.dev>',
   to,
   subject,
   html,
+  text,
+  replyTo,
+  headers,
 }: EmailOptions): Promise<boolean> => {
-  const transporter = nodemailer.createTransport({
-    host: 'localhost',
-    port: 465,
-    secure: true,
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const info: SentMessageInfo = await transporter.sendMail({
-    from: `a.to.zaccessories <${from}>`,
-    to,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({
+    from,
+    to: Array.isArray(to) ? to : [to],
     subject,
-    text: 'your login code',
     html,
+    ...(text && { text }),
+    ...(replyTo && { replyTo }),
+    ...(headers && { headers }),
   });
 
-  return info.accepted.length < 1 ? false : true;
+  return !error;
 };

@@ -30,6 +30,10 @@ const ProductSchema = new Schema<IProduct>(
     albumImages: { type: [ImageSchema], required: false },
     createdAt: RequiredNumber,
     isDeleted: NotRequiredBoolean,
+    isBestSeller: NotRequiredBoolean,
+    bestSellerManual: NotRequiredBoolean,
+    wholesalePrice: NotRequiredNumber,
+    finalPrice: NotRequiredNumber,
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

@@ -11,15 +11,19 @@ export default interface IProduct {
   productName: string;
   productDescription: string;
   price: number;
-  availableItems: number;  
+  availableItems: number;
   salePrice?: number;
-  discount?:number;
+  discount?: number;
   discountPercentage?: number;
-  soldItems?:number;
+  soldItems?: number;
   isSoldOut?: boolean;
   expiredSale?: number;
   isExpiredSale?: boolean;
   isSale?: boolean;
+  isBestSeller?: boolean;
+  bestSellerManual?: boolean;
+  wholesalePrice?: number;
+  finalPrice?: number;
   category: Types.ObjectId | string;
   createdBy: Types.ObjectId | string;
   slug: string;
@@ -29,14 +33,3 @@ export default interface IProduct {
   isDeleted?: boolean;
   paginate?: (page: number) => Promise<any>;
 }
-   /*
-*productName
-*productDescription
-*price
-*availableItems
-*Category
-*defaultImage
-salePrice
-expiredSale
-albumImages
- */

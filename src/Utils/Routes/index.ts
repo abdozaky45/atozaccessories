@@ -1,13 +1,19 @@
 enum RouterEnum {
   authentication = "authentication",
   user = "user",
-  category = "category",
-  product = "product",
+  category = "admin/categories",
+  product = "admin/products",
+  products = "products",
   public = "public",
   aws = "aws",
   imageSlider = "slider",
   wishlist = "wishlist",
   shipping = "shipping",
   order = "order",
+  adminOrder = "admin/orders",
+  icon = "admin/icons",
+  color = "admin/colors",
+  size = "admin/sizes",
+  offer = "admin/offers",
 }
 export default RouterEnum;
