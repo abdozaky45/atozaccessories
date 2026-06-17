@@ -8,7 +8,6 @@ const OFFER_TYPES = [
   "buy_x_get_free_shipping",
   "buy_x_get_half_price",
   "spend_x_get_free_item",
-  "deal_of_day",
   "flash_sale",
 ];
 

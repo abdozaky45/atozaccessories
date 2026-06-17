@@ -14,6 +14,8 @@ import { orderStatusType } from "../../Utils/OrderStatusType";
 import AuthModel from "../../Model/User/auth/AuthModel";
 import { deleteFromS3 } from "../../Utils/S3";
 import CategoryModel from "../../Model/Categories/CategoryModel";
+import WishListModel from "../../Model/Wishlist/WishlistModel";
+import moment from "../../Utils/DateAndTime";
 
 // ─── Product CRUD ────────────────────────────────────────────────────────────
 
@@ -312,27 +314,6 @@ const attachVariants = async (products: any[]) => {
   return products.map((p) => ({ ...p, variants: variantsByProductId[p._id.toString()] || [] }));
 };
 
-// ─── Best seller ──────────────────────────────────────────────────────────────
-
-export const toggleBestSeller = async (productId: string) => {
-  const product = await ProductModel.findById(productId);
-  if (!product) return null;
-  product.isBestSeller = !product.isBestSeller;
-  // Always mark as manually controlled — cron job must not override this product
-  product.bestSellerManual = true;
-  await product.save();
-  return product;
-};
-
-export const releaseBestSeller = async (productId: string) => {
-  const product = await ProductModel.findByIdAndUpdate(
-    productId,
-    { bestSellerManual: false },
-    { new: true }
-  );
-  return product;
-};
-
 // ─── Price helpers ────────────────────────────────────────────────────────────
 
 export const ratioCalculatePrice = async (price: number, salePrice: number) => {
@@ -345,7 +326,7 @@ export const ratioCalculatePrice = async (price: number, salePrice: number) => {
     isSale = false;
   } else if (salePrice < price) {
     discount = price - salePrice;
-    discountPercentage = (discount / price) * 100;
+    discountPercentage = Math.round((discount / price) * 100 * 100) / 100;
     isSale = true;
   }
   return { discount, discountPercentage, isSale };
@@ -446,19 +427,164 @@ export const updateStock = async (
 };
 
 export const getAnalytics = async () => {
-  const totalRevenue = await OrderModel.aggregate([
-    { $match: { status: orderStatusType.delivered } },
+  const TZ = "Africa/Cairo";
+
+  // ─── Products ─────────────────────────────────────────────────────────────
+  const totalProducts = await ProductModel.countDocuments({ isDeleted: false });
+  const soldOutProducts = await ProductModel.countDocuments({ isDeleted: false, isSoldOut: true });
+
+  const topSellingDocs = await ProductModel.find({ isDeleted: false })
+    .sort({ soldItems: -1 })
+    .limit(5)
+    .select("productName finalPrice soldItems defaultImage discount discountPercentage")
+    .lean();
+  const topSelling = topSellingDocs.map((p) => ({
+    ...p,
+    discountPercentage:
+      p.discountPercentage !== undefined && p.discountPercentage !== null
+        ? Math.round(p.discountPercentage)
+        : p.discountPercentage,
+  }));
+
+  const mostWishlisted = await WishListModel.aggregate([
+    { $group: { _id: "$productId", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: ProductModel.collection.name,
+        localField: "_id",
+        foreignField: "_id",
+        as: "product",
+      },
+    },
+    { $unwind: "$product" },
+    {
+      $project: {
+        _id: 0,
+        count: 1,
+        product: {
+          _id: "$product._id",
+          productName: "$product.productName",
+          finalPrice: "$product.finalPrice",
+          defaultImage: "$product.defaultImage",
+        },
+      },
+    },
+  ]);
+
+  const priceTotals = await ProductModel.aggregate([
+    { $match: { isDeleted: false } },
+    {
+      $group: {
+        _id: null,
+        totalFinalPrice: { $sum: { $ifNull: ["$finalPrice", 0] } },
+        totalWholesalePrice: { $sum: { $ifNull: ["$wholesalePrice", 0] } },
+      },
+    },
+  ]);
+
+  // ─── Categories ───────────────────────────────────────────────────────────
+  const totalCategories = await CategoryModel.countDocuments({ isDeleted: false });
+
+  // ─── Orders ───────────────────────────────────────────────────────────────
+  const totalOrders = await OrderModel.countDocuments();
+
+  const startOfToday = moment().startOf("day").toDate();
+  const endOfToday = moment().endOf("day").toDate();
+
+  // todaySales = revenue from today's orders (cancelled excluded); todayOrders = all of today's orders
+  const todaySalesAgg = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: startOfToday, $lte: endOfToday },
+        status: { $ne: orderStatusType.cancelled },
+      },
+    },
     { $group: { _id: null, total: { $sum: "$totalAmount" } } },
   ]);
-  const totalOrders = await OrderModel.countDocuments();
+  const todayOrders = await OrderModel.countDocuments({
+    createdAt: { $gte: startOfToday, $lte: endOfToday },
+  });
+
+  // totalRevenue = all-time revenue excluding cancelled orders
+  const totalRevenueAgg = await OrderModel.aggregate([
+    { $match: { status: { $ne: orderStatusType.cancelled } } },
+    { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+  ]);
+
+  // averageOrderValue = across completed (delivered) orders only
+  const averageOrderAgg = await OrderModel.aggregate([
+    { $match: { status: orderStatusType.delivered } },
+    { $group: { _id: null, avg: { $avg: "$totalAmount" } } },
+  ]);
+
+  const statusAgg = await OrderModel.aggregate([
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+  const byStatus: Record<string, number> = {};
+  statusAgg.forEach((s) => {
+    byStatus[s._id] = s.count;
+  });
+
+  // last7Days = daily revenue and order count for the past 7 days (cancelled excluded from revenue)
+  const sevenDaysAgo = moment().subtract(6, "days").startOf("day").toDate();
+  const last7Agg = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
+        status: { $ne: orderStatusType.cancelled },
+      },
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: TZ } },
+        revenue: { $sum: "$totalAmount" },
+        orders: { $sum: 1 },
+      },
+    },
+  ]);
+  const last7Map = last7Agg.reduce<Record<string, { revenue: number; orders: number }>>(
+    (acc, d) => {
+      acc[d._id] = { revenue: d.revenue, orders: d.orders };
+      return acc;
+    },
+    {}
+  );
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = moment().subtract(i, "days").format("YYYY-MM-DD");
+    const entry = last7Map[date];
+    last7Days.push({ date, revenue: entry?.revenue ?? 0, orders: entry?.orders ?? 0 });
+  }
+
+  // ─── Customers ────────────────────────────────────────────────────────────
   const totalCustomers = await AuthModel.countDocuments();
-  const totalProducts = await ProductModel.countDocuments();
 
   return {
-    totalRevenue: totalRevenue[0]?.total ?? 0,
-    totalOrders,
-    totalCustomers,
-    totalProducts,
+    products: {
+      total: totalProducts,
+      soldOut: soldOutProducts,
+      topSelling,
+      mostWishlisted,
+      totalFinalPrice: priceTotals[0]?.totalFinalPrice ?? 0,
+      totalWholesalePrice: priceTotals[0]?.totalWholesalePrice ?? 0,
+    },
+    categories: {
+      total: totalCategories,
+    },
+    orders: {
+      total: totalOrders,
+      todaySales: todaySalesAgg[0]?.total ?? 0,
+      todayOrders,
+      totalRevenue: totalRevenueAgg[0]?.total ?? 0,
+      averageOrderValue: averageOrderAgg[0]?.avg ?? 0,
+      byStatus,
+      last7Days,
+    },
+    customers: {
+      total: totalCustomers,
+    },
   };
 };
 

@@ -31,6 +31,7 @@ const OrderSchema = new Schema<IOrder>({
     totalPrice:  RequiredNumber,
     size:        RequiredString,
     color:       RequiredString,
+    isFreeGift:  { type: Boolean, default: false },
   }],
   subTotal:     RequiredNumber,
   discount:     RequiredNumber,
@@ -38,6 +39,7 @@ const OrderSchema = new Schema<IOrder>({
   shippingCost: RequiredNumber,
   totalAmount:  RequiredNumber,
   appliedOffer: { type: Types.ObjectId, ref: SchemaTypesReference.Offer, default: null },
+  appliedFlashOffers: [{ type: Types.ObjectId, ref: SchemaTypesReference.Offer }],
   status:       EnumStringRequired(orderStatusArray),
 }, {
   timestamps: true,

@@ -6,7 +6,8 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "baseUrl", "value": "localhost:5000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
     { "key": "adminToken", "value": "", "type": "string" },
     { "key": "userToken", "value": "", "type": "string" }
   ],
@@ -269,7 +270,7 @@
           "name": "Get All User Information (Admin)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/user/all-user-information", "host": ["{{baseUrl}}"], "path": ["user", "all-user-information"] }
           }
         },
@@ -304,7 +305,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/categories", "host": ["{{baseUrl}}"], "path": ["admin", "categories"] },
             "body": {
@@ -320,7 +321,7 @@
             "method": "PATCH",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/categories/:id", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
@@ -336,7 +337,7 @@
             "method": "PATCH",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/categories/:id/icon", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id", "icon"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
@@ -351,7 +352,7 @@
           "name": "Soft Delete Category",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/categories/:id", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Marks category as isDeleted: true."
           }
@@ -360,7 +361,7 @@
           "name": "Hard Delete Category 🆕 NEW",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/categories/:id/hard", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id", "hard"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Permanently deletes the category and its S3 image. Hard delete logic + S3 deletion."
           }
@@ -376,7 +377,7 @@
           "name": "Get Admin Products List 🔧 MODIFIED",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/admin/products?page=1&limit=20",
               "host": ["{{baseUrl}}"],
@@ -403,12 +404,12 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/products", "host": ["{{baseUrl}}"], "path": ["admin", "products"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productName\": \"Gold Ring\",\n  \"productDescription\": \"18k gold ring with diamond\",\n  \"price\": 1200,\n  \"availableItems\": 50,\n  \"categoryId\": \"<categoryId>\",\n  \"defaultImage\": \"https://atozaccessories.s3.amazonaws.com/products/ring.jpg\",\n  \"salePrice\": 999,\n  \"expiredSale\": 1735689600000,\n  \"albumImages\": [\n    \"https://atozaccessories.s3.amazonaws.com/products/ring2.jpg\"\n  ],\n  \"wholesalePrice\": 600,\n  \"isBestSeller\": false,\n  \"variants\": [\n    { \"color\": \"<colorId>\", \"size\": \"<sizeId>\", \"availableItems\": 10 }\n  ]\n}",
+              "raw": "{\n  \"productName\": \"Gold Ring\",\n  \"productDescription\": \"18k gold ring with diamond\",\n  \"price\": 1200,\n  \"availableItems\": 50,\n  \"categoryId\": \"<categoryId>\",\n  \"defaultImage\": \"https://atozaccessories.s3.amazonaws.com/products/ring.jpg\",\n  \"salePrice\": 999,\n  \"albumImages\": [\n    \"https://atozaccessories.s3.amazonaws.com/products/ring2.jpg\"\n  ],\n  \"wholesalePrice\": 600,\n  \"isBestSeller\": false,\n  \"variants\": [\n    { \"color\": \"<colorId>\", \"size\": \"<sizeId>\", \"availableItems\": 10 }\n  ]\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "MODIFIED: now includes wholesalePrice, finalPrice (auto-computed), and variants array. isSale is auto-derived from salePrice < price."
@@ -418,7 +419,7 @@
           "name": "Get Admin Product by ID",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/:id", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Returns product with variants populated. Includes wholesalePrice (admin only)."
           }
@@ -429,7 +430,7 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/products/:id", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
@@ -444,7 +445,7 @@
           "name": "Toggle Best Seller 🆕 NEW",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/:id/toggle-bestseller", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id", "toggle-bestseller"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Flips isBestSeller and sets bestSellerManual: true so the cron job does not override this product."
           }
@@ -453,7 +454,7 @@
           "name": "Release Best Seller Manual Control 🆕 NEW",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/:id/bestseller-release", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id", "bestseller-release"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Sets bestSellerManual: false — allows the cron job to manage this product's best-seller status again."
           }
@@ -462,7 +463,7 @@
           "name": "Hard Delete Product 🆕 NEW",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/:id/hard", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id", "hard"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Permanently deletes product: removes defaultImage and albumImages from S3, deletes all variants, then removes DB record."
           }
@@ -471,7 +472,7 @@
           "name": "Delete Product Variant 🆕 NEW",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/:productId/variants/:variantId", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":productId", "variants", ":variantId"], "variable": [{ "key": "productId", "value": "" }, { "key": "variantId", "value": "" }] },
             "description": "Hard-deletes a single product variant by its ID."
           }
@@ -480,7 +481,7 @@
           "name": "Soft Delete Product",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/:id", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Sets isDeleted: true on the product."
           }
@@ -489,7 +490,7 @@
           "name": "Get Analytics",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/products/analysis", "host": ["{{baseUrl}}"], "path": ["admin", "products", "analysis"] },
             "description": "Returns totalRevenue (delivered orders), totalOrders, totalCustomers, totalProducts."
           }
@@ -505,7 +506,7 @@
           "name": "List Icons",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/admin/icons?page=1",
               "host": ["{{baseUrl}}"],
@@ -518,7 +519,7 @@
           "name": "Get Icon by ID",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/icons/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "icons", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
           }
         },
@@ -528,7 +529,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/icons", "host": ["{{baseUrl}}"], "path": ["admin", "icons"] },
             "body": {
@@ -545,7 +546,7 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/icons/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "icons", ":_id"], "variable": [{ "key": "_id", "value": "" }] },
             "body": {
@@ -559,7 +560,7 @@
           "name": "Delete Icon",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/icons/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "icons", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
           }
         }
@@ -574,7 +575,7 @@
           "name": "List Colors",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/admin/colors?page=1",
               "host": ["{{baseUrl}}"],
@@ -590,7 +591,7 @@
           "name": "Get Color by ID",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/colors/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "colors", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
           }
         },
@@ -600,7 +601,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/colors", "host": ["{{baseUrl}}"], "path": ["admin", "colors"] },
             "body": {
@@ -617,7 +618,7 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/colors/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "colors", ":_id"], "variable": [{ "key": "_id", "value": "" }] },
             "body": {
@@ -631,7 +632,7 @@
           "name": "Delete Color",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/colors/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "colors", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
           }
         }
@@ -646,7 +647,7 @@
           "name": "List Sizes",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/admin/sizes?page=1",
               "host": ["{{baseUrl}}"],
@@ -659,7 +660,7 @@
           "name": "Get Size by ID",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/sizes/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "sizes", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
           }
         },
@@ -669,7 +670,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/sizes", "host": ["{{baseUrl}}"], "path": ["admin", "sizes"] },
             "body": {
@@ -686,7 +687,7 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/sizes/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "sizes", ":_id"], "variable": [{ "key": "_id", "value": "" }] },
             "body": {
@@ -700,7 +701,7 @@
           "name": "Delete Size",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/sizes/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "sizes", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
           }
         }
@@ -715,7 +716,7 @@
           "name": "List Offers",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/admin/offers?page=1&limit=10",
               "host": ["{{baseUrl}}"],
@@ -733,7 +734,7 @@
           "name": "Get Offer by ID",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Returns offer with condition.excludedCategories, targetProducts, and targetCategories all populated."
           }
@@ -744,7 +745,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -761,7 +762,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -778,7 +779,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -795,7 +796,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -812,7 +813,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -829,7 +830,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -846,7 +847,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -863,7 +864,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
@@ -880,7 +881,7 @@
             "method": "PUT",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
@@ -895,7 +896,7 @@
           "name": "Delete Offer",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Cancels Agenda jobs (for flash_sale / deal_of_day), deletes S3 image, then removes DB record."
           }
@@ -904,7 +905,7 @@
           "name": "Toggle Offer Active Status",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/offers/:id/toggle", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id", "toggle"], "variable": [{ "key": "id", "value": "" }] },
             "description": "Toggles isActive. For timed offers (flash_sale / deal_of_day): deactivating cancels Agenda jobs + sets status=expired; reactivating reschedules them (throws 400 if both dates have passed). Non-timed offers just flip isActive + set status=active."
           }
@@ -922,7 +923,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/slider/create", "host": ["{{baseUrl}}"], "path": ["slider", "create"] },
             "body": {
@@ -939,7 +940,7 @@
             "method": "PATCH",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/slider/update/:id", "host": ["{{baseUrl}}"], "path": ["slider", "update", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
@@ -953,7 +954,7 @@
           "name": "Delete Hero Section 🆕 NEW",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/slider/delete/:id", "host": ["{{baseUrl}}"], "path": ["slider", "delete", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "description": "NOTE: uses POST method (not DELETE) — router defines it as .post('/delete/:id'). Deletes both image1 and image2 from S3, then removes DB record."
           }
@@ -971,7 +972,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/aws/get-presigned-url", "host": ["{{baseUrl}}"], "path": ["aws", "get-presigned-url"] },
             "body": {
@@ -986,7 +987,7 @@
           "name": "Get Presigned Delete URL",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/aws/delete-presigned-url?fileName=products%2Fexample.jpg",
               "host": ["{{baseUrl}}"],
@@ -1039,7 +1040,7 @@
           "name": "Get All Wishlists (Admin)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/wishlist/get-all-wishlist?page=1",
               "host": ["{{baseUrl}}"],
@@ -1069,7 +1070,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/shipping", "host": ["{{baseUrl}}"], "path": ["shipping"] },
             "body": {
@@ -1101,7 +1102,7 @@
             "method": "PATCH",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/shipping/:id", "host": ["{{baseUrl}}"], "path": ["shipping", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
@@ -1115,7 +1116,7 @@
           "name": "Delete Shipping Zone",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/shipping/:id", "host": ["{{baseUrl}}"], "path": ["shipping", ":id"], "variable": [{ "key": "id", "value": "" }] }
           }
         }
@@ -1179,7 +1180,7 @@
           "name": "Get All Orders",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
               "raw": "{{baseUrl}}/admin/orders/all?page=1",
               "host": ["{{baseUrl}}"],
@@ -1197,7 +1198,7 @@
           "name": "Get Order by ID (Admin)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/admin/orders/:orderId", "host": ["{{baseUrl}}"], "path": ["admin", "orders", ":orderId"], "variable": [{ "key": "orderId", "value": "" }] }
           }
         },
@@ -1207,7 +1208,7 @@
             "method": "PATCH",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{baseUrl}}/admin/orders/status/:orderId", "host": ["{{baseUrl}}"], "path": ["admin", "orders", "status", ":orderId"], "variable": [{ "key": "orderId", "value": "" }] },
             "body": {

@@ -17,8 +17,6 @@ export default interface IProduct {
   discountPercentage?: number;
   soldItems?: number;
   isSoldOut?: boolean;
-  expiredSale?: number;
-  isExpiredSale?: boolean;
   isSale?: boolean;
   isBestSeller?: boolean;
   bestSellerManual?: boolean;

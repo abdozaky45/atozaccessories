@@ -20,8 +20,6 @@ import {
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
-  toggleBestSeller,
-  releaseBestSeller,
   upsertVariants,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
@@ -38,7 +36,6 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
     availableItems,
     categoryId,
     salePrice,
-    expiredSale,
     defaultImage,
     albumImages,
     wholesalePrice,
@@ -58,7 +55,11 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
     })) || [];
 
   const finalPrices = await ratioCalculatePrice(price, salePrice);
-  const finalPrice = salePrice ?? price;
+  const finalPrice = salePrice ? salePrice : price;
+
+  if (wholesalePrice !== undefined && wholesalePrice !== null && wholesalePrice >= finalPrice) {
+    throw new ApiError(400, "wholesalePrice must be less than the final selling price");
+  }
 
   const productData: IProduct = {
     productName,
@@ -70,7 +71,6 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
     discount: finalPrices?.discount,
     discountPercentage: finalPrices?.discountPercentage,
     isSale: finalPrices?.isSale,
-    expiredSale,
     wholesalePrice,
     isBestSeller: isBestSeller ?? false,
     finalPrice,
@@ -99,7 +99,6 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
     price,
     availableItems,
     salePrice,
-    expiredSale,
     categoryId,
     defaultImage,
     albumImages,
@@ -121,11 +120,15 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
     price,
     availableItems,
     salePrice,
-    expiredSale,
     category: categoryId,
     wholesalePrice,
     isBestSeller,
   };
+
+  // When marked as a best seller, lock it to manual control
+  if (isBestSeller === true) {
+    productData.bestSellerManual = true;
+  }
 
   let finalPrices;
   if (price !== undefined || salePrice !== undefined) {
@@ -140,7 +143,18 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   // Recompute finalPrice on every update
   const effectivePrice = price !== undefined ? price : product.price;
   const effectiveSalePrice = salePrice !== undefined ? salePrice : product.salePrice;
-  productData.finalPrice = effectiveSalePrice ?? effectivePrice;
+  const finalPrice = effectiveSalePrice ? effectiveSalePrice : effectivePrice;
+  productData.finalPrice = finalPrice;
+
+  const effectiveWholesalePrice =
+    wholesalePrice !== undefined ? wholesalePrice : product.wholesalePrice;
+  if (
+    effectiveWholesalePrice !== undefined &&
+    effectiveWholesalePrice !== null &&
+    effectiveWholesalePrice >= finalPrice
+  ) {
+    throw new ApiError(400, "wholesalePrice must be less than the final selling price");
+  }
 
   const updates = await prepareProductUpdates(productData, product, defaultImage, albumImages);
   if (updates) {
@@ -174,24 +188,6 @@ export const hardDelete = asyncHandler(async (req: Request, res: Response) => {
   const result = await hardDeleteProduct(id);
   if (!result) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
   return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_HARD_DELETED));
-});
-
-// ─── Admin: Toggle best seller ────────────────────────────────────────────────
-
-export const toggleBestSellerHandler = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const product = await toggleBestSeller(id);
-  if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
-  return res.json(new ApiResponse(200, { product }, SuccessMessage.BEST_SELLER_TOGGLED));
-});
-
-// ─── Admin: Release manual best-seller control ───────────────────────────────
-
-export const releaseBestSellerHandler = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const product = await releaseBestSeller(id);
-  if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
-  return res.json(new ApiResponse(200, { product }, SuccessMessage.BEST_SELLER_RELEASED));
 });
 
 // ─── Admin: Delete variant ────────────────────────────────────────────────────

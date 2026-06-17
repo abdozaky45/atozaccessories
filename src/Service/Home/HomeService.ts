@@ -73,9 +73,10 @@ export const getOnSale = async (): Promise<any[]> => {
   );
 };
 
-export const getDealOfDay = async (): Promise<any | null> => {
+export const getFlashSale = async (): Promise<any | null> => {
+  // A flash sale targets specific product(s) with a big, time-limited discount.
   const offer = await OfferModel.findOne({
-    offerType: "deal_of_day",
+    offerType: "flash_sale",
     status: "active",
     isActive: true,
   }).lean();
@@ -91,39 +92,6 @@ export const getDealOfDay = async (): Promise<any | null> => {
     .lean();
 
   if (!products.length) return null;
-
-  return { ...buildOfferShape(offer), products };
-};
-
-export const getFlashSale = async (): Promise<any | null> => {
-  const offer = await OfferModel.findOne({
-    offerType: "flash_sale",
-    status: "active",
-    isActive: true,
-  }).lean();
-
-  if (!offer) return null;
-
-  let categoryIds: any[];
-
-  if (offer.targetCategories?.length) {
-    const activeCats = await CategoryModel.find(
-      { _id: { $in: offer.targetCategories }, isDeleted: false },
-      { _id: 1 }
-    ).lean();
-    categoryIds = activeCats.map((c) => c._id);
-  } else {
-    const allActiveCats = await CategoryModel.find({ isDeleted: false }, { _id: 1 }).lean();
-    categoryIds = allActiveCats.map((c) => c._id);
-  }
-
-  if (!categoryIds.length) return { ...buildOfferShape(offer), products: [] };
-
-  const products = await fetchDiverseProducts(
-    { isDeleted: false },
-    categoryIds,
-    "soldItems"
-  );
 
   return { ...buildOfferShape(offer), products };
 };

@@ -15,7 +15,7 @@ import { scheduleOfferJobs } from "../../Utils/offerJobs/scheduleOfferJobs";
 import { cancelOfferJobs } from "../../Utils/offerJobs/cancelOfferJobs";
 import { rescheduleOfferJobs } from "../../Utils/offerJobs/rescheduleOfferJobs";
 
-const TIMED_OFFER_TYPES = ["flash_sale", "deal_of_day"];
+const TIMED_OFFER_TYPES = ["flash_sale"];
 
 export const createNewOffer = asyncHandler(async (req: Request, res: Response) => {
   const { title, description, isActive, image, offerType, timing, condition, reward, targetProducts, targetCategories } = req.body;

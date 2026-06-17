@@ -18,8 +18,8 @@ export const validateOfferBusinessRules = ({
   targetProducts?: any[];
   targetCategories?: any[];
 }) => {
-  // timing required for timed offer types
-  if (["deal_of_day", "flash_sale"].includes(offerType)) {
+  // timing required for time-bounded offer types (flash_sale runs for a limited time)
+  if (["flash_sale"].includes(offerType)) {
     if (!timing?.startDate || !timing?.endDate) {
       throw new ApiError(400, `timing.startDate and timing.endDate are required for ${offerType}`);
     }
@@ -40,7 +40,7 @@ export const validateOfferBusinessRules = ({
   }
 
   // discountPercentage required
-  if (["spend_x_get_discount", "deal_of_day", "flash_sale"].includes(offerType)) {
+  if (["spend_x_get_discount", "flash_sale"].includes(offerType)) {
     if (reward?.discountPercentage == null) {
       throw new ApiError(400, `reward.discountPercentage is required for ${offerType}`);
     }
@@ -53,10 +53,10 @@ export const validateOfferBusinessRules = ({
     }
   }
 
-  // targetProducts required for deal_of_day
-  if (offerType === "deal_of_day") {
+  // targetProducts required for flash_sale (a specific product gets the discount)
+  if (offerType === "flash_sale") {
     if (!targetProducts?.length) {
-      throw new ApiError(400, "targetProducts must be non-empty for deal_of_day");
+      throw new ApiError(400, "targetProducts must be non-empty for flash_sale");
     }
   }
 };

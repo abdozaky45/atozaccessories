@@ -35,13 +35,14 @@ class OrderController {
   // ── USER ─────────────────────────────────────────────────────────────────────
 
   createOrderController = asyncHandler(async (req: Request, res: Response) => {
-    const { products, userId } = req.body;
+    const { products, userId, freeGiftVariantId } = req.body;
     const { _id, email } = req.body.currentUser.userInfo;
 
     const order = await OrderService.createOrder({
       authUserId: _id,
       userInformationId: userId,
       products,
+      freeGiftVariantId,
     });
 
     const invoice = buildInvoice(order);
@@ -52,9 +53,9 @@ class OrderController {
   });
 
   previewOrderController = asyncHandler(async (req: Request, res: Response) => {
-    const { items, userInformationId } = req.body;
+    const { items, userInformationId, freeGiftVariantId } = req.body;
 
-    const preview = await OrderService.previewOrder({ items, userInformationId });
+    const preview = await OrderService.previewOrder({ items, userInformationId, freeGiftVariantId });
     return res.json(new ApiResponse(200, preview));
   });
 

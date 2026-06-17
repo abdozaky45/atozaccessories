@@ -24,6 +24,8 @@ interface ProductOrder {
   totalPrice: number;
   size: string;
   color: string;
+  /** True for a free item granted by the spend_x_get_free_item offer. */
+  isFreeGift?: boolean;
 }
 
 interface IOrder {
@@ -36,7 +38,10 @@ interface IOrder {
   freeShipping: boolean;
   shippingCost: number;
   totalAmount: number;
+  /** The single cart offer applied to this order (most valuable to the customer). */
   appliedOffer: Types.ObjectId | null;
+  /** Flash-sale offers applied to specific products in this order (independent of the cart offer). */
+  appliedFlashOffers: Types.ObjectId[];
   status: string;
 }
 

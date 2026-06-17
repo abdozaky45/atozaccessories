@@ -13,6 +13,8 @@ export const createOrderValidation = baseSchema.concat(
       })
     ).min(1).required(),
     userId: joi.string().required(),
+    // Optional: the variant the customer chose as their free item (spend_x_get_free_item)
+    freeGiftVariantId: joi.string().optional(),
   }).required()
 );
 
@@ -37,6 +39,8 @@ export const previewOrderValidation = baseSchema.concat(
       })
     ).min(1).required(),
     userInformationId: joi.string().required(),
+    // Optional: the variant the customer chose as their free item (spend_x_get_free_item)
+    freeGiftVariantId: joi.string().optional(),
   }).required()
 );
 

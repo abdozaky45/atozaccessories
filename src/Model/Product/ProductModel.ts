@@ -21,8 +21,6 @@ const ProductSchema = new Schema<IProduct>(
     soldItems: NotRequiredNumber,
     isSoldOut: NotRequiredBoolean,
     isSale: NotRequiredBoolean,
-    expiredSale: NotRequiredNumber,
-    isExpiredSale: NotRequiredBoolean,
     category: RefType(SchemaTypesReference.Category, true),
     createdBy: RefType(SchemaTypesReference.User, true),
     slug: RequiredString,

@@ -17,7 +17,6 @@ export const createProductValidation = baseSchema.concat(
     categoryId: joi.string().required(),
     defaultImage: joi.string().required(),
     salePrice: joi.number().optional(),
-    expiredSale: joi.number().optional(),
     albumImages: joi.array().items(joi.string()).optional(),
     wholesalePrice: joi.number().optional(),
     isBestSeller: joi.boolean().optional(),
@@ -35,7 +34,6 @@ export const updateProductValidation = baseSchema.concat(
     categoryId: joi.string().optional(),
     defaultImage: joi.string().optional(),
     salePrice: joi.number().optional(),
-    expiredSale: joi.number().optional(),
     albumImages: joi.array().items(joi.string()).optional(),
     wholesalePrice: joi.number().optional(),
     isBestSeller: joi.boolean().optional(),
@@ -50,18 +48,6 @@ export const deleteProductValidation = baseSchema.concat(
 );
 
 export const hardDeleteValidation = baseSchema.concat(
-  joi.object({
-    id: joi.string().required(),
-  }).required()
-);
-
-export const toggleBestSellerValidation = baseSchema.concat(
-  joi.object({
-    id: joi.string().required(),
-  }).required()
-);
-
-export const releaseBestSellerValidation = baseSchema.concat(
   joi.object({
     id: joi.string().required(),
   }).required()

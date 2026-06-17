@@ -27,18 +27,6 @@ ProductRouter.put(
   ProductController.updateProduct
 );
 
-ProductRouter.patch(
-  "/:id/toggle-bestseller",
-  Validation(ProductValidation.toggleBestSellerValidation),
-  ProductController.toggleBestSellerHandler
-);
-
-ProductRouter.patch(
-  "/:id/bestseller-release",
-  Validation(ProductValidation.releaseBestSellerValidation),
-  ProductController.releaseBestSellerHandler
-);
-
 ProductRouter.delete(
   "/:id/hard",
   Validation(ProductValidation.hardDeleteValidation),
