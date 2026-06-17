@@ -502,7 +502,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Buy 3 Get Cheapest Free\",\n  \"description\": \"Add 3 items and the cheapest one is on us\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/buy3free\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy3free\" },\n  \"offerType\": \"buy_x_get_cheapest_free\",\n  \"condition\": { \"minQuantity\": 3, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Buy 3 Get Cheapest Free\",\n  \"description\": \"Add 3 items and the cheapest one is on us\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy3free\" },\n  \"offerType\": \"buy_x_get_cheapest_free\",\n  \"condition\": { \"minQuantity\": 3, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Buy N items (minQuantity); the price of one cheapest item is applied as an order-level discount."
@@ -519,7 +519,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Spend 500 Get 20% Off\",\n  \"description\": \"Spend EGP 500 or more and get 20% off your order\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/spend500\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/spend500\" },\n  \"offerType\": \"spend_x_get_discount\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 500, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 20, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Spend 500 Get 20% Off\",\n  \"description\": \"Spend EGP 500 or more and get 20% off your order\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/spend500\" },\n  \"offerType\": \"spend_x_get_discount\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 500, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 20, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Spend >= minAmount to receive discountPercentage off the entire subtotal."
@@ -536,7 +536,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Free Shipping on Orders Over 300\",\n  \"description\": \"Spend EGP 300+ and enjoy free shipping\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/freeship300\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/freeship300\" },\n  \"offerType\": \"spend_x_get_free_shipping\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 300, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Free Shipping on Orders Over 300\",\n  \"description\": \"Spend EGP 300+ and enjoy free shipping\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/freeship300\" },\n  \"offerType\": \"spend_x_get_free_shipping\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 300, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Spend >= minAmount and shipping cost becomes 0."
@@ -553,7 +553,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Buy 3 Items Get Free Shipping\",\n  \"description\": \"Add 3 qualifying items and ship for free (gift cards excluded)\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/buy3freeship\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy3freeship\" },\n  \"offerType\": \"buy_x_get_free_shipping\",\n  \"condition\": { \"minQuantity\": 3, \"minAmount\": null, \"excludedCategories\": [\"<giftCardCategoryId>\"] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Buy 3 Items Get Free Shipping\",\n  \"description\": \"Add 3 qualifying items and ship for free (gift cards excluded)\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy3freeship\" },\n  \"offerType\": \"buy_x_get_free_shipping\",\n  \"condition\": { \"minQuantity\": 3, \"minAmount\": null, \"excludedCategories\": [\"<giftCardCategoryId>\"] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Buy N or more items (minQuantity) and shipping cost becomes 0. Items in excludedCategories count toward the order total but do NOT help qualify for the offer."
@@ -570,7 +570,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Buy 1 Get Cheapest Other Half Price\",\n  \"description\": \"Add 2+ items and the cheapest other item is 50% off\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/halfprice\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/halfprice\" },\n  \"offerType\": \"buy_x_get_half_price\",\n  \"condition\": { \"minQuantity\": 2, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Buy 1 Get Cheapest Other Half Price\",\n  \"description\": \"Add 2+ items and the cheapest other item is 50% off\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/halfprice\" },\n  \"offerType\": \"buy_x_get_half_price\",\n  \"condition\": { \"minQuantity\": 2, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Buy one item, get the cheapest other item at 50% off. Needs at least 2 items (minQuantity >= 2); half of one cheapest unit price is applied as an order-level discount."
@@ -587,7 +587,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Free Gift on Orders Over 800\",\n  \"description\": \"Spend EGP 800+ and choose a free item up to EGP 150\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/freegift\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/freegift\" },\n  \"offerType\": \"spend_x_get_free_item\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 800, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": 150 },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Free Gift on Orders Over 800\",\n  \"description\": \"Spend EGP 800+ and choose a free item up to EGP 150\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/freegift\" },\n  \"offerType\": \"spend_x_get_free_item\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 800, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": 150 },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Spend >= minAmount, then the customer chooses a free item whose price is <= reward.freeItemMaxValue. The chosen item is sent on the order request as freeGiftVariantId and is added to the order as a free line (price 0)."
@@ -604,7 +604,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Flash Sale — 40% Off the Smart Watch\",\n  \"description\": \"Limited time flash sale on a specific product\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/flashsale\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/flashsale\" },\n  \"offerType\": \"flash_sale\",\n  \"timing\": { \"startDate\": \"2026-06-17T10:00:00.000Z\", \"endDate\": \"2026-06-17T14:00:00.000Z\" },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 40, \"freeItemMaxValue\": null },\n  \"targetProducts\": [\"<productId1>\"],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Flash Sale — 40% Off the Smart Watch\",\n  \"description\": \"Limited time flash sale on a specific product\",\n  \"isActive\": true,\n  \"image\": { \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/flashsale\" },\n  \"offerType\": \"flash_sale\",\n  \"timing\": { \"startDate\": \"2026-06-17T10:00:00.000Z\", \"endDate\": \"2026-06-17T14:00:00.000Z\" },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 40, \"freeItemMaxValue\": null },\n  \"targetProducts\": [\"<productId1>\"],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "Homepage/flash offer. REQUIRES: targetProducts (non-empty), reward.discountPercentage, timing.startDate + endDate. The targeted product(s) get the discount for the time window. Flash-sale items are EXCLUDED from cart-offer qualification (their price/quantity does not count toward spend or quantity thresholds) but their discounted price IS added to the order total. Agenda activate/expire jobs scheduled automatically."
@@ -621,7 +621,7 @@
             "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Flash Sale\",\n  \"description\": \"Updated description\",\n  \"isActive\": false,\n  \"offerType\": \"flash_sale\",\n  \"image\": {\n    \"mediaKey\": \"offers/new_banner\",\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/new_banner\"\n  },\n  \"timing\": {\n    \"startDate\": \"2026-07-01T00:00:00.000Z\",\n    \"endDate\": \"2026-07-02T00:00:00.000Z\"\n  },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 25, \"freeItemMaxValue\": null },\n  \"targetProducts\": [\"<productId1>\"],\n  \"targetCategories\": []\n}",
+              "raw": "{\n  \"title\": \"Updated Flash Sale\",\n  \"description\": \"Updated description\",\n  \"isActive\": false,\n  \"offerType\": \"flash_sale\",\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/new_banner\"\n  },\n  \"timing\": {\n    \"startDate\": \"2026-07-01T00:00:00.000Z\",\n    \"endDate\": \"2026-07-02T00:00:00.000Z\"\n  },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 25, \"freeItemMaxValue\": null },\n  \"targetProducts\": [\"<productId1>\"],\n  \"targetCategories\": []\n}",
               "options": { "raw": { "language": "json" } }
             },
             "description": "All fields optional. If image.mediaKey changes the old S3 object is deleted. Business rules re-validated against merged state."

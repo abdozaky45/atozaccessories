@@ -12,7 +12,6 @@ const OFFER_TYPES = [
 ];
 
 const imageSchema = joi.object({
-  mediaKey: joi.string().required(),
   mediaUrl: joi.string().required(),
 });
 

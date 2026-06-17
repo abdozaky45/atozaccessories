@@ -17,6 +17,14 @@ import { rescheduleOfferJobs } from "../../Utils/offerJobs/rescheduleOfferJobs";
 
 const TIMED_OFFER_TYPES = ["flash_sale"];
 
+const S3_BASE_URL = "https://atozaccessories.s3.amazonaws.com/";
+
+// The request body only carries mediaUrl; derive mediaKey by stripping the S3 base URL.
+const buildImage = (image: { mediaUrl: string }) => ({
+  mediaUrl: image.mediaUrl,
+  mediaKey: image.mediaUrl.replace(S3_BASE_URL, ""),
+});
+
 export const createNewOffer = asyncHandler(async (req: Request, res: Response) => {
   const { title, description, isActive, image, offerType, timing, condition, reward, targetProducts, targetCategories } = req.body;
 
@@ -26,7 +34,7 @@ export const createNewOffer = asyncHandler(async (req: Request, res: Response) =
     title,
     description,
     isActive,
-    image,
+    image: buildImage(image),
     offerType,
     timing,
     condition,
@@ -91,9 +99,12 @@ export const updateOffer = asyncHandler(async (req: Request, res: Response) => {
     targetCategories: resolvedTargetCategories,
   });
 
-  if (image?.mediaKey && image.mediaKey !== offer.image.mediaKey) {
-    await deleteS3Object(offer.image.mediaKey);
-    offer.image = image;
+  if (image?.mediaUrl) {
+    const newImage = buildImage(image);
+    if (newImage.mediaKey !== offer.image.mediaKey) {
+      await deleteS3Object(offer.image.mediaKey);
+      offer.image = newImage;
+    }
   }
 
   if (title !== undefined) offer.title = title;
