@@ -87,6 +87,15 @@ export const getAllCategories = async () => {
   return categories;
 };
 
+// Admin only — soft-deleted categories (isDeleted: true). No pagination (small dataset).
+export const getDeletedCategories = async () => {
+  const categories = await CategoryModel.find({ isDeleted: true })
+    .select("-__v")
+    .populate("icon_id", "_id key svg")
+    .sort({ createdAt: -1 });
+  return categories;
+};
+
 export const hardDeleteCategory = async (categoryId: string) => {
   // Step 1 — Find all active products belonging to this category (for S3 cleanup)
   const activeProducts = await ProductModel.find({ category: categoryId, isDeleted: false });

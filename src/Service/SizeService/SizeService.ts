@@ -12,11 +12,18 @@ export const findSizeByNumber = async (number: string) => {
   return SizeModel.findOne({ number });
 };
 
-export const getAllSizes = async (page: number = 1) => {
-  const limit = 20;
-  page = !page || page < 1 || isNaN(page) ? 1 : page;
-  const skip = limit * (page - 1);
+export const getAllSizes = async (page?: number) => {
   const totalItems = await SizeModel.countDocuments();
+
+  // No page provided → return all sizes without pagination
+  if (page === undefined) {
+    const data = await SizeModel.find().sort({ order: 1 }).select("-__v");
+    return { data, totalItems, totalPages: 1, currentPage: 1 };
+  }
+
+  const limit = 20;
+  page = page < 1 || isNaN(page) ? 1 : page;
+  const skip = limit * (page - 1);
   const totalPages = Math.ceil(totalItems / limit);
   const data = await SizeModel.find().sort({ order: 1 }).skip(skip).limit(limit).select("-__v");
   return { data, totalItems, totalPages, currentPage: page };

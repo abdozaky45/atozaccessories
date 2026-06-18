@@ -2,8 +2,16 @@ import { Router } from "express";
 import * as categoryController from "../../Controller/Categories/CategoryController";
 import { Validation } from "../../middleware/ValidationMiddleware";
 import * as CategoryValidation from "../../Validation/Category/CategoryValidation";
+import { baseSchema } from "../../Validation/baseSchema";
 
 const categoryRouter = Router();
+
+// Named routes must come before /:id to avoid param capture
+categoryRouter.get(
+  "/deleted",
+  Validation(baseSchema),
+  categoryController.getDeletedCategoriesList
+);
 
 categoryRouter.post(
   "/",

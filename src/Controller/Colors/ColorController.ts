@@ -22,7 +22,7 @@ export const createNewColor = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getColors = asyncHandler(async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string) || 1;
+  const page = req.query.page !== undefined ? parseInt(req.query.page as string) : undefined;
   const search = req.query.search as string | undefined;
   const result = await getAllColors(page, search);
   return res.json(new ApiResponse(200, result));

@@ -9,6 +9,7 @@ import {
   findCategoryById,
   prepareCategoryUpdates,
   getAllCategories,
+  getDeletedCategories,
   hardDeleteCategory,
 } from "../../Service/CategoryService/CategoryService";
 import { findIconById } from "../../Service/IconService/IconService";
@@ -74,6 +75,12 @@ export const hardDeleteCategoryHandler = asyncHandler(async (req: Request, res: 
 
 export const getCategories = asyncHandler(async (req: Request, res: Response) => {
   const categories = await getAllCategories();
+  return res.json(new ApiResponse(200, { categories }));
+});
+
+// Admin only — returns soft-deleted categories (isDeleted: true). No pagination.
+export const getDeletedCategoriesList = asyncHandler(async (req: Request, res: Response) => {
+  const categories = await getDeletedCategories();
   return res.json(new ApiResponse(200, { categories }));
 });
 

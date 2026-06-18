@@ -22,7 +22,7 @@ export const createNewSize = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const getSizes = asyncHandler(async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string) || 1;
+  const page = req.query.page !== undefined ? parseInt(req.query.page as string) : undefined;
   const result = await getAllSizes(page);
   return res.json(new ApiResponse(200, result));
 });

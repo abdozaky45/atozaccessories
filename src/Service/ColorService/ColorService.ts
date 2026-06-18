@@ -12,12 +12,19 @@ export const findColorByName = async (name: string) => {
   return ColorModel.findOne({ name });
 };
 
-export const getAllColors = async (page: number = 1, search?: string) => {
-  const limit = 20;
-  page = !page || page < 1 || isNaN(page) ? 1 : page;
-  const skip = limit * (page - 1);
+export const getAllColors = async (page?: number, search?: string) => {
   const filter = search ? { name: { $regex: search, $options: "i" } } : {};
   const totalItems = await ColorModel.countDocuments(filter);
+
+  // No page provided → return all colors without pagination
+  if (page === undefined) {
+    const data = await ColorModel.find(filter).select("-__v");
+    return { data, totalItems, totalPages: 1, currentPage: 1 };
+  }
+
+  const limit = 20;
+  page = page < 1 || isNaN(page) ? 1 : page;
+  const skip = limit * (page - 1);
   const totalPages = Math.ceil(totalItems / limit);
   const data = await ColorModel.find(filter).skip(skip).limit(limit).select("-__v");
   return { data, totalItems, totalPages, currentPage: page };
