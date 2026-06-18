@@ -245,12 +245,20 @@ export const getProducts = async (filters: ProductFilters) => {
 
 export interface AdminProductFilters extends ProductFilters {
   isDeleted?: boolean;
+  search?: string;
 }
 
 export const getAdminProducts = async (filters: AdminProductFilters) => {
-  const { category, isBestSeller, minPrice, maxPrice, color, size, isDeleted, sort, page = 1, limit = 20 } = filters;
+  const { category, isBestSeller, minPrice, maxPrice, color, size, isDeleted, search, sort, page = 1, limit = 20 } = filters;
 
   const matchFilter: any = { isDeleted: isDeleted !== undefined ? isDeleted : false };
+
+  // Text search across product name and description (case-insensitive)
+  if (search && search.trim()) {
+    const safe = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(safe, "i");
+    matchFilter.$or = [{ productName: regex }, { productDescription: regex }];
+  }
 
   if (category) matchFilter.category = new mongoose.Types.ObjectId(category);
   if (isBestSeller !== undefined) matchFilter.isBestSeller = isBestSeller;

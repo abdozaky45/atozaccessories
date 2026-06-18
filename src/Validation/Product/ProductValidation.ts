@@ -69,6 +69,7 @@ export const adminGetProductsValidation = baseSchema.concat(
     color: joi.string().optional(),
     size: joi.string().optional(),
     isDeleted: joi.boolean().optional(),
+    search: joi.string().trim().optional(),
     sort: joi.string().valid("price", "createdAt", "soldItems").optional(),
     page: joi.number().optional(),
     limit: joi.number().optional(),

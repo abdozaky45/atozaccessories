@@ -4,6 +4,8 @@ import { ProductOrder, UserInfoSnapshot, ShippingSnapshot } from "../../Model/Or
 import ProductVariantModel from "../../Model/ProductVariant/ProductVariantModel";
 import ProductModel from "../../Model/Product/ProductModel";
 import OfferModel from "../../Model/Offers/OfferModel";
+import ShippingModel from "../../Model/Shipping/ShippingModel";
+import UserModel from "../../Model/User/UserInformation/UserModel";
 import { findUserInformationById } from "../User/AuthService";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import { orderStatusType } from "../../Utils/OrderStatusType";
@@ -330,6 +332,78 @@ const buildSoldItemsIncrOps = (products: ProductOrder[]) => {
   }));
 };
 
+// ─── Legacy order compatibility (read-path) ─────────────────────────────────────
+//
+// Orders created before the snapshot migration stored `userInformation` and
+// `shipping` as ObjectId references and kept a single `price` field instead of the
+// subTotal / discount / shippingCost / totalAmount breakdown. The current schema
+// treats those fields as embedded snapshots and never populates them, so legacy
+// orders would otherwise return raw ObjectIds and missing totals. The helpers below
+// resolve them on read (non-destructive) so the admin endpoints stay correct even
+// before the one-time migration script (src/Scripts/migrateLegacyOrders.ts) is run.
+
+const isLegacyOrder = (order: any): boolean =>
+  !!order && (order.price !== undefined || !order.shipping || order.shipping.name === undefined);
+
+export const normalizeLegacyOrders = async (orders: any[]): Promise<any[]> => {
+  const legacy = orders.filter(isLegacyOrder);
+  if (!legacy.length) return orders;
+
+  const shippingIds = [...new Set(legacy.map((o) => o.shipping).filter(Boolean).map(String))];
+  const userInfoIds = [...new Set(legacy.map((o) => o.userInformation).filter(Boolean).map(String))];
+
+  const [shippingDocs, userInfoDocs] = await Promise.all([
+    shippingIds.length ? ShippingModel.find({ _id: { $in: shippingIds } }).lean() : [],
+    userInfoIds.length ? UserModel.find({ _id: { $in: userInfoIds } }).lean() : [],
+  ]);
+
+  const shippingMap = new Map(shippingDocs.map((s: any) => [s._id.toString(), s]));
+  const userInfoMap = new Map(userInfoDocs.map((u: any) => [u._id.toString(), u]));
+
+  return orders.map((order) => {
+    if (!isLegacyOrder(order)) return order;
+
+    const shipDoc: any = order.shipping ? shippingMap.get(order.shipping.toString()) : null;
+    const uiDoc: any = order.userInformation ? userInfoMap.get(order.userInformation.toString()) : null;
+
+    const shipping = { name: shipDoc?.category ?? "", cost: shipDoc?.cost ?? 0 };
+    const userInformation = uiDoc
+      ? {
+          firstName: uiDoc.firstName,
+          lastName: uiDoc.lastName,
+          address: uiDoc.address,
+          primaryPhone: uiDoc.primaryPhone,
+          secondaryPhone: uiDoc.secondaryPhone,
+          country: uiDoc.country,
+          postalCode: uiDoc.postalCode,
+        }
+      : order.userInformation;
+
+    const subTotal = order.subTotal ?? order.price ?? 0;
+    const discount = order.discount ?? 0;
+    const freeShipping = order.freeShipping ?? false;
+    const shippingCost = order.shippingCost ?? shipping.cost;
+    const { price, ...rest } = order;
+
+    return {
+      ...rest,
+      userInformation,
+      shipping,
+      subTotal,
+      discount,
+      freeShipping,
+      shippingCost,
+      totalAmount: order.totalAmount ?? subTotal - discount + (freeShipping ? 0 : shippingCost),
+      appliedOffer: order.appliedOffer ?? null,
+      appliedFlashOffers: order.appliedFlashOffers ?? [],
+      _legacy: true,
+    };
+  });
+};
+
+export const normalizeLegacyOrder = async (order: any): Promise<any> =>
+  order ? (await normalizeLegacyOrders([order]))[0] : order;
+
 // ─── Order service ─────────────────────────────────────────────────────────────
 
 class OrderService {
@@ -453,17 +527,19 @@ class OrderService {
   // ── READ ─────────────────────────────────────────────────────────────────────
 
   async getOrderById(orderId: Types.ObjectId | string) {
-    const order = await OrderModel.findById(orderId).populate([
-      { path: "products.productId", select: "defaultImage productName" },
-    ]);
-    return order;
+    const order = await OrderModel.findById(orderId)
+      .populate([{ path: "products.productId", select: "defaultImage productName" }])
+      .lean();
+    if (!order) return order;
+    return normalizeLegacyOrder(order);
   }
 
   async getUserOrders(userId: Types.ObjectId | string) {
     const orders = await OrderModel.find({ user: userId })
       .populate([{ path: "products.productId", select: "defaultImage" }])
-      .sort({ createdAt: -1 });
-    return orders;
+      .sort({ createdAt: -1 })
+      .lean();
+    return normalizeLegacyOrders(orders);
   }
 
   async getAllOrders(page: number, status?: string, orderId?: string) {
@@ -486,9 +562,11 @@ class OrderService {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .exec();
+      .lean();
 
-    return { totalItems, totalPages, currentPage: page, orders };
+    const normalizedOrders = await normalizeLegacyOrders(orders);
+
+    return { totalItems, totalPages, currentPage: page, orders: normalizedOrders };
   }
 
   // ── USER CANCEL ───────────────────────────────────────────────────────────────

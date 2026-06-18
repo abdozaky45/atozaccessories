@@ -202,7 +202,7 @@ export const deleteVariant = asyncHandler(async (req: Request, res: Response) =>
 // ─── Admin: Get products list ─────────────────────────────────────────────────
 
 export const getAdminProductsList = asyncHandler(async (req: Request, res: Response) => {
-  const { category, isBestSeller, minPrice, maxPrice, color, size, isDeleted, sort, page, limit } = req.query;
+  const { category, isBestSeller, minPrice, maxPrice, color, size, isDeleted, search, sort, page, limit } = req.query;
 
   const result = await getAdminProducts({
     category: category as string,
@@ -212,6 +212,7 @@ export const getAdminProductsList = asyncHandler(async (req: Request, res: Respo
     color: color as string,
     size: size as string,
     isDeleted: isDeleted !== undefined ? isDeleted === "true" : undefined,
+    search: search as string,
     sort: sort as string,
     page: page ? Number(page) : 1,
     limit: limit ? Number(limit) : 20,

@@ -16,6 +16,7 @@
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "seed": "ts-node src/Seeds/index.ts",
+    "migrate:orders": "ts-node src/Scripts/migrateLegacyOrders.ts",
     "test": "npm run build && jasmine"
   },
   "dependencies": {
