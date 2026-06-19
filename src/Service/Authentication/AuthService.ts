@@ -32,9 +32,9 @@ export const sendWelcomeEmail = async (email: string): Promise<boolean> => {
       html: welcomeEmailTemplate(),
       text: welcomeEmailText(),
       headers: {
-        'X-Priority': '3',
         'X-Mailer': 'A to Z Accessory Mailer',
         'List-Unsubscribe': '<mailto:atozaccessories0@gmail.com?subject=unsubscribe>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       },
     });
     return isSent;
@@ -67,6 +67,9 @@ export const CreateNewAccount = async ({
     email,
     activeCode,
     codeCreatedAt,
+    // Regular users have no confirmation step, so they are confirmed and online from sign-up.
+    isConfirmed: true,
+    status: StatusEnum.Online,
   });
 
   return user;

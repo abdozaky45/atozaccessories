@@ -59,8 +59,7 @@ interface OfferResult {
 
 const calculateOrderOffers = async (
   products: ProductOrder[],
-  shippingCost: number,
-  freeGift: ProductOrder | null
+  shippingCost: number
 ): Promise<OfferResult> => {
   const baseResult: OfferResult = {
     appliedOffer: null,
@@ -114,11 +113,23 @@ const calculateOrderOffers = async (
     let saved = 0;
 
     switch (offer.offerType) {
-      // Buy N items, get the cheapest item free
+      // Buy N items, get the cheapest item free. Items in excludedCategories are
+      // outside the offer: they neither help qualify nor can become the free item.
       case "buy_x_get_cheapest_free": {
-        if (offer.condition.minQuantity == null || nonFlashQty < offer.condition.minQuantity) break;
-        if (!nonFlashProducts.length) break;
-        saved = cheapestProduct(nonFlashProducts).itemPrice;
+        if (offer.condition.minQuantity == null) break;
+        let eligible = nonFlashProducts;
+        if ((offer.condition as any).excludedCategories?.length) {
+          const productIds = nonFlashProducts.map((p) => p.productId);
+          const excluded = await ProductModel.find({
+            _id: { $in: productIds },
+            category: { $in: (offer.condition as any).excludedCategories },
+          }).select("_id");
+          const excludedSet = new Set(excluded.map((p) => (p._id as Types.ObjectId).toString()));
+          eligible = nonFlashProducts.filter((p) => !excludedSet.has(p.productId.toString()));
+        }
+        const eligibleQty = eligible.reduce((s, p) => s + p.quantity, 0);
+        if (eligibleQty < offer.condition.minQuantity || !eligible.length) break;
+        saved = cheapestProduct(eligible).itemPrice;
         break;
       }
 
@@ -164,13 +175,16 @@ const calculateOrderOffers = async (
         break;
       }
 
-      // Spend X, get a customer-chosen item worth <= Y for free
+      // Spend X, get the most valuable cart item worth <= Y free (one unit).
+      // No customer choice: we auto-pick the priciest eligible item so the gift is
+      // as close as possible to the admin-set value (freeItemMaxValue).
       case "spend_x_get_free_item": {
         if (offer.condition.minAmount == null || nonFlashSubTotal < offer.condition.minAmount) break;
-        if (!freeGift) break; // the customer must choose a free item
         const maxValue = offer.reward.freeItemMaxValue ?? 0;
-        if (freeGift.itemPrice > maxValue) break; // chosen gift exceeds the allowed value
-        saved = freeGift.itemPrice;
+        const eligible = nonFlashProducts.filter((p) => p.itemPrice <= maxValue);
+        if (!eligible.length) break; // nothing in the cart qualifies as the gift
+        // Most expensive eligible item; one unit becomes free.
+        saved = eligible.reduce((max, p) => (p.itemPrice > max.itemPrice ? p : max)).itemPrice;
         break;
       }
     }
@@ -202,7 +216,6 @@ const calculateOrderOffers = async (
   let freeShipping = false;
   let appliedOffer: Types.ObjectId | null = null;
   let cartOfferSaved = 0;
-  let giftLine: ProductOrder | null = null;
 
   if (bestOffer && bestSaved > 0) {
     appliedOffer = bestOffer._id as Types.ObjectId;
@@ -213,6 +226,8 @@ const calculateOrderOffers = async (
       case "buy_x_get_cheapest_free":
       case "spend_x_get_discount":
       case "buy_x_get_half_price":
+      // One eligible cart unit becomes free — applied as an order-level discount.
+      case "spend_x_get_free_item":
         discount = bestSaved;
         break;
 
@@ -220,19 +235,11 @@ const calculateOrderOffers = async (
       case "buy_x_get_free_shipping":
         freeShipping = true;
         break;
-
-      // The chosen item is added to the order as a free line (price 0)
-      case "spend_x_get_free_item":
-        if (freeGift) {
-          giftLine = { ...freeGift, itemPrice: 0, totalPrice: 0, isFreeGift: true };
-        }
-        break;
     }
   }
 
   // ── Step 5: Assemble the final product list ──────────────────────────────────
   const finalProducts = products.map(applyFlash);
-  if (giftLine) finalProducts.push(giftLine);
 
   return {
     appliedOffer,
@@ -242,43 +249,6 @@ const calculateOrderOffers = async (
     freeShipping,
     cartOfferSaved,
     flashSaved,
-  };
-};
-
-// ─── Free-gift helper (for spend_x_get_free_item) ───────────────────────────────
-//
-// Builds a ProductOrder for the customer-chosen free item. itemPrice/totalPrice
-// hold the item's ORIGINAL price so the offer can verify it is within the offer's
-// freeItemMaxValue; the calculation zeroes the price if the offer actually applies.
-
-const buildGiftProduct = async (variantId?: string): Promise<ProductOrder | null> => {
-  if (!variantId) return null;
-
-  const variant = await ProductVariantModel.findById(variantId)
-    .populate({ path: SchemaTypesReference.Color, select: "name" })
-    .populate({ path: SchemaTypesReference.Size, select: "number" });
-
-  if (!variant) throw new ApiError(404, `${ErrorMessages.VARIANT_NOT_FOUND}: ${variantId}`);
-
-  const product = await ProductModel.findOne({ _id: variant.product, isDeleted: false });
-  if (!product) throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
-
-  if (variant.availableItems < 1) {
-    throw new ApiError(400, `Not enough stock for free gift: ${product.productName}`);
-  }
-
-  const unitPrice = product.finalPrice ?? product.price;
-
-  return {
-    productId: variant.product as Types.ObjectId,
-    variantId: variant._id as Types.ObjectId,
-    quantity: 1,
-    productName: product.productName,
-    itemPrice: unitPrice,
-    totalPrice: unitPrice,
-    size: (variant.size as any)?.number ?? "",
-    color: (variant.color as any)?.name ?? "",
-    isFreeGift: true,
   };
 };
 
@@ -311,7 +281,8 @@ const buildSoldItemsDeductOps = (products: ProductOrder[]) => {
   return Array.from(map.entries()).map(([productId, qty]) => ({
     updateOne: {
       filter: { _id: new Types.ObjectId(productId) },
-      update: { $inc: { soldItems: -qty } },
+      // Cancel/restore: give stock back and undo the sale count.
+      update: { $inc: { soldItems: -qty, availableItems: qty } },
     },
   }));
 };
@@ -327,7 +298,9 @@ const buildSoldItemsIncrOps = (products: ProductOrder[]) => {
   return Array.from(map.entries()).map(([productId, qty]) => ({
     updateOne: {
       filter: { _id: new Types.ObjectId(productId) },
-      update: { $inc: { soldItems: qty } },
+      // On order: count the sale and reduce the product-level stock aggregate so it
+      // stays in sync with the variant stock (the source of truth).
+      update: { $inc: { soldItems: qty, availableItems: -qty } },
     },
   }));
 };
@@ -413,7 +386,6 @@ class OrderService {
     authUserId: string | Types.ObjectId;
     userInformationId: string;
     products: Array<{ variantId: string; quantity: number }>;
-    freeGiftVariantId?: string;
   }) {
     // Step 1 & 2 — Validate variants/products and build snapshots
     const orderProducts: ProductOrder[] = [];
@@ -466,8 +438,7 @@ class OrderService {
     };
 
     // Step 6 — Calculate and apply offers (flash sale + one best cart offer)
-    const freeGift = await buildGiftProduct(data.freeGiftVariantId);
-    const offerResult = await calculateOrderOffers(orderProducts, shippingCost, freeGift);
+    const offerResult = await calculateOrderOffers(orderProducts, shippingCost);
     const { appliedOffer, appliedFlashOffers, finalProducts, discount, freeShipping } = offerResult;
 
     // Step 7 — Recalculate subTotal from final (flash-discounted + free-gift) products
@@ -701,7 +672,6 @@ class OrderService {
   async previewOrder(data: {
     userInformationId: string;
     items: Array<{ variantId: string; quantity: number }>;
-    freeGiftVariantId?: string;
   }) {
     // Step 1 & 2 — Validate variants/products and build items array
     const orderProducts: ProductOrder[] = [];
@@ -740,8 +710,7 @@ class OrderService {
     const shippingCost = shipping?.cost ?? 0;
 
     // Step 5 — Apply same offer logic as createOrder (no side effects)
-    const freeGift = await buildGiftProduct(data.freeGiftVariantId);
-    const offerResult = await calculateOrderOffers(orderProducts, shippingCost, freeGift);
+    const offerResult = await calculateOrderOffers(orderProducts, shippingCost);
     const { appliedOffer, appliedFlashOffers, finalProducts, discount, freeShipping, cartOfferSaved, flashSaved } =
       offerResult;
 

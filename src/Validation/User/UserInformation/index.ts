@@ -1,5 +1,4 @@
 import joi from "joi";
-import { governorateArray } from "../../../Utils/Governorate/GovernorateEnum";
 import { baseSchema } from "../../baseSchema";
 export const createUser = baseSchema.concat(
   joi

@@ -19,6 +19,7 @@ import ProductPublicRouter from "./Router/Product/ProductPublicRouter";
 import imageSliderRouter from "./Router/ImageSlider/ImageSliderRouter";
 import wishlistRouter from "./Router/Wishlist/WishlistRouter";
 import shippingRouter from "./Router/Shipping/ShippingRouter";
+import ShippingPublicRouter from "./Router/Shipping/ShippingPublicRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
 import PublicOrderRouter from "./Router/Order/PublicOrderRouter";
 import iconRouter from "./Router/Icons/IconRouter";
@@ -46,6 +47,8 @@ app.use(`/${RouterEnum.authentication}`, authenticationRouter);
 app.use(`/${RouterEnum.public}`, publicRouter);
 app.use(`/${RouterEnum.products}`, ProductPublicRouter);
 app.use("/home", homeRouter);
+// Public read-only shipping costs (mutations stay admin-only below).
+app.use(`/${RouterEnum.shipping}`, ShippingPublicRouter);
 app.use(checkAuthority);
 app.use(
   `/${RouterEnum.user}`,
@@ -73,7 +76,7 @@ app.use(
   checkRole([UserTypeEnum.USER, UserTypeEnum.ADMIN]),
   wishlistRouter
 );
-app.use(`/${RouterEnum.shipping}`, checkRole([UserTypeEnum.ADMIN, UserTypeEnum.USER]), shippingRouter);
+app.use(`/${RouterEnum.shipping}`, checkRole([UserTypeEnum.ADMIN]), shippingRouter);
 app.use(`/${RouterEnum.order}`, checkRole([UserTypeEnum.USER, UserTypeEnum.ADMIN]), PublicOrderRouter);
 app.use(`/${RouterEnum.adminOrder}`, checkRole([UserTypeEnum.ADMIN]), OrderRouter);
 app.use(`/${RouterEnum.icon}`, checkRole([UserTypeEnum.ADMIN]), iconRouter);

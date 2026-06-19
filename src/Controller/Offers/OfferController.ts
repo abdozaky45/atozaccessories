@@ -14,8 +14,61 @@ import {
 import { scheduleOfferJobs } from "../../Utils/offerJobs/scheduleOfferJobs";
 import { cancelOfferJobs } from "../../Utils/offerJobs/cancelOfferJobs";
 import { rescheduleOfferJobs } from "../../Utils/offerJobs/rescheduleOfferJobs";
+import { sendEmail } from "../../Utils/Nodemailer/SendEmail";
+import { generateOfferEmail } from "../../Utils/Nodemailer/OfferEmail";
+import AuthModel from "../../Model/User/auth/AuthModel";
+import { UserTypeEnum } from "../../Utils/UserType";
 
 const TIMED_OFFER_TYPES = ["flash_sale"];
+
+const BRAND = "A to Z Accessory";
+const SHOP_URL = "https://www.atozaccessory.com";
+
+// Broadcast a promotional email about a live offer to every customer (role: user).
+// Fire-and-forget: never blocks or fails the request. BCC in chunks so recipients
+// don't see each other and we stay within Resend's per-message recipient cap.
+const broadcastOfferToUsers = async (offer: any) => {
+  try {
+    const users = await AuthModel.find({ role: UserTypeEnum.USER }).select("email").lean();
+    const emails = users.map((u: any) => u.email).filter(Boolean);
+    if (!emails.length) return;
+
+    const html = generateOfferEmail({
+      brandName: BRAND,
+      offerTitle: offer.title,
+      offerDescription: offer.description,
+      imageUrl: offer.image?.mediaUrl,
+      shopUrl: SHOP_URL,
+    });
+    const subject = `🎉 عرض جديد: ${offer.title}`;
+
+    const CHUNK = 49;
+    for (let i = 0; i < emails.length; i += CHUNK) {
+      await sendEmail({ to: "atozaccessories0@gmail.com", bcc: emails.slice(i, i + CHUNK), subject, html });
+    }
+  } catch (err) {
+    console.error("[broadcastOfferToUsers] failed:", err);
+  }
+};
+
+// Derive the lifecycle status at creation time. Without this, the schema default
+// "scheduled" would stick and the offer would never apply (the order engine only
+// uses offers with status "active"). Non-timed cart offers go live immediately;
+// timed offers (flash_sale) are derived from their window.
+const computeCreateStatus = (
+  offerType: string,
+  timing: { startDate?: string | Date | null; endDate?: string | Date | null } | undefined,
+  isActive: boolean | undefined
+): "scheduled" | "active" | "expired" => {
+  if (isActive === false) return "scheduled"; // created switched off
+  if (!TIMED_OFFER_TYPES.includes(offerType)) return "active";
+  const now = new Date();
+  const start = timing?.startDate ? new Date(timing.startDate) : null;
+  const end = timing?.endDate ? new Date(timing.endDate) : null;
+  if (end && end <= now) return "expired";
+  if (start && start > now) return "scheduled";
+  return "active";
+};
 
 const S3_BASE_URL = "https://atozaccessories.s3.amazonaws.com/";
 
@@ -34,6 +87,7 @@ export const createNewOffer = asyncHandler(async (req: Request, res: Response) =
     title,
     description,
     isActive,
+    status: computeCreateStatus(offerType, timing, isActive),
     image: buildImage(image),
     offerType,
     timing,
@@ -54,6 +108,11 @@ export const createNewOffer = asyncHandler(async (req: Request, res: Response) =
     } catch (err) {
       console.error(`[createNewOffer] Failed to schedule jobs for offer ${offer._id}:`, err);
     }
+  }
+
+  // Announce the offer to all customers if it is live now.
+  if (offer.status === "active") {
+    broadcastOfferToUsers(offer);
   }
 
   return res.json(new ApiResponse(200, { offer }, SuccessMessage.OFFER_CREATED));
@@ -181,5 +240,11 @@ export const toggleOffer = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await offer.save();
+
+  // Announce to all customers when an offer is (re)opened and now live.
+  if (offer.isActive && offer.status === "active") {
+    broadcastOfferToUsers(offer);
+  }
+
   return res.json(new ApiResponse(200, { offer }, SuccessMessage.OFFER_TOGGLED));
 });

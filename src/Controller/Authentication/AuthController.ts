@@ -16,16 +16,32 @@ import { generateAccessToken } from "../../Utils/GenerateAndVerifyToken";
 import ErrorMessages from "../../Utils/Error";
 import SuccessMessage from "../../Utils/SuccessMessages";
 
+// Regular users have no login/OTP step, so on email entry we mint a non-expiring
+// access token (carrying their id) and persist it. The frontend stores it and sends
+// it as a Bearer token with wishlist / user-information / order requests.
+const issueUserToken = async (user: any, userAgent: string): Promise<string> => {
+  const accessToken = generateAccessToken({
+    payload: { _id: user._id, role: user.role, email: user.email },
+    expiresIn: null, // never expires for regular users
+  });
+  await saveAccessToken(accessToken, user._id, userAgent);
+  return accessToken;
+};
+
 export const registerWithEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const email = req.body.email.toLowerCase();
+    const agent = req.headers["user-agent"] || "unknown";
 
     const user = await findUserByEmail(email);
 
     if (!user) {
-      await CreateNewAccount({ email, activeCode: "", codeCreatedAt: 0 });
+      const newUser = await CreateNewAccount({ email, activeCode: "", codeCreatedAt: 0 });
       await sendWelcomeEmail(email);
-      return res.status(201).json(new ApiResponse(201, {}, SuccessMessage.USER_CREATED));
+      const accessToken = await issueUserToken(newUser, agent);
+      return res
+        .status(201)
+        .json(new ApiResponse(201, { accessToken, userId: newUser._id }, SuccessMessage.USER_CREATED));
     }
 
     if (user.role === UserTypeEnum.ADMIN) {
@@ -40,9 +56,11 @@ export const registerWithEmail = asyncHandler(
         : next(new Error(ErrorMessages.EMAIL_NOT_SENT));
     }
 
-    // user exists, role === USER
-    await sendWelcomeEmail(email);
-    return res.status(200).json(new ApiResponse(200, {}, SuccessMessage.EMAIL_SENT));
+    // user exists, role === USER — this acts as a returning-user "login": issue a fresh token.
+    const accessToken = await issueUserToken(user, agent);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { accessToken, userId: user._id }, SuccessMessage.EMAIL_SENT));
   }
 );
 

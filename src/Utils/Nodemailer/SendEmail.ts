@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 interface EmailOptions {
   from?: string;
   to: string | string[];
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -13,6 +14,7 @@ interface EmailOptions {
 export const sendEmail = async ({
   from = process.env.RESEND_FROM ?? 'A to Z Accessory <onboarding@resend.dev>',
   to,
+  bcc,
   subject,
   html,
   text,
@@ -25,6 +27,7 @@ export const sendEmail = async ({
     to: Array.isArray(to) ? to : [to],
     subject,
     html,
+    ...(bcc && { bcc: Array.isArray(bcc) ? bcc : [bcc] }),
     ...(text && { text }),
     ...(replyTo && { replyTo }),
     ...(headers && { headers }),

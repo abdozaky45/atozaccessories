@@ -1,0 +1,433 @@
+{
+  "info": {
+    "name": "A to Z Accessories - User / Website APIs",
+    "description": "All public/user-facing endpoints the website front-end connects to.\n\nAUTH MODEL (no real login for regular users):\n- Entering an email at `POST /authentication/register-email` returns a non-expiring `accessToken` (carrying the user id) plus `userId`.\n- The token is auto-saved to the `accessToken` collection variable by the request's test script.\n- Only 3 areas need this token: wishlist, orders, userInformation. Everything else (products, categories, home, hero, shipping) is public.\n\nIDS YOU WILL USE:\n- `userId`            = the auth user id (from registration). Used as `customerId` when listing a user's orders.\n- `userInformationId` = a saved address record id (from add-user-information). Used as `userId` in create-order and as `userInformationId` in preview.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "userInformationId", "value": "", "type": "string" },
+    { "key": "productId", "value": "", "type": "string" },
+    { "key": "variantId", "value": "", "type": "string" },
+    { "key": "categoryId", "value": "", "type": "string" },
+    { "key": "wishlistId", "value": "", "type": "string" },
+    { "key": "shippingId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register / Login with email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// New & returning regular users get a non-expiring token here.",
+                  "const res = pm.response.json();",
+                  "if (res && res.data) {",
+                  "  if (res.data.accessToken) pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "  if (res.data.userId) pm.collectionVariables.set('userId', res.data.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}" },
+            "url": { "raw": "{{baseUrl}}/authentication/register-email", "host": ["{{baseUrl}}"], "path": ["authentication", "register-email"] },
+            "description": "Regular user: returns { accessToken, userId }. Admin email: sends an OTP code instead."
+          }
+        },
+        {
+          "name": "Activate account (ADMIN only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.accessToken) pm.collectionVariables.set('accessToken', res.data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"activeCode\": \"123456\"\n}" },
+            "url": { "raw": "{{baseUrl}}/authentication/active-account", "host": ["{{baseUrl}}"], "path": ["authentication", "active-account"] },
+            "description": "Admin-only OTP verification. Regular users do NOT use this (returns 403)."
+          }
+        },
+        {
+          "name": "Resend activation code (ADMIN only)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\"\n}" },
+            "url": { "raw": "{{baseUrl}}/authentication/email-new-code", "host": ["{{baseUrl}}"], "path": ["authentication", "email-new-code"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Home",
+      "item": [
+        {
+          "name": "Get home page",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/home", "host": ["{{baseUrl}}"], "path": ["home"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public - Categories",
+      "item": [
+        {
+          "name": "Get all categories",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/category/get-all-categories", "host": ["{{baseUrl}}"], "path": ["public", "category", "get-all-categories"] }
+          }
+        },
+        {
+          "name": "Get one category",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/category/get-one-category/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["public", "category", "get-one-category", "{{categoryId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public - Hero Section (Slider)",
+      "item": [
+        {
+          "name": "Get hero section",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/hero-section/get", "host": ["{{baseUrl}}"], "path": ["public", "hero-section", "get"] }
+          }
+        },
+        {
+          "name": "Get hero section by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/hero-section/get/:id", "host": ["{{baseUrl}}"], "path": ["public", "hero-section", "get", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get products list",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "category", "value": "", "disabled": true },
+                { "key": "isBestSeller", "value": "true", "disabled": true },
+                { "key": "isSale", "value": "true", "disabled": true },
+                { "key": "minPrice", "value": "", "disabled": true },
+                { "key": "maxPrice", "value": "", "disabled": true },
+                { "key": "color", "value": "", "disabled": true },
+                { "key": "size", "value": "", "disabled": true },
+                { "key": "sort", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search products",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/search?searchQuery=watch",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "search"],
+              "query": [{ "key": "searchQuery", "value": "watch" }]
+            }
+          }
+        },
+        {
+          "name": "Get product by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}?user={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"],
+              "query": [{ "key": "user", "value": "{{userId}}", "description": "optional - userInformation id to flag wishlist 'liked'", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Get products & available items",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"products\": [\n    \"{{variantId}}\"\n  ]\n}" },
+            "url": { "raw": "{{baseUrl}}/products/available-items", "host": ["{{baseUrl}}"], "path": ["products", "available-items"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shipping (PUBLIC)",
+      "item": [
+        {
+          "name": "Get all shipping",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/shipping", "host": ["{{baseUrl}}"], "path": ["shipping"] },
+            "description": "Public reference data (governorate prices). No token required."
+          }
+        },
+        {
+          "name": "Get shipping by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/shipping/{{shippingId}}", "host": ["{{baseUrl}}"], "path": ["shipping", "{{shippingId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Information (needs token)",
+      "item": [
+        {
+          "name": "Add user information",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save the new address record id for edit / order requests.",
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.user && res.data.user._id) {",
+                  "  pm.collectionVariables.set('userInformationId', res.data.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Ahmed\",\n  \"lastName\": \"Mohamed\",\n  \"address\": \"12 El Tahrir St\",\n  \"apartmentSuite\": \"Apt 5\",\n  \"shipping\": \"{{shippingId}}\",\n  \"postalCode\": \"12345\",\n  \"primaryPhone\": \"01012345678\",\n  \"secondaryPhone\": \"\"\n}" },
+            "url": { "raw": "{{baseUrl}}/user/add-user-information", "host": ["{{baseUrl}}"], "path": ["user", "add-user-information"] },
+            "description": "The owning user is taken from the token; no userId needed in the body."
+          }
+        },
+        {
+          "name": "Get my user information (list)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/user/user-information", "host": ["{{baseUrl}}"], "path": ["user", "user-information"] },
+            "description": "All address records belonging to the current (token) user."
+          }
+        },
+        {
+          "name": "Get single user information (for edit)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/user/single-user-information/{{userInformationId}}", "host": ["{{baseUrl}}"], "path": ["user", "single-user-information", "{{userInformationId}}"] },
+            "description": "Fetch one address record by its _id to prefill the edit form."
+          }
+        },
+        {
+          "name": "Update user information",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Ahmed\",\n  \"address\": \"New address\",\n  \"shipping\": \"{{shippingId}}\",\n  \"primaryPhone\": \"01012345678\"\n}" },
+            "url": { "raw": "{{baseUrl}}/user/update-user-information/{{userInformationId}}", "host": ["{{baseUrl}}"], "path": ["user", "update-user-information", "{{userInformationId}}"] }
+          }
+        },
+        {
+          "name": "Delete user information",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userInformationId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/user/delete-user-information/{{userInformationId}}", "host": ["{{baseUrl}}"], "path": ["user", "delete-user-information", "{{userInformationId}}"] }
+          }
+        },
+        {
+          "name": "Get all user information (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/user/all-user-information", "host": ["{{baseUrl}}"], "path": ["user", "all-user-information"] },
+            "description": "Returns every userInformation record in the system (admin view)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wishlist (needs token)",
+      "item": [
+        {
+          "name": "Add to wishlist",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"{{productId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/wishlist/add-to-wishlist", "host": ["{{baseUrl}}"], "path": ["wishlist", "add-to-wishlist"] },
+            "description": "Owner is taken from the token."
+          }
+        },
+        {
+          "name": "Get current user wishlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/wishlist/get-user-wishlist", "host": ["{{baseUrl}}"], "path": ["wishlist", "get-user-wishlist"] }
+          }
+        },
+        {
+          "name": "Get wishlist by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/wishlist/favorite-product/{{wishlistId}}", "host": ["{{baseUrl}}"], "path": ["wishlist", "favorite-product", "{{wishlistId}}"] }
+          }
+        },
+        {
+          "name": "Get all wishlist products (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/wishlist/get-all-wishlist?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["wishlist", "get-all-wishlist"],
+              "query": [{ "key": "page", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Delete favorite product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/wishlist/delete-favorite-product/{{productId}}", "host": ["{{baseUrl}}"], "path": ["wishlist", "delete-favorite-product", "{{productId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders (needs token)",
+      "item": [
+        {
+          "name": "Preview order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"items\": [\n    { \"variantId\": \"{{variantId}}\", \"quantity\": 1 }\n  ],\n  \"userInformationId\": \"{{userInformationId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/order/preview", "host": ["{{baseUrl}}"], "path": ["order", "preview"] },
+            "description": "userInformationId = a saved address record id."
+          }
+        },
+        {
+          "name": "Create order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.order && res.data.order._id) {",
+                  "  pm.collectionVariables.set('orderId', res.data.order._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"products\": [\n    { \"variantId\": \"{{variantId}}\", \"quantity\": 1 }\n  ],\n  \"userId\": \"{{userInformationId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/order", "host": ["{{baseUrl}}"], "path": ["order"] },
+            "description": "NOTE: `userId` here = the userInformation (address) record id, NOT the auth user id. The auth user comes from the token."
+          }
+        },
+        {
+          "name": "Get my orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/order/customer/{{userId}}", "host": ["{{baseUrl}}"], "path": ["order", "customer", "{{userId}}"] },
+            "description": "customerId = the auth user id (the userId from registration). A user can only fetch their own orders."
+          }
+        },
+        {
+          "name": "Get order by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["order", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Cancel order",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/order/cancel/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["order", "cancel", "{{orderId}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}
