@@ -27,6 +27,7 @@ import colorRouter from "./Router/Colors/ColorRouter";
 import sizeRouter from "./Router/Sizes/SizeRouter";
 import offerRouter from "./Router/Offers/OfferRouter";
 import homeRouter from "./Router/Home/HomeRouter";
+import BackupRouter from "./Router/Backup/BackupRouter";
 import { getCorsOptions } from "./config";
 //import { blockScrapers, enforcePublicApiRestrictions } from "./middleware/Security";
 const app: Application = express();
@@ -83,6 +84,7 @@ app.use(`/${RouterEnum.icon}`, checkRole([UserTypeEnum.ADMIN]), iconRouter);
 app.use(`/${RouterEnum.color}`, checkRole([UserTypeEnum.ADMIN]), colorRouter);
 app.use(`/${RouterEnum.size}`, checkRole([UserTypeEnum.ADMIN]), sizeRouter);
 app.use(`/${RouterEnum.offer}`, checkRole([UserTypeEnum.ADMIN]), offerRouter);
+app.use(`/${RouterEnum.backup}`, checkRole([UserTypeEnum.ADMIN]), BackupRouter);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });
