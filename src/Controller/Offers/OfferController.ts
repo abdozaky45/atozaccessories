@@ -122,11 +122,12 @@ export const getOffers = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const offerType = req.query.offerType as string | undefined;
+  const search = (req.query.search as string | undefined)?.trim() || undefined;
   const isActiveStr = req.query.isActive as string | undefined;
   const isActive =
     isActiveStr === "true" ? true : isActiveStr === "false" ? false : undefined;
 
-  const result = await getAllOffers({ page, limit, offerType, isActive });
+  const result = await getAllOffers({ page, limit, offerType, isActive, search });
   return res.json(new ApiResponse(200, result));
 });
 

@@ -79,6 +79,7 @@ export const listOffersValidation = baseSchema.concat(
     page: joi.number().integer().min(1).optional(),
     limit: joi.number().integer().min(1).optional(),
     offerType: joi.string().valid(...OFFER_TYPES).optional(),
+    search: joi.string().allow("").optional(),
     isActive: joi.alternatives()
       .try(joi.boolean(), joi.string().valid("true", "false"))
       .optional(),

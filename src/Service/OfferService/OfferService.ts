@@ -81,11 +81,13 @@ export const getAllOffers = async ({
   limit = 10,
   offerType,
   isActive,
+  search,
 }: {
   page?: number;
   limit?: number;
   offerType?: string;
   isActive?: boolean;
+  search?: string;
 }) => {
   page = !page || page < 1 || isNaN(page) ? 1 : page;
   const skip = limit * (page - 1);
@@ -93,6 +95,7 @@ export const getAllOffers = async ({
   const filter: any = {};
   if (offerType) filter.offerType = offerType;
   if (isActive !== undefined) filter.isActive = isActive;
+  if (search) filter.title = { $regex: search, $options: "i" };
 
   const totalItems = await OfferModel.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);
