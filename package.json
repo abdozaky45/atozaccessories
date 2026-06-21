@@ -18,6 +18,7 @@
     "seed": "ts-node src/Seeds/index.ts",
     "migrate:orders": "ts-node src/Scripts/migrateLegacyOrders.ts",
     "migrate:cdn": "ts-node src/Scripts/migrateImagesToCloudfront.ts",
+    "media:cleanup": "ts-node src/Scripts/cleanupOrphanMedia.ts",
     "test": "npm run build && jasmine"
   },
   "dependencies": {
