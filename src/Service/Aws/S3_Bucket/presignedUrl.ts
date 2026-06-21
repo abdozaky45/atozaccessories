@@ -25,11 +25,12 @@ export default class s3_service {
     key: string;
     contentType: string;
   }) => {
+    // No ACL: the bucket has ACLs disabled (Bucket owner enforced) and is
+    // private behind CloudFront (OAC). Sending an ACL would fail the upload.
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
       ContentType: contentType,
-      ACL: "public-read-write",
     });
     return await getSignedUrl(client, command, { expiresIn: 360000 });
   };

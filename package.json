@@ -17,6 +17,7 @@
     "dev": "nodemon src/index.ts",
     "seed": "ts-node src/Seeds/index.ts",
     "migrate:orders": "ts-node src/Scripts/migrateLegacyOrders.ts",
+    "migrate:cdn": "ts-node src/Scripts/migrateImagesToCloudfront.ts",
     "test": "npm run build && jasmine"
   },
   "dependencies": {
