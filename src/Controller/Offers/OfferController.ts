@@ -131,6 +131,20 @@ export const getOffers = asyncHandler(async (req: Request, res: Response) => {
   return res.json(new ApiResponse(200, result));
 });
 
+// Public, unauthenticated endpoint used by the storefront (e.g. the mobile side
+// menu promo card). Returns only currently-live offers (isActive + status
+// "active") so guests never see scheduled/expired ones.
+export const getPublicActiveOffers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const result = await getAllOffers({ page: 1, limit, isActive: true });
+    const offers = (result.data || []).filter(
+      (o: any) => o.status === "active"
+    );
+    return res.json(new ApiResponse(200, { offers }));
+  }
+);
+
 export const getOfferById = asyncHandler(async (req: Request, res: Response) => {
   const offer = await findOfferByIdWithPopulate(req.params.id);
   if (!offer) throw new ApiError(404, ErrorMessages.OFFER_NOT_FOUND);
