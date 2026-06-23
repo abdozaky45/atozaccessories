@@ -73,6 +73,17 @@ export const getOnSale = async (): Promise<any[]> => {
   );
 };
 
+export const getNewArrivals = async (): Promise<any[]> => {
+  const categories = await CategoryModel.find({ isDeleted: false }, { _id: 1 }).lean();
+  if (!categories.length) return [];
+
+  return fetchDiverseProducts(
+    { isDeleted: false },
+    categories.map((c) => c._id),
+    "createdAt"
+  );
+};
+
 export const getFlashSale = async (): Promise<any | null> => {
   // A flash sale targets specific product(s) with a big, time-limited discount.
   const offer = await OfferModel.findOne({
