@@ -30,7 +30,16 @@ const SHOP_URL = "https://www.atozaccessory.com";
 const broadcastOfferToUsers = async (offer: any) => {
   try {
     const users = await AuthModel.find({ role: UserTypeEnum.USER }).select("email").lean();
-    const emails = users.map((u: any) => u.email).filter(Boolean);
+    // Resend validates each bcc address (RFC): the local part may not end with a dot.
+    // Filter out malformed/duplicate addresses so one bad email can't break the broadcast.
+    const emailRegex = /^[^\s@]+(?<!\.)@[^\s@]+\.[^\s@]+$/;
+    const emails = [
+      ...new Set(
+        users
+          .map((u: any) => (typeof u.email === "string" ? u.email.trim().toLowerCase() : ""))
+          .filter((e: string) => emailRegex.test(e))
+      ),
+    ];
     if (!emails.length) return;
 
     const html = generateOfferEmail({
@@ -68,6 +77,23 @@ const computeCreateStatus = (
   if (end && end <= now) return "expired";
   if (start && start > now) return "scheduled";
   return "active";
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// When a flash_sale is (re)activated but its window has already passed and the
+// admin didn't extend the dates themselves, auto-extend the endDate to 24h from
+// now so the offer goes live again instead of failing with "dates have passed".
+// Mutates offer.timing.endDate in place and returns the dates to (re)schedule.
+const autoExtendExpiredTiming = (offer: any): { startDate: Date | null; endDate: Date | null } => {
+  const now = new Date();
+  const startDate = offer.timing?.startDate ? new Date(offer.timing.startDate) : null;
+  let endDate = offer.timing?.endDate ? new Date(offer.timing.endDate) : null;
+  if (endDate && endDate <= now) {
+    endDate = new Date(now.getTime() + DAY_MS);
+    offer.timing.endDate = endDate;
+  }
+  return { startDate, endDate };
 };
 
 const S3_BASE_URL = "https://atozaccessories.s3.amazonaws.com/";
@@ -183,13 +209,40 @@ export const updateOffer = asyncHandler(async (req: Request, res: Response) => {
 
   if (title !== undefined) offer.title = title;
   if (description !== undefined) offer.description = description;
-  if (isActive !== undefined) offer.isActive = isActive;
   if (offerType !== undefined) offer.offerType = offerType;
   if (timing !== undefined) offer.timing = timing;
   if (condition !== undefined) offer.condition = condition;
   if (reward !== undefined) offer.reward = reward;
   if (targetProducts !== undefined) offer.targetProducts = targetProducts;
   if (targetCategories !== undefined) offer.targetCategories = targetCategories;
+
+  // Sync status when isActive is toggled through the update endpoint.
+  // Without this, status stays stale (e.g. switching an offer off leaves
+  // status "active", switching it on leaves it "expired"/"scheduled").
+  // Mirrors the lifecycle handling in toggleOffer.
+  if (isActive !== undefined && isActive !== offer.isActive) {
+    const isTimedOffer = TIMED_OFFER_TYPES.includes(offer.offerType);
+    const offerId = String(offer._id);
+
+    if (!isActive) {
+      // ── Deactivating ──
+      if (isTimedOffer) await cancelOfferJobs(offerId);
+      offer.status = "expired";
+    } else {
+      // ── Reactivating ──
+      if (isTimedOffer) {
+        // Auto-extend by 24h if the window already passed and dates weren't changed
+        const { startDate, endDate } = autoExtendExpiredTiming(offer);
+        if (!startDate || !endDate) {
+          throw new ApiError(400, "Cannot reactivate a timed offer without valid startDate and endDate");
+        }
+        offer.status = await rescheduleOfferJobs(offerId, startDate, endDate);
+      } else {
+        offer.status = "active";
+      }
+    }
+    offer.isActive = isActive;
+  }
 
   await offer.save();
   return res.json(new ApiResponse(200, { offer }, SuccessMessage.OFFER_UPDATED));
@@ -238,14 +291,15 @@ export const toggleOffer = asyncHandler(async (req: Request, res: Response) => {
   } else {
     // ── Reactivating ──────────────────────────────────────────────────────────
     if (isTimedOffer) {
-      const startDate = offer.timing.startDate ? new Date(offer.timing.startDate) : null;
-      const endDate = offer.timing.endDate ? new Date(offer.timing.endDate) : null;
+      // Auto-extend by 24h if the window already passed so the offer can go live
+      // again without the admin having to manually bump the dates first.
+      const { startDate, endDate } = autoExtendExpiredTiming(offer);
 
       if (!startDate || !endDate) {
         throw new ApiError(400, "Cannot reactivate a timed offer without valid startDate and endDate");
       }
 
-      // rescheduleOfferJobs throws if both dates have passed; returns the correct status
+      // rescheduleOfferJobs returns the correct status for the (extended) window
       const newStatus = await rescheduleOfferJobs(offerId, startDate, endDate);
       offer.status = newStatus;
     } else {
