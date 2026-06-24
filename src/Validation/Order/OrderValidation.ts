@@ -4,14 +4,17 @@ import { baseSchema } from '../baseSchema';
 
 // ── User ──────────────────────────────────────────────────────────────────────
 
+// A line identifies its item by variantId (exact variant chosen) OR productId
+// (quick add — the backend resolves the product's variant). At least one required.
+const orderLineSchema = joi.object({
+  variantId: joi.string(),
+  productId: joi.string(),
+  quantity:  joi.number().integer().min(1).required(),
+}).or('variantId', 'productId');
+
 export const createOrderValidation = baseSchema.concat(
   joi.object({
-    products: joi.array().items(
-      joi.object({
-        variantId: joi.string().required(),
-        quantity:  joi.number().integer().min(1).required(),
-      })
-    ).min(1).required(),
+    products: joi.array().items(orderLineSchema).min(1).required(),
     userId: joi.string().required(),
   }).required()
 );
@@ -30,12 +33,7 @@ export const getUserOrdersValidation = baseSchema.concat(
 
 export const previewOrderValidation = baseSchema.concat(
   joi.object({
-    items: joi.array().items(
-      joi.object({
-        variantId: joi.string().required(),
-        quantity:  joi.number().integer().min(1).required(),
-      })
-    ).min(1).required(),
+    items: joi.array().items(orderLineSchema).min(1).required(),
     userInformationId: joi.string().required(),
   }).required()
 );

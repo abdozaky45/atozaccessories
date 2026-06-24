@@ -171,6 +171,24 @@ export const deleteVariantById = async (variantId: string) => {
   return variant;
 };
 
+// Recompute the product-level stock mirror from its variants. `availableItems`
+// is the sum of every variant's stock, and `isSoldOut` is true when nothing is
+// left. Call this after any variant create/update/delete so the product aggregate
+// (used for listings, filters and display) stays in sync with the source of truth.
+export const syncProductStockFromVariants = async (
+  productId: Types.ObjectId | string
+) => {
+  const variants = await ProductVariantModel.find({ product: productId })
+    .select("availableItems")
+    .lean();
+  const total = variants.reduce((sum, v) => sum + (v.availableItems || 0), 0);
+  await ProductModel.findByIdAndUpdate(productId, {
+    availableItems: total,
+    isSoldOut: total <= 0,
+  });
+  return total;
+};
+
 // ─── Unified GET — users ─────────────────────────────────────────────────────
 
 export interface ProductFilters {

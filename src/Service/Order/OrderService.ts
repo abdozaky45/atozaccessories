@@ -14,13 +14,22 @@ import ErrorMessages from "../../Utils/Error";
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
+// Product-level `availableItems` is a denormalized mirror of the SUM of its
+// variants' stock, and `isSoldOut` follows from it. We recompute both from the
+// variants (the source of truth) after any stock change so the aggregate can
+// never drift — e.g. from free-item lines, partial cancels, or concurrent orders.
+// This makes cancel/restore return the totals to exactly the variant sum.
 export const updateProductSoldOutStatus = async (productIds: Types.ObjectId[]) => {
   for (const productId of productIds) {
-    const hasStock = await ProductVariantModel.exists({
-      product: productId,
-      availableItems: { $gt: 0 },
+    const [agg] = await ProductVariantModel.aggregate([
+      { $match: { product: productId } },
+      { $group: { _id: null, total: { $sum: "$availableItems" } } },
+    ]);
+    const total = agg?.total ?? 0;
+    await ProductModel.findByIdAndUpdate(productId, {
+      availableItems: total,
+      isSoldOut: total <= 0,
     });
-    await ProductModel.findByIdAndUpdate(productId, { isSoldOut: !hasStock });
   }
 };
 
@@ -270,6 +279,9 @@ const buildVariantDeductOps = (products: ProductOrder[]) =>
     },
   }));
 
+// Sale counter only. The aggregate `availableItems` is recomputed from the
+// variants by updateProductSoldOutStatus, so it is intentionally NOT touched here.
+// Free lines (itemPrice === 0) never counted as a sale, so they aren't undone.
 const buildSoldItemsDeductOps = (products: ProductOrder[]) => {
   const map = new Map<string, number>();
   for (const p of products) {
@@ -281,8 +293,8 @@ const buildSoldItemsDeductOps = (products: ProductOrder[]) => {
   return Array.from(map.entries()).map(([productId, qty]) => ({
     updateOne: {
       filter: { _id: new Types.ObjectId(productId) },
-      // Cancel/restore: give stock back and undo the sale count.
-      update: { $inc: { soldItems: -qty, availableItems: qty } },
+      // Cancel/restore: undo the sale count.
+      update: { $inc: { soldItems: -qty } },
     },
   }));
 };
@@ -298,11 +310,50 @@ const buildSoldItemsIncrOps = (products: ProductOrder[]) => {
   return Array.from(map.entries()).map(([productId, qty]) => ({
     updateOne: {
       filter: { _id: new Types.ObjectId(productId) },
-      // On order: count the sale and reduce the product-level stock aggregate so it
-      // stays in sync with the variant stock (the source of truth).
-      update: { $inc: { soldItems: qty, availableItems: -qty } },
+      // On order: count the sale. The aggregate availableItems is recomputed from
+      // the variants by updateProductSoldOutStatus, so it isn't touched here.
+      update: { $inc: { soldItems: qty } },
     },
   }));
+};
+
+// ─── Stock <-> status invariant ─────────────────────────────────────────────────
+//
+// Inventory is "reserved" (deducted from variants, counted as sold) for the whole
+// time an order is active. The moment it leaves the active set its stock is given
+// back exactly once. These are the only two restored states:
+const STOCK_RESTORED_STATES: orderStatusType[] = [orderStatusType.cancelled, orderStatusType.deleted];
+const isStockRestored = (status: string): boolean =>
+  STOCK_RESTORED_STATES.includes(status as orderStatusType);
+
+const orderProductIds = (order: any): Types.ObjectId[] =>
+  [...new Set((order.products as ProductOrder[]).map((p) => p.productId.toString()))].map(
+    (id) => new Types.ObjectId(id)
+  );
+
+// Give inventory back and undo the sale counters (cancel / delete).
+const restoreOrderStock = async (order: any, session: any): Promise<void> => {
+  await ProductVariantModel.bulkWrite(buildVariantRestoreOps(order.products as ProductOrder[]), { session });
+  const deductOps = buildSoldItemsDeductOps(order.products as ProductOrder[]);
+  if (deductOps.length) {
+    await ProductModel.bulkWrite(deductOps, { session });
+  }
+};
+
+// Re-claim inventory when a restored order becomes active again (e.g. an admin
+// un-cancels). Verifies availability first so we never go negative / oversell.
+const reserveOrderStock = async (order: any, session: any): Promise<void> => {
+  for (const p of order.products as ProductOrder[]) {
+    const variant = await ProductVariantModel.findById(p.variantId).session(session);
+    if (!variant || variant.availableItems < p.quantity) {
+      throw new ApiError(400, `Not enough stock to reactivate order for product: ${p.productName}`);
+    }
+  }
+  await ProductVariantModel.bulkWrite(buildVariantDeductOps(order.products as ProductOrder[]), { session });
+  const incrOps = buildSoldItemsIncrOps(order.products as ProductOrder[]);
+  if (incrOps.length) {
+    await ProductModel.bulkWrite(incrOps, { session });
+  }
 };
 
 // ─── Legacy order compatibility (read-path) ─────────────────────────────────────
@@ -377,6 +428,68 @@ export const normalizeLegacyOrders = async (orders: any[]): Promise<any[]> => {
 export const normalizeLegacyOrder = async (order: any): Promise<any> =>
   order ? (await normalizeLegacyOrders([order]))[0] : order;
 
+// ─── Shared item resolution ─────────────────────────────────────────────────────
+//
+// Single source of truth for turning a cart line into a priced ProductOrder.
+// Used by BOTH previewOrder and createOrder so the two can never drift apart.
+//
+// A line may identify its item by:
+//   • variantId — the exact variant the customer picked (colour/size). Preferred.
+//   • productId — a "quick add" from a card with no variant chosen. We resolve the
+//     product's variant server-side (prefer one with enough stock, else any), which
+//     covers simple products that own a single backfilled variant.
+const buildOrderProducts = async (
+  items: Array<{ variantId?: string; productId?: string; quantity: number }>
+): Promise<ProductOrder[]> => {
+  const orderProducts: ProductOrder[] = [];
+
+  for (const item of items) {
+    const withRefs = (q: any) =>
+      q
+        .populate({ path: SchemaTypesReference.Color, select: "name" })
+        .populate({ path: SchemaTypesReference.Size, select: "number" });
+
+    let variant: any = null;
+    if (item.variantId) {
+      variant = await withRefs(ProductVariantModel.findById(item.variantId));
+    } else if (item.productId) {
+      // Prefer a variant that can satisfy the requested quantity; fall back to any.
+      variant =
+        (await withRefs(
+          ProductVariantModel.findOne({
+            product: item.productId,
+            availableItems: { $gte: item.quantity },
+          })
+        )) ||
+        (await withRefs(ProductVariantModel.findOne({ product: item.productId })));
+    }
+
+    if (!variant) {
+      throw new ApiError(404, `${ErrorMessages.VARIANT_NOT_FOUND}: ${item.variantId ?? item.productId}`);
+    }
+
+    const product = await ProductModel.findOne({ _id: variant.product, isDeleted: false });
+    if (!product) throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
+
+    if (variant.availableItems < item.quantity) {
+      throw new ApiError(400, `Not enough stock for product: ${product.productName}`);
+    }
+
+    orderProducts.push({
+      productId: variant.product as Types.ObjectId,
+      variantId: variant._id as Types.ObjectId,
+      quantity: item.quantity,
+      productName: product.productName,
+      itemPrice: product.finalPrice ?? product.price,
+      totalPrice: (product.finalPrice ?? product.price) * item.quantity,
+      size: (variant.size as any)?.number ?? "",
+      color: (variant.color as any)?.name ?? "",
+    });
+  }
+
+  return orderProducts;
+};
+
 // ─── Order service ─────────────────────────────────────────────────────────────
 
 class OrderService {
@@ -385,36 +498,10 @@ class OrderService {
   async createOrder(data: {
     authUserId: string | Types.ObjectId;
     userInformationId: string;
-    products: Array<{ variantId: string; quantity: number }>;
+    products: Array<{ variantId?: string; productId?: string; quantity: number }>;
   }) {
     // Step 1 & 2 — Validate variants/products and build snapshots
-    const orderProducts: ProductOrder[] = [];
-
-    for (const item of data.products) {
-      const variant = await ProductVariantModel.findById(item.variantId)
-        .populate({ path: SchemaTypesReference.Color, select: "name" })
-        .populate({ path: SchemaTypesReference.Size, select: "number" });
-
-      if (!variant) throw new ApiError(404, `${ErrorMessages.VARIANT_NOT_FOUND}: ${item.variantId}`);
-
-      const product = await ProductModel.findOne({ _id: variant.product, isDeleted: false });
-      if (!product) throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
-
-      if (variant.availableItems < item.quantity) {
-        throw new ApiError(400, `Not enough stock for product: ${product.productName}`);
-      }
-
-      orderProducts.push({
-        productId: variant.product as Types.ObjectId,
-        variantId: variant._id as Types.ObjectId,
-        quantity: item.quantity,
-        productName: product.productName,
-        itemPrice: product.finalPrice ?? product.price,
-        totalPrice: (product.finalPrice ?? product.price) * item.quantity,
-        size: (variant.size as any)?.number ?? "",
-        color: (variant.color as any)?.name ?? "",
-      });
-    }
+    const orderProducts = await buildOrderProducts(data.products);
 
     // Step 4 & 5 — Snapshots
     const userInfo = await findUserInformationById(data.userInformationId);
@@ -555,12 +642,7 @@ class OrderService {
     try {
       session.startTransaction();
 
-      await ProductVariantModel.bulkWrite(buildVariantRestoreOps(order.products as ProductOrder[]), { session });
-
-      const deductOps = buildSoldItemsDeductOps(order.products as ProductOrder[]);
-      if (deductOps.length) {
-        await ProductModel.bulkWrite(deductOps, { session });
-      }
+      await restoreOrderStock(order, session);
 
       order.status = orderStatusType.cancelled;
       await order.save({ session });
@@ -573,10 +655,49 @@ class OrderService {
       session.endSession();
     }
 
-    const uniqueProductIds = [
-      ...new Set((order.products as ProductOrder[]).map((p) => p.productId.toString())),
-    ].map((id) => new Types.ObjectId(id));
-    await updateProductSoldOutStatus(uniqueProductIds);
+    await updateProductSoldOutStatus(orderProductIds(order));
+
+    return order;
+  }
+
+  // ── ADMIN: move into a stock-restored state (cancel / delete) ──────────────────
+  //
+  // Restores inventory exactly once: only when the order is leaving an ACTIVE state.
+  // If it is already restored (e.g. cancelling an already-deleted order) the status
+  // is just re-labelled with no stock change. Re-applying the same state is rejected
+  // so callers don't trigger duplicate side-effects (e.g. a second cancellation email).
+  private async moveToRestoredState(orderId: string, target: orderStatusType) {
+    const order = await OrderModel.findById(orderId);
+    if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
+
+    if (order.status === target) {
+      throw new ApiError(400, `Order is already ${target}`);
+    }
+
+    const shouldRestoreStock = !isStockRestored(order.status);
+
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      if (shouldRestoreStock) {
+        await restoreOrderStock(order, session);
+      }
+
+      order.status = target;
+      await order.save({ session });
+
+      await session.commitTransaction();
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+
+    if (shouldRestoreStock) {
+      await updateProductSoldOutStatus(orderProductIds(order));
+    }
 
     return order;
   }
@@ -584,123 +705,24 @@ class OrderService {
   // ── ADMIN CANCEL ──────────────────────────────────────────────────────────────
 
   async adminCancelOrder(orderId: string) {
-    const order = await OrderModel.findById(orderId);
-    if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
-
-    const stockAlreadyRestored = ["cancelled", "deleted"];
-    const shouldRestoreStock = !stockAlreadyRestored.includes(order.status);
-
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
-
-      if (shouldRestoreStock) {
-        await ProductVariantModel.bulkWrite(buildVariantRestoreOps(order.products as ProductOrder[]), { session });
-
-        const deductOps = buildSoldItemsDeductOps(order.products as ProductOrder[]);
-        if (deductOps.length) {
-          await ProductModel.bulkWrite(deductOps, { session });
-        }
-      }
-
-      order.status = orderStatusType.cancelled;
-      await order.save({ session });
-
-      await session.commitTransaction();
-    } catch (err) {
-      await session.abortTransaction();
-      throw err;
-    } finally {
-      session.endSession();
-    }
-
-    if (shouldRestoreStock) {
-      const uniqueProductIds = [
-        ...new Set((order.products as ProductOrder[]).map((p) => p.productId.toString())),
-      ].map((id) => new Types.ObjectId(id));
-      await updateProductSoldOutStatus(uniqueProductIds);
-    }
-
-    return order;
+    return this.moveToRestoredState(orderId, orderStatusType.cancelled);
   }
 
   // ── ADMIN DELETE ──────────────────────────────────────────────────────────────
 
   async adminDeleteOrder(orderId: string) {
-    const order = await OrderModel.findById(orderId);
-    if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
-
-    const stockAlreadyRestored = ["cancelled", "deleted"];
-    const shouldRestoreStock = !stockAlreadyRestored.includes(order.status);
-
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
-
-      if (shouldRestoreStock) {
-        await ProductVariantModel.bulkWrite(buildVariantRestoreOps(order.products as ProductOrder[]), { session });
-
-        const deductOps = buildSoldItemsDeductOps(order.products as ProductOrder[]);
-        if (deductOps.length) {
-          await ProductModel.bulkWrite(deductOps, { session });
-        }
-      }
-
-      order.status = orderStatusType.deleted;
-      await order.save({ session });
-
-      await session.commitTransaction();
-    } catch (err) {
-      await session.abortTransaction();
-      throw err;
-    } finally {
-      session.endSession();
-    }
-
-    if (shouldRestoreStock) {
-      const uniqueProductIds = [
-        ...new Set((order.products as ProductOrder[]).map((p) => p.productId.toString())),
-      ].map((id) => new Types.ObjectId(id));
-      await updateProductSoldOutStatus(uniqueProductIds);
-    }
-
-    return order;
+    return this.moveToRestoredState(orderId, orderStatusType.deleted);
   }
 
   // ── PREVIEW ───────────────────────────────────────────────────────────────────
 
   async previewOrder(data: {
     userInformationId: string;
-    items: Array<{ variantId: string; quantity: number }>;
+    items: Array<{ variantId?: string; productId?: string; quantity: number }>;
   }) {
     // Step 1 & 2 — Validate variants/products and build items array
-    const orderProducts: ProductOrder[] = [];
-
-    for (const item of data.items) {
-      const variant = await ProductVariantModel.findById(item.variantId)
-        .populate({ path: SchemaTypesReference.Color, select: "name" })
-        .populate({ path: SchemaTypesReference.Size, select: "number" });
-
-      if (!variant) throw new ApiError(404, `${ErrorMessages.VARIANT_NOT_FOUND}: ${item.variantId}`);
-
-      const product = await ProductModel.findOne({ _id: variant.product, isDeleted: false });
-      if (!product) throw new ApiError(404, ErrorMessages.PRODUCT_NOT_FOUND);
-
-      if (variant.availableItems < item.quantity) {
-        throw new ApiError(400, `Not enough stock for product: ${product.productName}`);
-      }
-
-      orderProducts.push({
-        productId: variant.product as Types.ObjectId,
-        variantId: variant._id as Types.ObjectId,
-        quantity: item.quantity,
-        productName: product.productName,
-        itemPrice: product.finalPrice ?? product.price,
-        totalPrice: (product.finalPrice ?? product.price) * item.quantity,
-        size: (variant.size as any)?.number ?? "",
-        color: (variant.color as any)?.name ?? "",
-      });
-    }
+    // (same resolution path as createOrder — no side effects)
+    const orderProducts = await buildOrderProducts(data.items);
 
     // Step 4 — Get shipping cost from user information
     const userInfo = await findUserInformationById(data.userInformationId);
@@ -768,8 +790,37 @@ class OrderService {
   async updateOrderStatus(orderId: string, status: string) {
     const order = await OrderModel.findById(orderId);
     if (!order) throw new ApiError(404, ErrorMessages.ORDER_NOT_FOUND);
-    order.status = status;
-    await order.save();
+
+    if (order.status === status) return order; // no-op
+
+    // Reactivating a cancelled/deleted order (-> any active status) must re-claim
+    // its inventory, otherwise the stock that was given back on cancel is oversold.
+    const reactivating = isStockRestored(order.status) && !isStockRestored(status);
+    if (!reactivating) {
+      order.status = status;
+      await order.save();
+      return order;
+    }
+
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      await reserveOrderStock(order, session);
+
+      order.status = status;
+      await order.save({ session });
+
+      await session.commitTransaction();
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+
+    await updateProductSoldOutStatus(orderProductIds(order));
+
     return order;
   }
 }

@@ -20,6 +20,7 @@ import {
   prepareProductUpdates,
   productSearch,
   ratioCalculatePrice,
+  syncProductStockFromVariants,
   upsertVariants,
 } from "../../Service/Product/ProductService";
 import SuccessMessage from "../../Utils/SuccessMessages";
@@ -33,7 +34,6 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
     productName,
     productDescription,
     price,
-    availableItems,
     categoryId,
     salePrice,
     defaultImage,
@@ -45,6 +45,12 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
 
   const category = await findCategoryById(categoryId);
   if (!category) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
+
+  // Stock is owned by the variants; the product-level figure is their sum.
+  const availableItems = (variants as Array<{ availableItems: number }>).reduce(
+    (sum, v) => sum + (Number(v.availableItems) || 0),
+    0
+  );
 
   const mediaUrl = defaultImage;
   const mediaId = extractMediaId(defaultImage);
@@ -67,6 +73,7 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
     productDescription,
     price,
     availableItems,
+    isSoldOut: availableItems <= 0,
     salePrice,
     discount: finalPrices?.discount,
     discountPercentage: finalPrices?.discountPercentage,
@@ -83,9 +90,9 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
 
   const product = await createProduct(productData);
 
-  if (variants?.length) {
-    await createVariants(product._id, variants);
-  }
+  await createVariants(product._id, variants);
+  // Authoritative recompute from the persisted variant docs.
+  await syncProductStockFromVariants(product._id);
 
   return res.status(201).json(new ApiResponse(201, { product }, SuccessMessage.PRODUCT_CREATED));
 });
@@ -97,7 +104,6 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
     productName,
     productDescription,
     price,
-    availableItems,
     salePrice,
     categoryId,
     defaultImage,
@@ -114,11 +120,11 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   const Category = await findCategoryById(categoryId);
   if (!Category) throw new ApiError(400, ErrorMessages.CATEGORY_NOT_FOUND);
 
+  // availableItems is derived from variants (synced below), never set directly.
   const productData: Partial<IProduct> = {
     productName,
     productDescription,
     price,
-    availableItems,
     salePrice,
     category: categoryId,
     wholesalePrice,
@@ -163,6 +169,11 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
 
   if (variants?.length) {
     await upsertVariants(product._id as any, variants);
+    // Variant stock changed → product total is the sum of ALL its variants
+    // (newly added ones included). Reflect the fresh total on the response too.
+    const total = await syncProductStockFromVariants(product._id);
+    product.availableItems = total;
+    product.isSoldOut = total <= 0;
   }
 
   if (updates || variants?.length) {
@@ -196,6 +207,8 @@ export const deleteVariant = asyncHandler(async (req: Request, res: Response) =>
   const { variantId } = req.params;
   const variant = await deleteVariantById(variantId);
   if (!variant) throw new ApiError(400, ErrorMessages.VARIANT_NOT_FOUND);
+  // Removing a variant changes the product-level stock total.
+  await syncProductStockFromVariants(variant.product);
   return res.json(new ApiResponse(200, {}, SuccessMessage.VARIANT_DELETED));
 });
 

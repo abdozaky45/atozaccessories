@@ -1,11 +1,13 @@
 import { baseSchema } from "../baseSchema";
 import joi from "joi";
 
+// color/size are optional: a simple product is one variant with neither.
+// availableItems is the single source of truth for stock and is always required.
 const variantSchema = joi.object({
   _id: joi.string().optional(),
-  color: joi.string().required(),
-  size: joi.string().required(),
-  availableItems: joi.number().required(),
+  color: joi.string().allow(null, "").optional(),
+  size: joi.string().allow(null, "").optional(),
+  availableItems: joi.number().min(0).required(),
 });
 
 export const createProductValidation = baseSchema.concat(
@@ -13,14 +15,16 @@ export const createProductValidation = baseSchema.concat(
     productName: joi.string().required(),
     productDescription: joi.string().required(),
     price: joi.number().required(),
-    availableItems: joi.number().required(),
+    // Product-level stock is derived from the variants (sum), not supplied directly.
+    availableItems: joi.number().optional(),
     categoryId: joi.string().required(),
     defaultImage: joi.string().required(),
     salePrice: joi.number().optional(),
     albumImages: joi.array().items(joi.string()).optional(),
     wholesalePrice: joi.number().optional(),
     isBestSeller: joi.boolean().optional(),
-    variants: joi.array().items(variantSchema).optional(),
+    // Every product has at least one variant (simple products included).
+    variants: joi.array().items(variantSchema).min(1).required(),
   }).required()
 );
 
