@@ -1,34 +1,31 @@
 const colorsSeedData = [
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Black", hex: "#000000" },
-  { name: "Red", hex: "#FF0000" },
-  { name: "Dark Red", hex: "#8B0000" },
-  { name: "Blue", hex: "#0000FF" },
-  { name: "Navy", hex: "#001F5B" },
-  { name: "Sky Blue", hex: "#87CEEB" },
-  { name: "Green", hex: "#008000" },
-  { name: "Olive", hex: "#808000" },
-  { name: "Yellow", hex: "#FFFF00" },
-  { name: "Orange", hex: "#FF6600" },
-  { name: "Pink", hex: "#FF69B4" },
-  { name: "Hot Pink", hex: "#FF1493" },
-  { name: "Purple", hex: "#800080" },
-  { name: "Lavender", hex: "#E6E6FA" },
-  { name: "Gray", hex: "#808080" },
-  { name: "Light Gray", hex: "#D3D3D3" },
-  { name: "Dark Gray", hex: "#A9A9A9" },
-  { name: "Brown", hex: "#8B4513" },
-  { name: "Beige", hex: "#F5F5DC" },
-  { name: "Cream", hex: "#FFFDD0" },
-  { name: "Camel", hex: "#C19A6B" },
-  { name: "Gold", hex: "#FFD700" },
-  { name: "Silver", hex: "#C0C0C0" },
-  { name: "Mint", hex: "#98FF98" },
-  { name: "Teal", hex: "#008080" },
-  { name: "Coral", hex: "#FF7F50" },
-  { name: "Burgundy", hex: "#800020" },
-  { name: "Khaki", hex: "#C3B091" },
-  { name: "Off White", hex: "#FAF9F6" },
+  // Neutrals & Base
+  { name: "Off White", hex: "#FAF7F2" },
+  { name: "Warm Beige", hex: "#E8D5B7" },
+  { name: "Latte", hex: "#C9A882" },
+  { name: "Camel", hex: "#B08050" },
+  { name: "Chocolate Brown", hex: "#5C3A1E" },
+  { name: "Classic Black", hex: "#1A1A1A" },
+
+  // Pinks & Mauves
+  { name: "Baby Pink", hex: "#F7C5D0" },
+  { name: "Dusty Rose", hex: "#C9858A" },
+  { name: "Mauve", hex: "#B07080" },
+  { name: "Blush Nude", hex: "#E8B4A0" },
+  { name: "Mocha Rose", hex: "#8B5A5A" },
+
+  // Pastels & Soft Tones
+  { name: "Powder Blue", hex: "#B8D4E8" },
+  { name: "Lavender", hex: "#C8B8E8" },
+  { name: "Sage Green", hex: "#A8C0A0" },
+  { name: "Mint", hex: "#B8E0D0" },
+  { name: "Butter Yellow", hex: "#F0E0A0" },
+
+  // Earth Tones
+  { name: "Terracotta", hex: "#C8643C" },
+  { name: "Rust", hex: "#A0422A" },
+  { name: "Olive", hex: "#7A7A50" },
+  { name: "Sand", hex: "#D4B896" },
 ];
 
 export default colorsSeedData;

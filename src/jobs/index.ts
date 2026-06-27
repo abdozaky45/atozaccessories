@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { getAgenda } from "../config/agenda";
+import { closeRedis } from "../config/redis";
 import { defineActivateOfferJob } from "./activateOffer";
 import { defineExpireOfferJob } from "./expireOffer";
 import { defineCalculateBestSellersJob } from "./calculateBestSellers";
@@ -39,6 +40,7 @@ export const registerJobs = async (): Promise<void> => {
   const gracefulShutdown = async (signal: string): Promise<void> => {
     console.log(`[Agenda] ${signal} received — stopping gracefully`);
     await agenda.stop();
+    await closeRedis();
     console.log("[Agenda] Stopped");
     process.exit(0);
   };

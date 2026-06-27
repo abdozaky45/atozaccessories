@@ -14,6 +14,11 @@ import {
 } from "../../Service/CategoryService/CategoryService";
 import { findIconById } from "../../Service/IconService/IconService";
 import SuccessMessage from "../../Utils/SuccessMessages";
+import { getOrSet, cacheDel } from "../../Utils/Cache";
+import { CacheKeys, CacheTTL } from "../../Utils/Cache/keys";
+
+// Categories also drive the home page sections, so any category write drops both.
+const invalidateCategoryCaches = () => cacheDel(CacheKeys.categories, CacheKeys.home);
 
 export const CreateNewCategory = asyncHandler(async (req: Request, res: Response) => {
   const { categoryName, imageUrl, icon_id } = req.body;
@@ -32,6 +37,7 @@ export const CreateNewCategory = asyncHandler(async (req: Request, res: Response
     createdAt: moment().valueOf(),
     icon_id,
   });
+  await invalidateCategoryCaches();
   return res.json(new ApiResponse(200, { category }, SuccessMessage.CATEGORY_CREATED));
 });
 
@@ -48,6 +54,7 @@ export const updateCategory = asyncHandler(async (req: Request, res: Response) =
   const updates = await prepareCategoryUpdates(Category, req.body.categoryName, req.body.imageUrl, icon_id);
   if (updates) {
     await Category.save();
+    await invalidateCategoryCaches();
     return res.json(new ApiResponse(200, { category: Category }, SuccessMessage.CATEGORY_UPDATED));
   }
   return res.json(new ApiResponse(200, {}, SuccessMessage.NO_UPDATE_CATEGORY));
@@ -60,6 +67,7 @@ export const deleteOneCategory = asyncHandler(async (req: Request, res: Response
   const result = await deleteCategory(req.params.id);
   if (!result) throw new ApiError(404, ErrorMessages.CATEGORY_NOT_FOUND_OR_EALREADY_DELETED);
 
+  await invalidateCategoryCaches();
   return res.json(new ApiResponse(200, {}, SuccessMessage.CATEGORY_DELETED_SUCCESS));
 });
 
@@ -70,11 +78,14 @@ export const hardDeleteCategoryHandler = asyncHandler(async (req: Request, res: 
 
   const summary = await hardDeleteCategory(id);
 
+  await invalidateCategoryCaches();
   return res.json(new ApiResponse(200, summary, SuccessMessage.CATEGORY_DELETED_SUCCESS));
 });
 
 export const getCategories = asyncHandler(async (req: Request, res: Response) => {
-  const categories = await getAllCategories();
+  const { categories } = await getOrSet(CacheKeys.categories, CacheTTL.reference, async () => ({
+    categories: await getAllCategories(),
+  }));
   return res.json(new ApiResponse(200, { categories }));
 });
 

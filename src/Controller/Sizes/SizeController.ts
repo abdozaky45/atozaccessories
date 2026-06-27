@@ -10,6 +10,8 @@ import {
   prepareSizeUpdates,
   deleteSizeById,
 } from "../../Service/SizeService/SizeService";
+import { getOrSet, cacheDel } from "../../Utils/Cache";
+import { CacheKeys, CacheTTL } from "../../Utils/Cache/keys";
 
 export const createNewSize = asyncHandler(async (req: Request, res: Response) => {
   const { number, order } = req.body;
@@ -18,11 +20,17 @@ export const createNewSize = asyncHandler(async (req: Request, res: Response) =>
     throw new ApiError(409, ErrorMessages.SIZE_NUMBER_ALREADY_EXISTS);
   }
   const size = await createSize({ number, order });
+  await cacheDel(CacheKeys.sizes);
   return res.json(new ApiResponse(200, { size }, SuccessMessage.SIZE_CREATED));
 });
 
 export const getSizes = asyncHandler(async (req: Request, res: Response) => {
   const page = req.query.page !== undefined ? parseInt(req.query.page as string) : undefined;
+  // Cache only the default, unpaginated list (the common storefront call).
+  if (page === undefined) {
+    const result = await getOrSet(CacheKeys.sizes, CacheTTL.reference, () => getAllSizes(undefined));
+    return res.json(new ApiResponse(200, result));
+  }
   const result = await getAllSizes(page);
   return res.json(new ApiResponse(200, result));
 });
@@ -50,6 +58,7 @@ export const updateSize = asyncHandler(async (req: Request, res: Response) => {
   const updates = prepareSizeUpdates(size, number, order);
   if (updates) {
     await size.save();
+    await cacheDel(CacheKeys.sizes);
     return res.json(new ApiResponse(200, { size }, SuccessMessage.SIZE_UPDATED));
   }
   return res.json(new ApiResponse(200, {}, SuccessMessage.NO_UPDATE_SIZE));
@@ -60,5 +69,6 @@ export const deleteSize = asyncHandler(async (req: Request, res: Response) => {
   if (!size) {
     throw new ApiError(404, ErrorMessages.SIZE_NOT_FOUND);
   }
+  await cacheDel(CacheKeys.sizes);
   return res.json(new ApiResponse(200, {}, SuccessMessage.SIZE_DELETED));
 });

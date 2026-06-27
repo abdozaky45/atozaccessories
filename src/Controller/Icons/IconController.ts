@@ -10,6 +10,8 @@ import {
   prepareIconUpdates,
   deleteIconById,
 } from "../../Service/IconService/IconService";
+import { getOrSet, cacheDel } from "../../Utils/Cache";
+import { CacheKeys, CacheTTL } from "../../Utils/Cache/keys";
 
 export const createNewIcon = asyncHandler(async (req: Request, res: Response) => {
   const { key, svg, isActive } = req.body;
@@ -18,10 +20,16 @@ export const createNewIcon = asyncHandler(async (req: Request, res: Response) =>
     throw new ApiError(409, ErrorMessages.ICON_KEY_ALREADY_EXISTS);
   }
   const icon = await createIcon({ key, svg, isActive });
+  await cacheDel(CacheKeys.icons);
   return res.json(new ApiResponse(200, { icon }, SuccessMessage.ICON_CREATED));
 });
 
 export const getIcons = asyncHandler(async (req: Request, res: Response) => {
+  // Cache only the default (first-page) list — the common storefront call.
+  if (req.query.page === undefined) {
+    const result = await getOrSet(CacheKeys.icons, CacheTTL.reference, () => getAllIcons(1));
+    return res.json(new ApiResponse(200, result));
+  }
   const page = parseInt(req.query.page as string) || 1;
   const result = await getAllIcons(page);
   return res.json(new ApiResponse(200, result));
@@ -50,6 +58,7 @@ export const updateIcon = asyncHandler(async (req: Request, res: Response) => {
   const updates = prepareIconUpdates(icon, key, svg, isActive);
   if (updates) {
     await icon.save();
+    await cacheDel(CacheKeys.icons);
     return res.json(new ApiResponse(200, { icon }, SuccessMessage.ICON_UPDATED));
   }
   return res.json(new ApiResponse(200, {}, SuccessMessage.NO_UPDATE_ICON));
@@ -60,5 +69,6 @@ export const deleteIcon = asyncHandler(async (req: Request, res: Response) => {
   if (!icon) {
     throw new ApiError(404, ErrorMessages.ICON_NOT_FOUND);
   }
+  await cacheDel(CacheKeys.icons);
   return res.json(new ApiResponse(200, {}, SuccessMessage.ICON_DELETED));
 });

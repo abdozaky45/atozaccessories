@@ -26,6 +26,8 @@ import {
 import SuccessMessage from "../../Utils/SuccessMessages";
 import { getProductWishlist } from "../../Service/Wishlist/WishlistService";
 import IProduct from "../../Model/Product/Iproduct";
+import { cacheDel } from "../../Utils/Cache";
+import { CacheKeys } from "../../Utils/Cache/keys";
 
 // ─── Admin: Create ────────────────────────────────────────────────────────────
 
@@ -94,6 +96,7 @@ export const CreateProduct = asyncHandler(async (req: Request, res: Response) =>
   // Authoritative recompute from the persisted variant docs.
   await syncProductStockFromVariants(product._id);
 
+  await cacheDel(CacheKeys.home);
   return res.status(201).json(new ApiResponse(201, { product }, SuccessMessage.PRODUCT_CREATED));
 });
 
@@ -177,6 +180,7 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   }
 
   if (updates || variants?.length) {
+    await cacheDel(CacheKeys.home);
     return res.json(new ApiResponse(200, { product }, SuccessMessage.PRODUCT_UPDATED));
   }
   return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_NOT_UPDATED));
@@ -189,6 +193,7 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   const product = await findProductById(id);
   if (!product) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
   await deleteOneProduct(id);
+  await cacheDel(CacheKeys.home);
   return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_DELETED));
 });
 
@@ -198,6 +203,7 @@ export const hardDelete = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await hardDeleteProduct(id);
   if (!result) throw new ApiError(400, ErrorMessages.PRODUCT_NOT_FOUND);
+  await cacheDel(CacheKeys.home);
   return res.json(new ApiResponse(200, {}, SuccessMessage.PRODUCT_HARD_DELETED));
 });
 
