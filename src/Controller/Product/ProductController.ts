@@ -15,6 +15,7 @@ import {
   getAdminProducts,
   getAnalytics,
   getAvailableItems,
+  getVariantsAvailableItems,
   getProducts,
   hardDeleteProduct,
   prepareProductUpdates,
@@ -309,6 +310,19 @@ export const getProductsAndAvailableItems = asyncHandler(async (req: Request, re
   const response: Record<string, number> = {};
   result.forEach((product) => {
     response[product._id.toString()] = product.availableItems;
+  });
+  return res.json(response);
+});
+
+// Per-variant availability for cart stock checks. Body: { variantIds: string[] }
+// → { [variantId]: availableItems }. The cart validates each line against the
+// exact color+size variant, not the product-level total.
+export const getVariantsAndAvailableItems = asyncHandler(async (req: Request, res: Response) => {
+  const variantIds = req.body.variantIds;
+  const result = await getVariantsAvailableItems(variantIds);
+  const response: Record<string, number> = {};
+  result.forEach((variant) => {
+    response[variant._id.toString()] = variant.availableItems;
   });
   return res.json(response);
 });

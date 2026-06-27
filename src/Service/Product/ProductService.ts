@@ -621,3 +621,13 @@ export const getAvailableItems = async (productIds: [string]) => {
   );
   return products;
 };
+
+// Per-variant stock — the unit the cart and order system actually validate
+// against (Product.availableItems is only the denormalized sum of variants).
+export const getVariantsAvailableItems = async (variantIds: string[]) => {
+  const variants = await ProductVariantModel.find(
+    { _id: { $in: variantIds } },
+    { _id: 1, availableItems: 1 }
+  );
+  return variants;
+};

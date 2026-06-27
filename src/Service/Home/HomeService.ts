@@ -84,25 +84,36 @@ export const getNewArrivals = async (): Promise<any[]> => {
   );
 };
 
-export const getFlashSale = async (): Promise<any | null> => {
-  // A flash sale targets specific product(s) with a big, time-limited discount.
-  const offer = await OfferModel.findOne({
+// Returns every live flash sale (each targets specific product(s) with a big,
+// time-limited discount). Soonest-ending first so the most urgent leads.
+export const getFlashSale = async (): Promise<any[]> => {
+  const offers = await OfferModel.find({
     offerType: "flash_sale",
     status: "active",
     isActive: true,
   }).lean();
 
-  if (!offer) return null;
+  if (!offers.length) return [];
 
-  const products = await ProductModel.find({
-    _id: { $in: offer.targetProducts },
-    isDeleted: false,
-  })
-    .select(PRODUCT_SELECT)
-    .populate(CATEGORY_POPULATE)
-    .lean();
+  const sales = await Promise.all(
+    offers.map(async (offer) => {
+      const products = await ProductModel.find({
+        _id: { $in: offer.targetProducts },
+        isDeleted: false,
+      })
+        .select(PRODUCT_SELECT)
+        .populate(CATEGORY_POPULATE)
+        .lean();
 
-  if (!products.length) return null;
+      if (!products.length) return null;
+      return { _id: offer._id, ...buildOfferShape(offer), products };
+    })
+  );
 
-  return { ...buildOfferShape(offer), products };
+  return sales
+    .filter((s): s is NonNullable<typeof s> => s !== null)
+    .sort(
+      (a, b) =>
+        new Date(a.endDate ?? 0).getTime() - new Date(b.endDate ?? 0).getTime()
+    );
 };

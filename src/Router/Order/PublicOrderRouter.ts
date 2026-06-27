@@ -17,6 +17,14 @@ PublicOrderRouter.post(
   OrderController.previewOrderController
 );
 
+// Token-derived: the signed-in customer's own orders (mirrors
+// /wishlist/get-user-wishlist). MUST precede the `/:orderId` route below, or
+// Express captures the literal "get-user-orders" as an order id → CastError.
+PublicOrderRouter.get(
+  '/get-user-orders',
+  OrderController.getUserOrdersController
+);
+
 PublicOrderRouter.get(
   '/customer/:customerId',
   Validation(orderValidation.getUserOrdersValidation),

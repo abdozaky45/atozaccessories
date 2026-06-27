@@ -13,6 +13,11 @@ ProductPublicRouter.post(
   ProductController.getProductsAndAvailableItems
 );
 
+ProductPublicRouter.post(
+  "/variants-availability",
+  ProductController.getVariantsAndAvailableItems
+);
+
 ProductPublicRouter.get("/", ProductController.getProductsList);
 
 ProductPublicRouter.get("/:id", ProductController.getProductById);

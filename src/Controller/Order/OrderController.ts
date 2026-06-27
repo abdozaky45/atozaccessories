@@ -175,8 +175,10 @@ class OrderController {
   });
 
   getUserOrdersController = asyncHandler(async (req: Request, res: Response) => {
-    const { customerId } = req.params;
     const { _id, role } = req.body.currentUser.userInfo;
+    // `/order/get-user-orders` derives the customer from the auth token; the
+    // admin `/customer/:customerId` route passes an explicit id.
+    const customerId = req.params.customerId ?? _id;
 
     if (role !== UserTypeEnum.ADMIN && customerId !== _id) {
       throw new ApiError(403, ErrorMessages.NOT_PERMITTED);
