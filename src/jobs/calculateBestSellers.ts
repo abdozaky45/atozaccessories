@@ -1,5 +1,7 @@
 import Agenda from "agenda";
 import ProductModel from "../Model/Product/ProductModel";
+import { cacheDel } from "../Utils/Cache";
+import { CacheKeys } from "../Utils/Cache/keys";
 
 export const defineCalculateBestSellersJob = (agenda: Agenda): void => {
   agenda.define("calculate-bestsellers", async () => {
@@ -21,6 +23,7 @@ export const defineCalculateBestSellersJob = (agenda: Agenda): void => {
         { $set: { isBestSeller: true } }
       );
 
+      await cacheDel(CacheKeys.home); // best-seller set changed → refresh home
       console.log("[calculate-bestsellers] Done");
     } catch (err) {
       console.error("[calculate-bestsellers] Error:", err);

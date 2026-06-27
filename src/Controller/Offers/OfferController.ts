@@ -18,6 +18,8 @@ import { sendEmail } from "../../Utils/Nodemailer/SendEmail";
 import { generateOfferEmail } from "../../Utils/Nodemailer/OfferEmail";
 import AuthModel from "../../Model/User/auth/AuthModel";
 import { UserTypeEnum } from "../../Utils/UserType";
+import { cacheDel } from "../../Utils/Cache";
+import { CacheKeys } from "../../Utils/Cache/keys";
 
 const TIMED_OFFER_TYPES = ["flash_sale"];
 
@@ -136,6 +138,9 @@ export const createNewOffer = asyncHandler(async (req: Request, res: Response) =
     }
   }
 
+  // A new offer can surface in the home flash-sale section.
+  await cacheDel(CacheKeys.home);
+
   // Announce the offer to all customers if it is live now.
   if (offer.status === "active") {
     broadcastOfferToUsers(offer);
@@ -246,6 +251,7 @@ export const updateOffer = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await offer.save();
+  await cacheDel(CacheKeys.home);
   return res.json(new ApiResponse(200, { offer }, SuccessMessage.OFFER_UPDATED));
 });
 
@@ -271,6 +277,7 @@ export const deleteOffer = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await deleteOfferById(String(offer._id));
+  await cacheDel(CacheKeys.home);
   return res.json(new ApiResponse(200, {}, SuccessMessage.OFFER_DELETED));
 });
 
@@ -310,6 +317,7 @@ export const toggleOffer = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await offer.save();
+  await cacheDel(CacheKeys.home);
 
   // Announce to all customers when an offer is (re)opened and now live.
   if (offer.isActive && offer.status === "active") {

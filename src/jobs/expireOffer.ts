@@ -1,5 +1,7 @@
 import Agenda, { Job } from "agenda";
 import OfferModel from "../Model/Offers/OfferModel";
+import { cacheDel } from "../Utils/Cache";
+import { CacheKeys } from "../Utils/Cache/keys";
 
 export const defineExpireOfferJob = (agenda: Agenda): void => {
   agenda.define("expire-offer", async (job: Job) => {
@@ -18,6 +20,7 @@ export const defineExpireOfferJob = (agenda: Agenda): void => {
       }
 
       await OfferModel.findByIdAndUpdate(offerId, { status: "expired", isActive: false });
+      await cacheDel(CacheKeys.home); // offer expired → drop it from home flash sale
       console.log(`[expire-offer] Offer ${offerId} set to expired`);
     } catch (err) {
       console.error("[expire-offer] Error processing job:", err);
