@@ -1,0 +1,1226 @@
+{
+  "info": {
+    "_postman_id": "a2z-accessories-api-v1",
+    "name": "A-to-Z Accessories API",
+    "description": "Full API collection generated from source — every route extracted directly from route files. 🆕 NEW = hard delete / S3 / variants / bestSellerManual / Agenda jobs / role guards / unified filters. 🔧 MODIFIED = existing endpoints updated with wholesalePrice, finalPrice, isSale, or bestSellerManual logic.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "localhost:5000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "userToken", "value": "", "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Authentication",
+      "description": "Public — no auth required. Admin login uses OTP flow; regular users receive a magic-link style welcome email.",
+      "item": [
+        {
+          "name": "Register / Login with Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/authentication/register-email", "host": ["{{baseUrl}}"], "path": ["authentication", "register-email"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates account if new. If user is ADMIN, sends 6-digit OTP via email. If role is USER, sends welcome email."
+          }
+        },
+        {
+          "name": "Activate Account (Admin OTP) 🆕 NEW",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/authentication/active-account", "host": ["{{baseUrl}}"], "path": ["authentication", "active-account"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"activeCode\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Validates the 6-digit OTP (valid 15 min). Returns accessToken on success. Admin only — role guard enforced inside controller."
+          }
+        },
+        {
+          "name": "Resend Activation Code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/authentication/email-new-code", "host": ["{{baseUrl}}"], "path": ["authentication", "email-new-code"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Generates and emails a fresh 6-digit OTP. Admin role required (checked in controller)."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Public — Home",
+      "description": "No auth required. Single endpoint that returns best sellers, on-sale products, deal of the day, and flash sale — all fetched in parallel.",
+      "item": [
+        {
+          "name": "Get Home Data 🆕 NEW",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/home",
+              "host": ["{{baseUrl}}"],
+              "path": ["home"]
+            },
+            "description": "Returns four sections in one call:\n\n• bestSellers — up to 20 products (isBestSeller: true), diverse across categories (max 2 per category), sorted by soldItems desc. Filled up to 20 if categories are sparse.\n\n• onSale — up to 20 products (isSale: true), diverse across categories (max 2 per category), sorted by discountPercentage desc.\n\n• dealOfDay — active deal_of_day offer with its targetProducts populated, or null if none active.\n\n• flashSale — active flash_sale offer with up to 20 products from offer's targetCategories (or all categories if empty), or null if none active.\n\nAll sections exclude wholesalePrice and apply isDeleted: false on every product query. All 4 are fetched in parallel via Promise.all."
+          },
+          "response": [
+            {
+              "name": "200 OK — example response shape",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": { "raw": "{{baseUrl}}/home", "host": ["{{baseUrl}}"], "path": ["home"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"data\": {\n    \"bestSellers\": [\n      {\n        \"productName\": \"Gold Ring\",\n        \"slug\": \"gold-ring\",\n        \"finalPrice\": 999,\n        \"price\": 1200,\n        \"salePrice\": 999,\n        \"discount\": 201,\n        \"discountPercentage\": 16.75,\n        \"isSale\": true,\n        \"isBestSeller\": true,\n        \"defaultImage\": { \"mediaUrl\": \"https://...\", \"mediaId\": \"...\" },\n        \"category\": { \"categoryName\": \"Rings\" }\n      }\n    ],\n    \"onSale\": [\n      {\n        \"productName\": \"Silver Necklace\",\n        \"slug\": \"silver-necklace\",\n        \"finalPrice\": 350,\n        \"price\": 500,\n        \"salePrice\": 350,\n        \"discount\": 150,\n        \"discountPercentage\": 30,\n        \"isSale\": true,\n        \"isBestSeller\": false,\n        \"defaultImage\": { \"mediaUrl\": \"https://...\", \"mediaId\": \"...\" },\n        \"category\": { \"categoryName\": \"Necklaces\" }\n      }\n    ],\n    \"dealOfDay\": {\n      \"title\": \"Deal of the Day\",\n      \"description\": \"Today only!\",\n      \"discountPercentage\": 40,\n      \"endDate\": \"2025-06-16T23:59:59.000Z\",\n      \"products\": []\n    },\n    \"flashSale\": {\n      \"title\": \"Flash Sale\",\n      \"description\": \"Limited time!\",\n      \"discountPercentage\": 30,\n      \"endDate\": \"2025-06-16T12:00:00.000Z\",\n      \"products\": []\n    }\n  },\n  \"message\": \"\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Public — Categories",
+      "description": "No auth required. Mounted at /public/category.",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/category/get-all-categories", "host": ["{{baseUrl}}"], "path": ["public", "category", "get-all-categories"] },
+            "description": "Returns all non-deleted categories."
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/category/get-one-category/:categoryId", "host": ["{{baseUrl}}"], "path": ["public", "category", "get-one-category", ":categoryId"], "variable": [{ "key": "categoryId", "value": "" }] },
+            "description": "Returns a single category. 404 if soft-deleted."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Public — Hero Section (Image Slider)",
+      "description": "No auth required. Mounted at /public/hero-section.",
+      "item": [
+        {
+          "name": "Get All Hero Sections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/hero-section/get", "host": ["{{baseUrl}}"], "path": ["public", "hero-section", "get"] }
+          }
+        },
+        {
+          "name": "Get Hero Section by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/public/hero-section/get/:id", "host": ["{{baseUrl}}"], "path": ["public", "hero-section", "get", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Public — Products",
+      "description": "No auth required. Mounted at /products.",
+      "item": [
+        {
+          "name": "Get Products List 🔧 MODIFIED",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "category", "value": "", "disabled": true, "description": "Category ObjectId" },
+                { "key": "isBestSeller", "value": "true", "disabled": true, "description": "true | false" },
+                { "key": "isSale", "value": "true", "disabled": true, "description": "true | false — NEW filter" },
+                { "key": "minPrice", "value": "", "disabled": true },
+                { "key": "maxPrice", "value": "", "disabled": true },
+                { "key": "color", "value": "", "disabled": true, "description": "Color ObjectId" },
+                { "key": "size", "value": "", "disabled": true, "description": "Size ObjectId" },
+                { "key": "sort", "value": "", "disabled": true, "description": "price | soldItems | createdAt" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Unified public product list. Filters always exclude isDeleted and wholesalePrice. MODIFIED: isSale filter added; isBestSeller already existed. Both filters support true/false. Only products whose category is not soft-deleted are returned."
+          }
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/search?searchQuery=ring",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "search"],
+              "query": [{ "key": "searchQuery", "value": "ring" }]
+            },
+            "description": "Fuzzy search on productName and productDescription using Fuse.js (threshold 0.3)."
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", ":id"],
+              "variable": [{ "key": "id", "value": "" }],
+              "query": [{ "key": "user", "value": "", "disabled": true, "description": "Optional userId to check if product is in their wishlist" }]
+            },
+            "description": "Returns single product with variants populated. wholesalePrice excluded. If user query param is provided, also returns liked: true/false."
+          }
+        },
+        {
+          "name": "Get Available Items (Order System)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/products/available-items", "host": ["{{baseUrl}}"], "path": ["products", "available-items"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\"productId1\", \"productId2\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Returns a map of productId → availableItems. Used by the order system to pre-validate stock."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "User",
+      "description": "Requires Bearer token. Role: ADMIN or USER. Mounted at /user.",
+      "item": [
+        {
+          "name": "Add User Information",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/user/add-user-information", "host": ["{{baseUrl}}"], "path": ["user", "add-user-information"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ahmed\",\n  \"lastName\": \"Mohamed\",\n  \"address\": \"123 Main St\",\n  \"apartmentSuite\": \"Apt 4B\",\n  \"shipping\": \"<shippingId>\",\n  \"postalCode\": \"11511\",\n  \"primaryPhone\": \"01012345678\",\n  \"secondaryPhone\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update User Information",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/user/update-user-information/:userId", "host": ["{{baseUrl}}"], "path": ["user", "update-user-information", ":userId"], "variable": [{ "key": "userId", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ahmed\",\n  \"lastName\": \"Updated\",\n  \"address\": \"456 New Street\",\n  \"primaryPhone\": \"01098765432\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Only the owner of the user info record can update it (auth._id must match userInfo.user)."
+          }
+        },
+        {
+          "name": "Delete User Information",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/user/delete-user-information/:userId", "host": ["{{baseUrl}}"], "path": ["user", "delete-user-information", ":userId"], "variable": [{ "key": "userId", "value": "" }] },
+            "description": "Only owner can delete their own user information."
+          }
+        },
+        {
+          "name": "Get All User Information (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/user/all-user-information", "host": ["{{baseUrl}}"], "path": ["user", "all-user-information"] }
+          }
+        },
+        {
+          "name": "Get My User Information",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/user/user-information", "host": ["{{baseUrl}}"], "path": ["user", "user-information"] },
+            "description": "Returns all user information records linked to the authenticated user's _id."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/user/logout", "host": ["{{baseUrl}}"], "path": ["user", "logout"] },
+            "description": "Sets user status to Offline, deletes the current access token, and clears the refreshToken cookie."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Categories",
+      "description": "Requires Bearer token. Role: ADMIN only. 🆕 NEW role guard enforced by checkRole([ADMIN]).",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/categories", "host": ["{{baseUrl}}"], "path": ["admin", "categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryName\": \"Rings\",\n  \"imageUrl\": \"https://atozaccessories.s3.amazonaws.com/categories/example.jpg\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/categories/:id", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryName\": \"Updated Rings\",\n  \"imageUrl\": \"https://atozaccessories.s3.amazonaws.com/categories/new.jpg\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Set Category Icon 🆕 NEW",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/categories/:id/icon", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id", "icon"], "variable": [{ "key": "id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"icon_id\": \"<iconId or null>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Assign or unassign an icon to a category. Pass null to remove the icon."
+          }
+        },
+        {
+          "name": "Soft Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/categories/:id", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Marks category as isDeleted: true."
+          }
+        },
+        {
+          "name": "Hard Delete Category 🆕 NEW",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/categories/:id/hard", "host": ["{{baseUrl}}"], "path": ["admin", "categories", ":id", "hard"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Permanently deletes the category and its S3 image. Hard delete logic + S3 deletion."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Products",
+      "description": "Requires Bearer token. Role: ADMIN only. 🆕 NEW role guard enforced by checkRole([ADMIN]).",
+      "item": [
+        {
+          "name": "Get Admin Products List 🔧 MODIFIED",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "products"],
+              "query": [
+                { "key": "category", "value": "", "disabled": true },
+                { "key": "isBestSeller", "value": "", "disabled": true },
+                { "key": "minPrice", "value": "", "disabled": true },
+                { "key": "maxPrice", "value": "", "disabled": true },
+                { "key": "color", "value": "", "disabled": true },
+                { "key": "size", "value": "", "disabled": true },
+                { "key": "isDeleted", "value": "", "disabled": true, "description": "true | false — admin can see deleted products" },
+                { "key": "sort", "value": "", "disabled": true, "description": "price | soldItems | createdAt" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Admin product list — includes isDeleted filter. Uses unified filter logic."
+          }
+        },
+        {
+          "name": "Create Product 🔧 MODIFIED",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/products", "host": ["{{baseUrl}}"], "path": ["admin", "products"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productName\": \"Gold Ring\",\n  \"productDescription\": \"18k gold ring with diamond\",\n  \"price\": 1200,\n  \"availableItems\": 50,\n  \"categoryId\": \"<categoryId>\",\n  \"defaultImage\": \"https://atozaccessories.s3.amazonaws.com/products/ring.jpg\",\n  \"salePrice\": 999,\n  \"albumImages\": [\n    \"https://atozaccessories.s3.amazonaws.com/products/ring2.jpg\"\n  ],\n  \"wholesalePrice\": 600,\n  \"isBestSeller\": false,\n  \"variants\": [\n    { \"color\": \"<colorId>\", \"size\": \"<sizeId>\", \"availableItems\": 10 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "MODIFIED: now includes wholesalePrice, finalPrice (auto-computed), and variants array. isSale is auto-derived from salePrice < price."
+          }
+        },
+        {
+          "name": "Get Admin Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/:id", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Returns product with variants populated. Includes wholesalePrice (admin only)."
+          }
+        },
+        {
+          "name": "Update Product 🔧 MODIFIED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/products/:id", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productName\": \"Updated Gold Ring\",\n  \"productDescription\": \"Updated description\",\n  \"price\": 1300,\n  \"availableItems\": 45,\n  \"categoryId\": \"<categoryId>\",\n  \"defaultImage\": \"https://atozaccessories.s3.amazonaws.com/products/ring_new.jpg\",\n  \"salePrice\": 1100,\n  \"wholesalePrice\": 650,\n  \"isBestSeller\": true,\n  \"variants\": [\n    { \"_id\": \"<existingVariantId>\", \"color\": \"<colorId>\", \"size\": \"<sizeId>\", \"availableItems\": 8 },\n    { \"color\": \"<colorId2>\", \"size\": \"<sizeId2>\", \"availableItems\": 12 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "MODIFIED: finalPrice is recomputed on every update. isSale auto-derived. Variants upserted: if _id present → update, else → create new."
+          }
+        },
+        {
+          "name": "Toggle Best Seller 🆕 NEW",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/:id/toggle-bestseller", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id", "toggle-bestseller"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Flips isBestSeller and sets bestSellerManual: true so the cron job does not override this product."
+          }
+        },
+        {
+          "name": "Release Best Seller Manual Control 🆕 NEW",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/:id/bestseller-release", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id", "bestseller-release"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Sets bestSellerManual: false — allows the cron job to manage this product's best-seller status again."
+          }
+        },
+        {
+          "name": "Hard Delete Product 🆕 NEW",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/:id/hard", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id", "hard"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Permanently deletes product: removes defaultImage and albumImages from S3, deletes all variants, then removes DB record."
+          }
+        },
+        {
+          "name": "Delete Product Variant 🆕 NEW",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/:productId/variants/:variantId", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":productId", "variants", ":variantId"], "variable": [{ "key": "productId", "value": "" }, { "key": "variantId", "value": "" }] },
+            "description": "Hard-deletes a single product variant by its ID."
+          }
+        },
+        {
+          "name": "Soft Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/:id", "host": ["{{baseUrl}}"], "path": ["admin", "products", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Sets isDeleted: true on the product."
+          }
+        },
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/products/analysis", "host": ["{{baseUrl}}"], "path": ["admin", "products", "analysis"] },
+            "description": "Returns totalRevenue (delivered orders), totalOrders, totalCustomers, totalProducts."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Icons",
+      "description": "Requires Bearer token. Role: ADMIN only. 🆕 NEW role guard enforced by checkRole([ADMIN]).",
+      "item": [
+        {
+          "name": "List Icons",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/icons?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "icons"],
+              "query": [{ "key": "page", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Get Icon by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/icons/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "icons", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Create Icon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/icons", "host": ["{{baseUrl}}"], "path": ["admin", "icons"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"ring-icon\",\n  \"svg\": \"<svg xmlns=\\\"http://www.w3.org/2000/svg\\\" viewBox=\\\"0 0 24 24\\\"><circle cx=\\\"12\\\" cy=\\\"12\\\" r=\\\"10\\\"/></svg>\",\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "key must be unique. svg is the raw SVG string."
+          }
+        },
+        {
+          "name": "Update Icon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/icons/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "icons", ":_id"], "variable": [{ "key": "_id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"ring-icon-v2\",\n  \"svg\": \"<svg xmlns=\\\"http://www.w3.org/2000/svg\\\" viewBox=\\\"0 0 24 24\\\"><path d=\\\"M12 2L2 22h20z\\\"/></svg>\",\n  \"isActive\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Icon",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/icons/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "icons", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Colors",
+      "description": "Requires Bearer token. Role: ADMIN only. 🆕 NEW role guard enforced by checkRole([ADMIN]).",
+      "item": [
+        {
+          "name": "List Colors",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/colors?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "colors"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "search", "value": "", "disabled": true, "description": "Optional name search" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Color by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/colors/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "colors", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Create Color",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/colors", "host": ["{{baseUrl}}"], "path": ["admin", "colors"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gold\",\n  \"hex\": \"#FFD700\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "name must be unique. hex must be a valid CSS hex color (e.g. #FFD700 or #F5C)."
+          }
+        },
+        {
+          "name": "Update Color",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/colors/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "colors", ":_id"], "variable": [{ "key": "_id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rose Gold\",\n  \"hex\": \"#B76E79\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Color",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/colors/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "colors", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Sizes",
+      "description": "Requires Bearer token. Role: ADMIN only. 🆕 NEW role guard enforced by checkRole([ADMIN]).",
+      "item": [
+        {
+          "name": "List Sizes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/sizes?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "sizes"],
+              "query": [{ "key": "page", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Get Size by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/sizes/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "sizes", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Create Size",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/sizes", "host": ["{{baseUrl}}"], "path": ["admin", "sizes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"M\",\n  \"order\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "number must be unique. order is the display sort order (integer >= 1)."
+          }
+        },
+        {
+          "name": "Update Size",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/sizes/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "sizes", ":_id"], "variable": [{ "key": "_id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"L\",\n  \"order\": 3\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Size",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/sizes/:_id", "host": ["{{baseUrl}}"], "path": ["admin", "sizes", ":_id"], "variable": [{ "key": "_id", "value": "" }] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Offers",
+      "description": "Requires Bearer token. Role: ADMIN only. Agenda job scheduling for timed offers (flash_sale, deal_of_day). S3 deletion on offer delete/update.\n\nOffer types:\n• buy_x_get_cheapest_free — buy N items, cheapest becomes free. Requires condition.minQuantity.\n• spend_x_get_discount — spend ≥ minAmount, get discountPercentage off subtotal. Requires condition.minAmount + reward.discountPercentage.\n• spend_x_get_free_shipping — spend ≥ minAmount, shipping waived. Requires condition.minAmount.\n• buy_x_get_free_shipping — buy N items, shipping waived. Requires condition.minQuantity.\n• buy_x_get_half_price — buy N items, cheapest is half price. Requires condition.minQuantity.\n• spend_x_get_free_item — spend ≥ minAmount, get free item up to freeItemMaxValue. Requires condition.minAmount + reward.freeItemMaxValue.\n• deal_of_day — specific products get discountPercentage off. Requires targetProducts (non-empty) + reward.discountPercentage + timing.\n• flash_sale — products in targetCategories get discountPercentage off. Requires reward.discountPercentage + timing.",
+      "item": [
+        {
+          "name": "List Offers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/offers?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "offers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "offerType", "value": "", "disabled": true, "description": "buy_x_get_cheapest_free | spend_x_get_discount | spend_x_get_free_shipping | buy_x_get_free_shipping | buy_x_get_half_price | spend_x_get_free_item | deal_of_day | flash_sale" },
+                { "key": "isActive", "value": "", "disabled": true, "description": "true | false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Offer by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Returns offer with condition.excludedCategories, targetProducts, and targetCategories all populated."
+          }
+        },
+        {
+          "name": "Create Offer — buy_x_get_cheapest_free",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Buy 3 Get Cheapest Free\",\n  \"description\": \"Add 3 items and the cheapest one is on us\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/buy3free\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy3free\" },\n  \"offerType\": \"buy_x_get_cheapest_free\",\n  \"condition\": { \"minQuantity\": 3, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Buy N items (minQuantity), cheapest item price set to 0 at checkout."
+          }
+        },
+        {
+          "name": "Create Offer — spend_x_get_discount",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spend 500 Get 20% Off\",\n  \"description\": \"Spend EGP 500 or more and get 20% off your order\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/spend500\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/spend500\" },\n  \"offerType\": \"spend_x_get_discount\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 500, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 20, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Spend ≥ minAmount to receive discountPercentage off the entire subtotal."
+          }
+        },
+        {
+          "name": "Create Offer — spend_x_get_free_shipping",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Free Shipping on Orders Over 300\",\n  \"description\": \"Spend EGP 300+ and enjoy free shipping\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/freeship300\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/freeship300\" },\n  \"offerType\": \"spend_x_get_free_shipping\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 300, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Spend ≥ minAmount and shipping cost becomes 0."
+          }
+        },
+        {
+          "name": "Create Offer — buy_x_get_free_shipping",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Buy 2 Items Get Free Shipping\",\n  \"description\": \"Add 2 or more items and ship for free\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/buy2freeship\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy2freeship\" },\n  \"offerType\": \"buy_x_get_free_shipping\",\n  \"condition\": { \"minQuantity\": 2, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Buy N or more items (minQuantity) and shipping cost becomes 0."
+          }
+        },
+        {
+          "name": "Create Offer — buy_x_get_half_price",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Buy 2 Get 1 Half Price\",\n  \"description\": \"Add 2 items and the cheapest is half price\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/halfprice\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/halfprice\" },\n  \"offerType\": \"buy_x_get_half_price\",\n  \"condition\": { \"minQuantity\": 2, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Buy N items (minQuantity), cheapest item price is halved at checkout."
+          }
+        },
+        {
+          "name": "Create Offer — spend_x_get_free_item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Free Gift on Orders Over 800\",\n  \"description\": \"Spend EGP 800+ and choose a free item up to EGP 150\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/freegift\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/freegift\" },\n  \"offerType\": \"spend_x_get_free_item\",\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 800, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": null, \"freeItemMaxValue\": 150 },\n  \"targetProducts\": [],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Spend ≥ minAmount, discount = freeItemMaxValue deducted from total (customer chooses a free item up to that value)."
+          }
+        },
+        {
+          "name": "Create Offer — deal_of_day",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Deal of the Day\",\n  \"description\": \"Today only — 40% off selected products!\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/dealofday\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/dealofday\" },\n  \"offerType\": \"deal_of_day\",\n  \"timing\": { \"startDate\": \"2025-06-17T00:00:00.000Z\", \"endDate\": \"2025-06-17T23:59:59.000Z\" },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 40, \"freeItemMaxValue\": null },\n  \"targetProducts\": [\"<productId1>\", \"<productId2>\"],\n  \"targetCategories\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "REQUIRES: targetProducts (non-empty), reward.discountPercentage, timing.startDate + endDate. Agenda activate/expire jobs are scheduled automatically. deal_of_day products are excluded from all other offer calculations."
+          }
+        },
+        {
+          "name": "Create Offer — flash_sale",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Flash Sale — 30% Off Rings\",\n  \"description\": \"Limited time flash sale on ring category\",\n  \"isActive\": true,\n  \"image\": { \"mediaKey\": \"offers/flashsale\", \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/flashsale\" },\n  \"offerType\": \"flash_sale\",\n  \"timing\": { \"startDate\": \"2025-06-17T10:00:00.000Z\", \"endDate\": \"2025-06-17T14:00:00.000Z\" },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": null, \"excludedCategories\": [] },\n  \"reward\": { \"discountPercentage\": 30, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": [\"<categoryId1>\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "REQUIRES: reward.discountPercentage, timing.startDate + endDate. targetCategories scopes which product categories receive the discount (empty = all categories). Agenda activate/expire jobs are scheduled automatically."
+          }
+        },
+        {
+          "name": "Update Offer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Offer Title\",\n  \"description\": \"Updated description\",\n  \"isActive\": false,\n  \"image\": {\n    \"mediaKey\": \"offers/new_banner\",\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/new_banner\"\n  },\n  \"timing\": {\n    \"startDate\": \"2025-07-01T00:00:00.000Z\",\n    \"endDate\": \"2025-07-02T00:00:00.000Z\"\n  },\n  \"condition\": { \"minQuantity\": null, \"minAmount\": 400, \"excludedCategories\": [\"<categoryId>\"] },\n  \"reward\": { \"discountPercentage\": 25, \"freeItemMaxValue\": null },\n  \"targetProducts\": [],\n  \"targetCategories\": [\"<categoryId>\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "All fields optional. If image.mediaKey changes the old S3 object is deleted. Business rules are re-validated against the resolved (merged) offer state."
+          }
+        },
+        {
+          "name": "Delete Offer",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/offers/:id", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Cancels Agenda jobs (for flash_sale / deal_of_day), deletes S3 image, then removes DB record."
+          }
+        },
+        {
+          "name": "Toggle Offer Active Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/offers/:id/toggle", "host": ["{{baseUrl}}"], "path": ["admin", "offers", ":id", "toggle"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "Toggles isActive. For timed offers (flash_sale / deal_of_day): deactivating cancels Agenda jobs + sets status=expired; reactivating reschedules them (throws 400 if both dates have passed). Non-timed offers just flip isActive + set status=active."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Admin — Image Slider",
+      "description": "Requires Bearer token. Role: ADMIN only. Mounted at /slider.",
+      "item": [
+        {
+          "name": "Create Hero Section",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/slider/create", "host": ["{{baseUrl}}"], "path": ["slider", "create"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": {\n    \"image1\": {\n      \"imageUrl\": \"https://atozaccessories.s3.amazonaws.com/imageSlider/banner1.jpg\",\n      \"imageType\": \"desktop\"\n    },\n    \"image2\": {\n      \"imageUrl\": \"https://atozaccessories.s3.amazonaws.com/imageSlider/banner1_mobile.jpg\",\n      \"imageType\": \"mobile\"\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "imageType must be a value from DeviceTypeArr (e.g. desktop, mobile)."
+          }
+        },
+        {
+          "name": "Update Hero Section",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/slider/update/:id", "host": ["{{baseUrl}}"], "path": ["slider", "update", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": {\n    \"image1\": {\n      \"imageUrl\": \"https://atozaccessories.s3.amazonaws.com/imageSlider/new_banner.jpg\",\n      \"imageType\": \"desktop\"\n    },\n    \"image2\": {\n      \"imageUrl\": \"https://atozaccessories.s3.amazonaws.com/imageSlider/new_banner_mobile.jpg\",\n      \"imageType\": \"mobile\"\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Hero Section 🆕 NEW",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/slider/delete/:id", "host": ["{{baseUrl}}"], "path": ["slider", "delete", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "description": "NOTE: uses POST method (not DELETE) — router defines it as .post('/delete/:id'). Deletes both image1 and image2 from S3, then removes DB record."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "AWS (S3)",
+      "description": "Requires Bearer token. Role: ADMIN only. Use presigned URLs to upload files directly to S3 from the client.",
+      "item": [
+        {
+          "name": "Get Presigned Upload URL(s)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/aws/get-presigned-url", "host": ["{{baseUrl}}"], "path": ["aws", "get-presigned-url"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"folder\": \"products\",\n  \"files\": [\n    { \"contentType\": \"image/jpeg\" },\n    { \"contentType\": \"image/png\", \"fileName\": \"products/custom_name.png\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Returns array of { preSignedURL, mediaUrl } pairs. Client PUTs the file directly to preSignedURL. Use mediaUrl as the stored reference."
+          }
+        },
+        {
+          "name": "Get Presigned Delete URL",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/aws/delete-presigned-url?fileName=products%2Fexample.jpg",
+              "host": ["{{baseUrl}}"],
+              "path": ["aws", "delete-presigned-url"],
+              "query": [{ "key": "fileName", "value": "products/example.jpg" }]
+            },
+            "description": "Returns a presigned DELETE URL for removing a file from S3."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Wishlist",
+      "description": "Requires Bearer token. Role: ADMIN or USER. Mounted at /wishlist.",
+      "item": [
+        {
+          "name": "Add Product to Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/wishlist/add-to-wishlist", "host": ["{{baseUrl}}"], "path": ["wishlist", "add-to-wishlist"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"<productId>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get Wishlist Entry by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/wishlist/favorite-product/:wishlistId", "host": ["{{baseUrl}}"], "path": ["wishlist", "favorite-product", ":wishlistId"], "variable": [{ "key": "wishlistId", "value": "" }] }
+          }
+        },
+        {
+          "name": "Get My Full Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/wishlist/get-user-wishlist", "host": ["{{baseUrl}}"], "path": ["wishlist", "get-user-wishlist"] }
+          }
+        },
+        {
+          "name": "Get All Wishlists (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/wishlist/get-all-wishlist?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["wishlist", "get-all-wishlist"],
+              "query": [{ "key": "page", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Remove Product from Wishlist",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/wishlist/delete-favorite-product/:productId", "host": ["{{baseUrl}}"], "path": ["wishlist", "delete-favorite-product", ":productId"], "variable": [{ "key": "productId", "value": "" }] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Shipping",
+      "description": "Requires Bearer token. Role: ADMIN or USER. Mounted at /shipping.",
+      "item": [
+        {
+          "name": "Create Shipping Zone",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/shipping", "host": ["{{baseUrl}}"], "path": ["shipping"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Cairo\",\n  \"cost\": 50\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get All Shipping Zones",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/shipping", "host": ["{{baseUrl}}"], "path": ["shipping"] }
+          }
+        },
+        {
+          "name": "Get Shipping Zone by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/shipping/:id", "host": ["{{baseUrl}}"], "path": ["shipping", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Update Shipping Zone",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/shipping/:id", "host": ["{{baseUrl}}"], "path": ["shipping", ":id"], "variable": [{ "key": "id", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Giza\",\n  \"cost\": 60\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Shipping Zone",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/shipping/:id", "host": ["{{baseUrl}}"], "path": ["shipping", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Orders — User  (Bearer userToken · /order)",
+      "description": "User-facing order endpoints. Mounted at /order. Requires USER or ADMIN role.",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/order/", "host": ["{{baseUrl}}"], "path": ["order", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"products\": [\n    { \"variantId\": \"<variantId1>\", \"quantity\": 2 },\n    { \"variantId\": \"<variantId2>\", \"quantity\": 1 }\n  ],\n  \"userId\": \"<userInformationId>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "products use variantId. Validates variant.availableItems >= quantity. Snapshots userInfo+shipping at creation. Runs calculateOrderOffers (8 types, best saving wins). Stock deducted in MongoDB transaction. Invoice email sent fire-and-forget."
+          }
+        },
+        {
+          "name": "Get Order by ID (User)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/order/:orderId", "host": ["{{baseUrl}}"], "path": ["order", ":orderId"], "variable": [{ "key": "orderId", "value": "" }] }
+          }
+        },
+        {
+          "name": "Get Customer Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/order/customer/:customerId", "host": ["{{baseUrl}}"], "path": ["order", "customer", ":customerId"], "variable": [{ "key": "customerId", "value": "" }] },
+            "description": "USER can only fetch their own customerId. ADMIN can fetch any."
+          }
+        },
+        {
+          "name": "Cancel Order (User)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "url": { "raw": "{{baseUrl}}/order/cancel/:orderId", "host": ["{{baseUrl}}"], "path": ["order", "cancel", ":orderId"], "variable": [{ "key": "orderId", "value": "" }] },
+            "description": "Only allowed when status is under_review or confirmed. Restores variant stock + decrements soldItems in transaction."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders — Admin  (Bearer adminToken · /admin/orders)",
+      "description": "Admin-only order endpoints. Mounted at /admin/orders. Requires ADMIN role.",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/all?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "orders", "all"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "orderId", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Paginated (20/page). Filter by status or partial orderId suffix."
+          }
+        },
+        {
+          "name": "Get Order by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/orders/:orderId", "host": ["{{baseUrl}}"], "path": ["admin", "orders", ":orderId"], "variable": [{ "key": "orderId", "value": "" }] }
+          }
+        },
+        {
+          "name": "Update Order Status (confirmed / shipped / delivered / ordered / cancelled / deleted)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/orders/status/:orderId", "host": ["{{baseUrl}}"], "path": ["admin", "orders", "status", ":orderId"], "variable": [{ "key": "orderId", "value": "" }] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Handles all status transitions. cancelled → restores stock (unless already cancelled/deleted). deleted → same guard. Other statuses → simple field update."
+          }
+        }
+      ]
+    }
+
+  ]
+}

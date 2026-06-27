@@ -1,0 +1,90 @@
+{
+  "info": {
+    "name": "A to Z Accessories - Colors",
+    "description": "Full CRUD endpoints for the Colors resource (admin only).\n\nBase path: /admin/colors\nAuth: Bearer token (Admin role required).\n\nSet the collection/environment variables:\n- baseUrl: e.g. http://localhost:3000\n- token: a valid admin JWT access token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "colorId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Create Color",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Midnight Black\",\n  \"hex\": \"#000000\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/colors",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "colors"]
+        }
+      }
+    },
+    {
+      "name": "List Colors",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/colors?page=1&search=black",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "colors"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "search", "value": "black", "description": "Optional case-insensitive name filter" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Color By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/colors/{{colorId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "colors", "{{colorId}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Color",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Jet Black\",\n  \"hex\": \"#0A0A0A\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/colors/{{colorId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "colors", "{{colorId}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Color",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/colors/{{colorId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "colors", "{{colorId}}"]
+        }
+      }
+    }
+  ]
+}

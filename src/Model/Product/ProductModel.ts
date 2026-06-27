@@ -21,8 +21,6 @@ const ProductSchema = new Schema<IProduct>(
     soldItems: NotRequiredNumber,
     isSoldOut: NotRequiredBoolean,
     isSale: NotRequiredBoolean,
-    expiredSale: NotRequiredNumber,
-    isExpiredSale: NotRequiredBoolean,
     category: RefType(SchemaTypesReference.Category, true),
     createdBy: RefType(SchemaTypesReference.User, true),
     slug: RequiredString,
@@ -30,6 +28,10 @@ const ProductSchema = new Schema<IProduct>(
     albumImages: { type: [ImageSchema], required: false },
     createdAt: RequiredNumber,
     isDeleted: NotRequiredBoolean,
+    isBestSeller: NotRequiredBoolean,
+    bestSellerManual: NotRequiredBoolean,
+    wholesalePrice: NotRequiredNumber,
+    finalPrice: NotRequiredNumber,
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

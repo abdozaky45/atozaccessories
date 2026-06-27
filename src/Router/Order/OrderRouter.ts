@@ -2,12 +2,30 @@ import { Router } from 'express';
 import OrderController from '../../Controller/Order/OrderController';
 import * as orderValidation from '../../Validation/Order/OrderValidation';
 import { Validation } from '../../middleware/ValidationMiddleware';
-import { baseSchema } from '../../Validation/baseSchema';
 
 const OrderRouter = Router();
-OrderRouter.post("/create", Validation(orderValidation.createOrderValidation), OrderController.createOrder);
-OrderRouter.patch("/update-status", Validation(orderValidation.updateOrderStatusValidation), OrderController.updateOrderStatus);
-OrderRouter.get("/get-user-orders", Validation(baseSchema), OrderController.getUserOrders);
-OrderRouter.get("/get-all-orders", Validation(orderValidation.getAllOrdersValidation), OrderController.getAllOrders);
-OrderRouter.get("/get-order/:orderId", Validation(orderValidation.getOrderByIdValidation), OrderController.getOrderById);
+
+// Mounted at /admin/orders — full paths:
+// GET  /admin/orders/all
+// GET  /admin/orders/:orderId
+// PATCH /admin/orders/status/:orderId
+
+OrderRouter.get(
+  '/all',
+  Validation(orderValidation.getAllOrdersValidation),
+  OrderController.getAllOrdersController
+);
+
+OrderRouter.get(
+  '/:orderId',
+  Validation(orderValidation.AdminOrderIdValidation),
+  OrderController.getOrderByIdController
+);
+
+OrderRouter.patch(
+  '/status/:orderId',
+  Validation(orderValidation.updateOrderStatusValidation),
+  OrderController.updateOrderStatusController
+);
+
 export default OrderRouter;

@@ -10,5 +10,5 @@ interface categoryImage {
     createdBy:Types.ObjectId | string;
     createdAt: number;
     isDeleted?: boolean;
+    icon_id?: Types.ObjectId | null;
   }
-  

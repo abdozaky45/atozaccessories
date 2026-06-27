@@ -1,17 +1,11 @@
-import { nanoid } from "nanoid";
 import { sendEmail } from "../../Utils/Nodemailer/SendEmail";
 import AuthModel from "../../Model/User/auth/AuthModel";
-import { activeCodeTemplate } from "../../Utils/Nodemailer/SendCodeTemplate";
+import { activeCodeTemplate, welcomeEmailTemplate, welcomeEmailText } from "../../Utils/Nodemailer/SendCodeTemplate";
 import { StatusEnum } from "../../Utils/StatusType";
 import TokenModel from "../../Model/Token/TokenModel";
 import { Types } from "mongoose";
-export function generateSixDigitCode() {
-  let code = nanoid(6);
-  code = code.replace(/[^0-9]/g, "");
-  while (code.length < 6) {
-    code = nanoid(6).replace(/[^0-9]/g, "");
-  }
-  return code;
+export function generateSixDigitCode(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 export const sendActivationEmail = async (
   email: string,
@@ -24,8 +18,27 @@ export const sendActivationEmail = async (
       html: activeCodeTemplate(activeCode),
     });
     return isSent;
-  } catch (error) {
-    console.error("Error sending email:", error);
+  } catch {
+    return false;
+  }
+};
+export const sendWelcomeEmail = async (email: string): Promise<boolean> => {
+  try {
+    const isSent = await sendEmail({
+      from: process.env.RESEND_FROM ?? 'A to Z Accessory <onboarding@resend.dev>',
+      to: email,
+      replyTo: 'atozaccessories0@gmail.com',
+      subject: 'أهلاً بك في A to Z Accessory',
+      html: welcomeEmailTemplate(),
+      text: welcomeEmailText(),
+      headers: {
+        'X-Mailer': 'A to Z Accessory Mailer',
+        'List-Unsubscribe': '<mailto:atozaccessories0@gmail.com?subject=unsubscribe>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    });
+    return isSent;
+  } catch {
     return false;
   }
 };
@@ -54,6 +67,9 @@ export const CreateNewAccount = async ({
     email,
     activeCode,
     codeCreatedAt,
+    // Regular users have no confirmation step, so they are confirmed and online from sign-up.
+    isConfirmed: true,
+    status: StatusEnum.Online,
   });
 
   return user;
@@ -69,31 +85,16 @@ export const updateUserAndDeleteActiveCode = async (searchKey: string) => {
   );
   return user;
 };
-export const createNewAccessAndRefreshToken = async (
+export const saveAccessToken = async (
   accessToken: string,
-  refreshToken: string,
   user: Types.ObjectId,
   userAgent: string
 ) => {
   const token = await TokenModel.create({
     accessToken,
-    refreshToken,
     user,
     userAgent,
   });
-  return token;
-};
-export const findRefreshToken = async (refreshToken: string) => {
-  const token = await TokenModel.findOne({
-    refreshToken,
-  });
-  return token;
-};
-export const SaveAccessToken = async (
-  _id: Types.ObjectId,
-  accessToken: string
-) => {
-  const token = await TokenModel.findByIdAndUpdate({ _id }, { accessToken });
   return token;
 };
 export const findOneUserById = async (id: Types.ObjectId) => {

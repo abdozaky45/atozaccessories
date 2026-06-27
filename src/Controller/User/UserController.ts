@@ -83,6 +83,17 @@ export const getUserInformationById = asyncHandler(
     return res.json(new ApiResponse(200, { user }, SuccessMessage.USER_FOUND));
   }
 );
+// Fetch a single userInformation record by its own _id — used to prefill the edit form.
+export const getSingleUserInformation = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const user = await userService.findUserInformationById(userId);
+    if (!user) {
+      return next(new ApiError(404, ErrorMessages.USER_NOT_FOUND));
+    }
+    return res.json(new ApiResponse(200, { user }, SuccessMessage.USER_FOUND));
+  }
+);
 export const logout = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { _id } = req.body.currentUser.userInfo;

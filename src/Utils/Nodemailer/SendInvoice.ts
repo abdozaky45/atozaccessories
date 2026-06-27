@@ -1,148 +1,177 @@
-export const generateInvoice = (
-  {
-    customerName,
-    restaurantName,
-    items,
-    Shipping,
-    total,
-    subTotal,
-    discount,
-    orderNumber,
-    orderDate,
-    paymentMethod
-  }: {
-    customerName: string;
-    restaurantName: string;
-    items: { productId?: string, productName: string; quantity: number; itemPrice: number, totalPrice?: number }[];
-    Shipping: number;
-    total: number;
-    subTotal: number;
-    discount: number;
-    orderNumber: string;
-    orderDate: string;
-    paymentMethod: string;
-  }) => `<!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order Confirmation</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #F5F5F5;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF;">
-          <!-- Header -->
+export const generateInvoice = ({
+  customerName,
+  brandName,
+  items,
+  subTotal,
+  discount,
+  shippingCost,
+  freeShipping,
+  total,
+  orderNumber,
+  orderDate,
+  paymentMethod,
+}: {
+  customerName: string;
+  brandName: string;
+  items: {
+    productName: string;
+    quantity: number;
+    itemPrice: number;
+    totalPrice?: number;
+    size?: string;
+    color?: string;
+  }[];
+  subTotal: number;
+  discount: number;
+  shippingCost: number;
+  freeShipping: boolean;
+  total: number;
+  orderNumber: string;
+  orderDate: string;
+  paymentMethod: string;
+}) => {
+  const money = (n: number) => `EGP ${Number(n ?? 0).toFixed(2)}`;
+
+  const itemRows = items
+    .map((item) => {
+      const lineTotal = item.totalPrice ?? item.itemPrice * item.quantity;
+      const meta = [item.color, item.size].filter(Boolean).join(" &bull; ");
+      return `
+        <tr>
+          <td style="padding:14px 0;border-bottom:1px solid #EFE6DC;">
+            <span style="display:block;font-size:14px;font-weight:700;color:#51311B;">${item.productName}</span>
+            ${meta ? `<span style="display:block;font-size:12px;color:#9A8B7C;margin-top:3px;">${meta}</span>` : ""}
+          </td>
+          <td align="center" style="padding:14px 0;border-bottom:1px solid #EFE6DC;font-size:13px;color:#706257;white-space:nowrap;">
+            &times;${item.quantity}
+          </td>
+          <td align="right" style="padding:14px 0;border-bottom:1px solid #EFE6DC;font-size:13px;color:#706257;white-space:nowrap;">
+            ${money(item.itemPrice)}
+          </td>
+          <td align="right" style="padding:14px 0 14px 12px;border-bottom:1px solid #EFE6DC;font-size:14px;font-weight:700;color:#51311B;white-space:nowrap;">
+            ${money(lineTotal)}
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  const summaryRow = (label: string, value: string, opts: { strong?: boolean; accent?: boolean } = {}) => `
+    <tr>
+      <td style="padding:7px 0;font-size:${opts.strong ? "14px" : "13px"};color:${opts.strong ? "#51311B" : "#706257"};font-weight:${opts.strong ? "700" : "400"};">${label}</td>
+      <td align="right" style="padding:7px 0;font-size:${opts.strong ? "14px" : "13px"};font-weight:${opts.strong ? "700" : "400"};color:${opts.accent ? "#1E7F4F" : opts.strong ? "#51311B" : "#706257"};white-space:nowrap;">${value}</td>
+    </tr>`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Order Confirmation</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F5EEE8;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F5EEE8;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;">
+
+          <!-- HEADER -->
           <tr>
-            <td style="background-color: #8B4513; padding: 30px; border-radius: 8px 8px 0 0;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td>
-                    <h1 style="color: #FFFFFF; font-size: 24px; font-weight: 300; margin: 0 0 8px 0;">
-                      ${customerName},
-                    </h1>
-                    <p style="color: #FFFFFF; font-size: 14px; margin: 0;">
-                      thanks for your order!
-                    </p>
-                  </td>
-                  <td align="right" style="vertical-align: top;">
-                    <div style="background-color: rgba(255,255,255,0.1); width: 64px; height: 64px; border-radius: 8px; text-align: center; line-height: 64px;">
-                      💎
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Order Details -->
-          <tr>
-            <td style="padding: 30px; border: 1px solid #E5E5E5; border-top: none; border-radius: 0 0 8px 8px;">
-              <!-- Restaurant Name -->
-              <h2 style="color: #1A1A1A; font-size: 18px; font-weight: 300; margin: 0 0 24px 0;">
-                Your order from ${restaurantName}
-              </h2>
-
-              <!-- Items -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
-                ${items
-    .map(
-      (item) => `
-                  <tr>
-                    <td style="padding: 8px 0;">
-                      <span style="color: #666666; font-size: 14px; margin-right: 8px;">(${item.quantity
-        })</span>
-                      <span style="color: #1A1A1A; font-size: 14px;">${item.productName
-        }</span>
-                    </td>
-                    <td align="right" style="color: #1A1A1A; font-size: 14px; padding: 8px 0;">
-                      ${item.itemPrice.toFixed(2)}
-                    </td>
-                  </tr>
-                `
-    )
-    .join("")}
-              </table>
-
-              <!-- Fees -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #E5E5E5; padding: 16px 0;">
-                <tr>
-                  <td style="color: #666666; font-size: 14px; padding: 4px 0;">Shipping</td>
-                  <td align="right" style="color: #1A1A1A; font-size: 14px;">${Shipping.toFixed(
-      2
-    )}</td>
-                </tr>
-              </table>
-
-              <!-- Total -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #E5E5E5; padding: 16px 0; margin: 16px 0;">
-                <tr>
-                  <td style="color: #1A1A1A; font-weight: 500;">Sub Total</td>
-                  <td align="right" style="color: #1A1A1A; font-weight: 500;">
-                    EGP ${subTotal.toFixed(2)}
-                  </td>
-                </tr>
-              </table>
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #E5E5E5; padding: 16px 0; margin: 16px 0;">
-                <tr>
-                  <td style="color: #1A1A1A; font-weight: 500;">Discount</td>
-                  <td align="right" style="color: #1A1A1A; font-weight: 500;">
-                    EGP ${discount.toFixed(2)}
-                  </td>
-                </tr>
-              </table>
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #E5E5E5; padding: 16px 0; margin: 16px 0;">
-                <tr>
-                  <td style="color: #1A1A1A; font-weight: 500;">Total</td>
-                  <td align="right" style="color: #1A1A1A; font-weight: 500;">
-                    EGP ${total.toFixed(2)}
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Order Info -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-                <tr>
-                  <td style="color: #666666; font-size: 14px; padding: 4px 0;">
-                    Your order ID: ${orderNumber}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="color: #666666; font-size: 14px; padding: 4px 0;">
-                    Time of order: ${orderDate}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="color: #666666; font-size: 14px; padding: 4px 0;">
-                    Paid by: ${paymentMethod}
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Disclaimer -->
-              <p style="color: #666666; font-size: 12px; margin: 24px 0 0 0;">
-                This is not an invoice. The vendor, being the merchant shall share their official invoice with the customer instead.
+            <td style="background-color:#51311B;border-radius:12px 12px 0 0;padding:36px 40px;text-align:center;">
+              <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;letter-spacing:2px;color:#DECBBA;font-family:Georgia,serif;">
+                ${brandName}
+              </h1>
+              <p style="margin:0;font-size:13px;color:#BD8958;letter-spacing:2px;text-transform:uppercase;">
+                Order Confirmation
               </p>
             </td>
           </tr>
+
+          <!-- GREETING -->
+          <tr>
+            <td style="background-color:#ffffff;padding:36px 40px 8px;">
+              <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#51311B;font-family:Georgia,serif;">
+                Thank you, ${customerName}!
+              </h2>
+              <p style="margin:0;font-size:14px;line-height:1.7;color:#706257;">
+                We have received your order and it is being prepared. Here is a summary of your purchase.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ORDER META -->
+          <tr>
+            <td style="background-color:#ffffff;padding:20px 40px 4px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FAF6F1;border:1px solid #EFE6DC;border-radius:10px;">
+                <tr>
+                  <td style="padding:14px 18px;font-size:12px;color:#9A8B7C;">Order ID</td>
+                  <td align="right" style="padding:14px 18px;font-size:13px;font-weight:700;color:#51311B;">#${orderNumber}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 14px;font-size:12px;color:#9A8B7C;">Date</td>
+                  <td align="right" style="padding:0 18px 14px;font-size:13px;color:#51311B;">${orderDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 14px;font-size:12px;color:#9A8B7C;">Payment</td>
+                  <td align="right" style="padding:0 18px 14px;font-size:13px;color:#51311B;">${paymentMethod}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ITEMS -->
+          <tr>
+            <td style="background-color:#ffffff;padding:24px 40px 8px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding:0 0 8px;font-size:11px;font-weight:700;color:#BD8958;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid #DECBBA;">Item</td>
+                  <td align="center" style="padding:0 0 8px;font-size:11px;font-weight:700;color:#BD8958;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid #DECBBA;">Qty</td>
+                  <td align="right" style="padding:0 0 8px;font-size:11px;font-weight:700;color:#BD8958;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid #DECBBA;">Price</td>
+                  <td align="right" style="padding:0 0 8px 12px;font-size:11px;font-weight:700;color:#BD8958;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid #DECBBA;">Total</td>
+                </tr>
+                ${itemRows}
+              </table>
+            </td>
+          </tr>
+
+          <!-- SUMMARY -->
+          <tr>
+            <td style="background-color:#ffffff;padding:16px 40px 8px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                ${summaryRow("Subtotal", money(subTotal))}
+                ${discount > 0 ? summaryRow("Discount", `- ${money(discount)}`, { accent: true }) : ""}
+                ${summaryRow("Shipping", freeShipping ? "FREE" : money(shippingCost), { accent: freeShipping })}
+              </table>
+            </td>
+          </tr>
+
+          <!-- TOTAL -->
+          <tr>
+            <td style="background-color:#ffffff;padding:12px 40px 36px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#51311B;border-radius:10px;">
+                <tr>
+                  <td style="padding:18px 22px;font-size:15px;font-weight:700;color:#DECBBA;letter-spacing:1px;">TOTAL</td>
+                  <td align="right" style="padding:18px 22px;font-size:18px;font-weight:800;color:#ffffff;">${money(total)}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color:#DECBBA;border-radius:0 0 12px 12px;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#51311B;">${brandName}</p>
+              <p style="margin:0;font-size:11px;line-height:1.6;color:#706257;">
+                This is an order confirmation, not a tax invoice.<br>
+                &copy; ${new Date().getFullYear()} ${brandName}. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
         </table>
-      </body>
-    </html>`;
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+};

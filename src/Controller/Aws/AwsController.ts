@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ApiResponse, ApiError, asyncHandler } from "../../Utils/ErrorHandling";
 import ErrorMessages from "../../Utils/Error";
 import s3_service from "../../Service/Aws/S3_Bucket/presignedUrl";
+import { toCdnUrl } from "../../Utils/Cdn";
 export const getPresignedURL = asyncHandler(
   async (req: Request, res: Response) => {
     const regionAws = process.env.AWS_REGION!;
@@ -18,15 +19,17 @@ export const getPresignedURL = asyncHandler(
         const fileName = `${req.body.folder}/${
           req.body.currentUser.userInfo._id
         }_${Date.now()}_${index}`;
+        const key = file.fileName || fileName;
         const preSignedURL = await aws_s3_service.createPresignedUrlWithClient({
           region: regionAws,
           bucket: bucketName,
-          key: file.fileName || fileName,
+          key,
           contentType: file.contentType || "image/jpeg",
         });
         return {
           preSignedURL,
-          mediaUrl: preSignedURL.split("?")[0],
+          // Upload goes to S3; reads are served through CloudFront.
+          mediaUrl: toCdnUrl(key),
         };
       })
     );

@@ -15,10 +15,19 @@ import categoryRouter from "./Router/Categories/CategoryRouter";
 import publicRouter from "./Router/PublicRouters/PublicRouter";
 import AwsRouter from "./Router/Aws/AwsRouter";
 import ProductRouter from "./Router/Product/ProductRouter";
+import ProductPublicRouter from "./Router/Product/ProductPublicRouter";
 import imageSliderRouter from "./Router/ImageSlider/ImageSliderRouter";
 import wishlistRouter from "./Router/Wishlist/WishlistRouter";
 import shippingRouter from "./Router/Shipping/ShippingRouter";
+import ShippingPublicRouter from "./Router/Shipping/ShippingPublicRouter";
 import OrderRouter from "./Router/Order/OrderRouter";
+import PublicOrderRouter from "./Router/Order/PublicOrderRouter";
+import iconRouter from "./Router/Icons/IconRouter";
+import colorRouter from "./Router/Colors/ColorRouter";
+import sizeRouter from "./Router/Sizes/SizeRouter";
+import offerRouter from "./Router/Offers/OfferRouter";
+import homeRouter from "./Router/Home/HomeRouter";
+import BackupRouter from "./Router/Backup/BackupRouter";
 import { getCorsOptions } from "./config";
 
 const app: Application = express();
@@ -37,6 +46,10 @@ app.get("/", async (_, res) => {
 app.use(`/${RouterEnum.authentication}`, authenticationRouter);
 //app.use(`/${RouterEnum.public}`, enforcePublicApiRestrictions, blockScrapers, publicRouter);
 app.use(`/${RouterEnum.public}`, publicRouter);
+app.use(`/${RouterEnum.products}`, ProductPublicRouter);
+app.use("/home", homeRouter);
+// Public read-only shipping costs (mutations stay admin-only below).
+app.use(`/${RouterEnum.shipping}`, ShippingPublicRouter);
 app.use(checkAuthority);
 app.use(
   `/${RouterEnum.user}`,
@@ -64,8 +77,14 @@ app.use(
   checkRole([UserTypeEnum.USER, UserTypeEnum.ADMIN]),
   wishlistRouter
 );
-app.use(`/${RouterEnum.shipping}`, checkRole([UserTypeEnum.ADMIN, UserTypeEnum.USER]), shippingRouter);
-app.use(`/${RouterEnum.order}`, checkRole([UserTypeEnum.ADMIN, UserTypeEnum.USER]), OrderRouter);
+app.use(`/${RouterEnum.shipping}`, checkRole([UserTypeEnum.ADMIN]), shippingRouter);
+app.use(`/${RouterEnum.order}`, checkRole([UserTypeEnum.USER, UserTypeEnum.ADMIN]), PublicOrderRouter);
+app.use(`/${RouterEnum.adminOrder}`, checkRole([UserTypeEnum.ADMIN]), OrderRouter);
+app.use(`/${RouterEnum.icon}`, checkRole([UserTypeEnum.ADMIN]), iconRouter);
+app.use(`/${RouterEnum.color}`, checkRole([UserTypeEnum.ADMIN]), colorRouter);
+app.use(`/${RouterEnum.size}`, checkRole([UserTypeEnum.ADMIN]), sizeRouter);
+app.use(`/${RouterEnum.offer}`, checkRole([UserTypeEnum.ADMIN]), offerRouter);
+app.use(`/${RouterEnum.backup}`, checkRole([UserTypeEnum.ADMIN]), BackupRouter);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });

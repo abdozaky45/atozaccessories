@@ -1,0 +1,100 @@
+{
+  "info": {
+    "name": "Categories Admin API",
+    "description": "Admin category endpoints mounted under /admin/categories. All requests require an ADMIN Bearer token ({{token}}).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Category",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryName\": \"Watches\",\n  \"imageUrl\": \"https://bucket.s3.amazonaws.com/watches.jpg\",\n  \"icon_id\": \"665f0a2b3c4d5e6f7a8b9c11\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/categories",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "categories"]
+        },
+        "description": "Create a new category. slug is derived from categoryName; mediaId is extracted from imageUrl. icon_id is optional and must reference an existing icon. Responds with status 200."
+      }
+    },
+    {
+      "name": "Update Category",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryName\": \"Luxury Watches\",\n  \"imageUrl\": \"https://bucket.s3.amazonaws.com/luxury-watches.jpg\",\n  \"icon_id\": \"665f0a2b3c4d5e6f7a8b9c11\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/categories/{{categoryId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "categories", "{{categoryId}}"]
+        },
+        "description": "Update a category. Only changed fields are applied; slug regenerates when categoryName changes. icon_id must reference an existing icon when provided."
+      }
+    },
+    {
+      "name": "Hard Delete Category",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/categories/{{categoryId}}/hard",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "categories", "{{categoryId}}", "hard"]
+        },
+        "description": "Permanently delete a category and cascade-delete its products, their variants, and product S3 images. Returns { deletedProducts, deletedVariants, deletedImages }. Irreversible."
+      }
+    },
+    {
+      "name": "Soft Delete Category",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/categories/{{categoryId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "categories", "{{categoryId}}"]
+        },
+        "description": "Soft delete a category (sets isDeleted: true). Document and products remain."
+      }
+    }
+  ]
+}
