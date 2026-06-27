@@ -215,6 +215,7 @@ export const deleteVariant = asyncHandler(async (req: Request, res: Response) =>
   if (!variant) throw new ApiError(400, ErrorMessages.VARIANT_NOT_FOUND);
   // Removing a variant changes the product-level stock total.
   await syncProductStockFromVariants(variant.product);
+  await cacheDel(CacheKeys.home);
   return res.json(new ApiResponse(200, {}, SuccessMessage.VARIANT_DELETED));
 });
 
