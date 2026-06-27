@@ -21,9 +21,10 @@ const OfferSchema = new Schema<IOffer>(
     description: NotRequiredString,
     isActive: { type: Boolean, default: true },
     status: { type: String, enum: OFFER_STATUSES, default: "scheduled" },
+    // Image is optional — an offer can be created without one (not currently surfaced).
     image: {
-      mediaKey: { type: String, required: true },
-      mediaUrl: { type: String, required: true },
+      mediaKey: { type: String },
+      mediaUrl: { type: String },
     },
     offerType: {
       type: String,

@@ -29,8 +29,10 @@ const OrderSchema = new Schema<IOrder>({
     productName: RequiredString,
     itemPrice:   RequiredNumber,
     totalPrice:  RequiredNumber,
-    size:        RequiredString,
-    color:       RequiredString,
+    // Optional: a "simple" product (single backfilled variant) has no size/color,
+    // so its order line carries "" — which RequiredString would reject at checkout.
+    size:        NotRequiredString,
+    color:       NotRequiredString,
     isFreeGift:  { type: Boolean, default: false },
   }],
   subTotal:     RequiredNumber,

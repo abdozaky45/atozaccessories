@@ -18,7 +18,7 @@ export default interface IOffer {
   description: string;
   isActive: boolean;
   status: OfferStatus;
-  image: {
+  image?: {
     mediaKey: string;
     mediaUrl: string;
   };

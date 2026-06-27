@@ -36,7 +36,7 @@ export const createOfferValidation = baseSchema.concat(
     title: joi.string().required(),
     description: joi.string().allow("").optional(),
     isActive: joi.boolean().optional(),
-    image: imageSchema.required(),
+    image: imageSchema.optional(),
     offerType: joi.string().valid(...OFFER_TYPES).required(),
     timing: timingSchema.optional(),
     condition: conditionSchema.optional(),

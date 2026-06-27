@@ -114,7 +114,7 @@ export const createNewOffer = asyncHandler(async (req: Request, res: Response) =
     description,
     isActive,
     status: computeCreateStatus(offerType, timing, isActive),
-    image: buildImage(image),
+    image: image?.mediaUrl ? buildImage(image) : undefined,
     offerType,
     timing,
     condition,
@@ -201,8 +201,9 @@ export const updateOffer = asyncHandler(async (req: Request, res: Response) => {
 
   if (image?.mediaUrl) {
     const newImage = buildImage(image);
-    if (newImage.mediaKey !== offer.image.mediaKey) {
-      await deleteS3Object(offer.image.mediaKey);
+    if (newImage.mediaKey !== offer.image?.mediaKey) {
+      // Delete the previous image only if the offer had one.
+      if (offer.image?.mediaKey) await deleteS3Object(offer.image.mediaKey);
       offer.image = newImage;
     }
   }
