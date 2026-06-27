@@ -51,6 +51,29 @@ function buildOfferShape(offer: any) {
   };
 }
 
+// Flash-sale products are stored with their normal prices; the offer's discount
+// lives on the offer. Re-express each product as a sale so the storefront can use
+// its existing price/salePrice display untouched:
+//   base = the product's current effective price (salePrice if already discounted,
+//          otherwise price)
+//   price     -> base                     (shown struck-through)
+//   salePrice -> base after flash discount (shown as the flash price)
+// finalPrice is intentionally left as-is so the rest of the system isn't affected.
+function applyFlashDiscount(products: any[], discountPercentage: number | null | undefined): any[] {
+  if (!discountPercentage || discountPercentage <= 0) return products;
+  const factor = 1 - discountPercentage / 100;
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  return products.map((p) => {
+    const hasSale = p.salePrice != null && p.salePrice > 0;
+    const base = hasSale ? p.salePrice : p.price;
+    if (base == null) return p;
+
+    const flashPrice = round2(base * factor);
+    return { ...p, price: base, salePrice: flashPrice };
+  });
+}
+
 export const getBestSellers = async (): Promise<any[]> => {
   const categories = await CategoryModel.find({ isDeleted: false }, { _id: 1 }).lean();
   if (!categories.length) return [];
@@ -106,7 +129,8 @@ export const getFlashSale = async (): Promise<any[]> => {
         .lean();
 
       if (!products.length) return null;
-      return { _id: offer._id, ...buildOfferShape(offer), products };
+      const discountedProducts = applyFlashDiscount(products, offer.reward?.discountPercentage);
+      return { _id: offer._id, ...buildOfferShape(offer), products: discountedProducts };
     })
   );
 
