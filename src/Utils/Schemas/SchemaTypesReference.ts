@@ -13,5 +13,6 @@ enum SchemaTypesReference {
   Color = "color",
   Size = "size",
   Offer = "offer",
+  Video = "video",
 }
 export default SchemaTypesReference;

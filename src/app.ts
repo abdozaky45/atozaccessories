@@ -29,6 +29,7 @@ import offerRouter from "./Router/Offers/OfferRouter";
 import homeRouter from "./Router/Home/HomeRouter";
 import BackupRouter from "./Router/Backup/BackupRouter";
 import AnalyticsRouter from "./Router/Analytics/AnalyticsRouter";
+import videoRouter from "./Router/Video/VideoRouter";
 import { getCorsOptions } from "./config";
 //import { blockScrapers, enforcePublicApiRestrictions } from "./middleware/Security";
 const app: Application = express();
@@ -87,6 +88,7 @@ app.use(`/${RouterEnum.size}`, checkRole([UserTypeEnum.ADMIN]), sizeRouter);
 app.use(`/${RouterEnum.offer}`, checkRole([UserTypeEnum.ADMIN]), offerRouter);
 app.use(`/${RouterEnum.backup}`, checkRole([UserTypeEnum.ADMIN]), BackupRouter);
 app.use(`/${RouterEnum.analytics}`, checkRole([UserTypeEnum.ADMIN]), AnalyticsRouter);
+app.use(`/${RouterEnum.video}`, checkRole([UserTypeEnum.ADMIN]), videoRouter);
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   globalErrorHandling(error, req, res, next);
 });
