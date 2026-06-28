@@ -50,5 +50,7 @@ enum ErrorMessages {
   VARIANT_NOT_FOUND = "Variant not found",
   VARIANT_DUPLICATE = "This color and size combination already exists for this product",
   S3_DELETE_FAILED = "Failed to delete image from storage, product was not deleted",
+  VIDEO_NOT_FOUND = "Video not found",
+  VIDEO_ALREADY_EXISTS = "A video already exists. Delete the current video before uploading a new one.",
 }
 export default ErrorMessages;

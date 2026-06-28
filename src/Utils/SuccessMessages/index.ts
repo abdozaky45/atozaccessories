@@ -48,6 +48,9 @@ enum SuccessMessage {
   PRODUCT_HARD_DELETED = "Product permanently deleted",
   BEST_SELLER_TOGGLED = "Best seller status toggled successfully",
   BEST_SELLER_RELEASED = "Product released from manual best seller control — nightly cron job will now manage it",
+  VIDEO_CREATED = "Video uploaded successfully",
+  VIDEO_DELETED = "Video deleted successfully",
+  VIDEO_FETCHED = "Video fetched successfully",
   NULL = "NULL",
 }
 export default SuccessMessage;
