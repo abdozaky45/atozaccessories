@@ -318,6 +318,7 @@ export const getAdminProducts = async (filters: AdminProductFilters) => {
 
 const buildSortCriteria = (sort?: string): Record<string, 1 | -1> => {
   if (sort === "price") return { finalPrice: 1 };
+  if (sort === "price_desc") return { finalPrice: -1 };
   if (sort === "soldItems") return { soldItems: -1 };
   return { createdAt: -1 };
 };
