@@ -21,6 +21,7 @@
     "migrate:order-variants": "ts-node src/Scripts/backfillLegacyOrderVariants.ts",
     "migrate:variants": "ts-node src/Scripts/backfillSimpleVariants.ts",
     "migrate:final-price": "ts-node src/Scripts/backfillFinalPrice.ts",
+    "migrate:gold-freesize": "ts-node src/Scripts/backfillGoldFreeSize.ts",
     "migrate:cdn": "ts-node src/Scripts/migrateImagesToCloudfront.ts",
     "media:cleanup": "ts-node src/Scripts/cleanupOrphanMedia.ts",
     "test": "npm run build && jasmine"
