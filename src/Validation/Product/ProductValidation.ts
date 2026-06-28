@@ -74,7 +74,7 @@ export const adminGetProductsValidation = baseSchema.concat(
     size: joi.string().optional(),
     isDeleted: joi.boolean().optional(),
     search: joi.string().trim().optional(),
-    sort: joi.string().valid("price", "createdAt", "soldItems").optional(),
+    sort: joi.string().valid("price", "price_desc", "createdAt", "soldItems").optional(),
     page: joi.number().optional(),
     limit: joi.number().optional(),
   }).required()
@@ -87,7 +87,7 @@ export const getUserProductsValidation = joi.object({
   maxPrice: joi.number().optional(),
   color: joi.string().optional(),
   size: joi.string().optional(),
-  sort: joi.string().valid("price", "createdAt", "soldItems").optional(),
+  sort: joi.string().valid("price", "price_desc", "createdAt", "soldItems").optional(),
   page: joi.number().optional(),
   limit: joi.number().optional(),
 });
