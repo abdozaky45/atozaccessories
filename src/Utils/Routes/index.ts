@@ -16,5 +16,6 @@ enum RouterEnum {
   size = "admin/sizes",
   offer = "admin/offers",
   backup = "admin/backups",
+  analytics = "admin/analytics",
 }
 export default RouterEnum;

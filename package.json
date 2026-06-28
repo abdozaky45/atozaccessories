@@ -24,11 +24,13 @@
     "migrate:gold-freesize": "ts-node src/Scripts/backfillGoldFreeSize.ts",
     "migrate:cdn": "ts-node src/Scripts/migrateImagesToCloudfront.ts",
     "media:cleanup": "ts-node src/Scripts/cleanupOrphanMedia.ts",
+    "test:analytics": "ts-node src/Scripts/testAnalytics.ts",
     "test": "npm run build && jasmine"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.699.0",
     "@aws-sdk/s3-request-presigner": "^3.699.0",
+    "@google-analytics/data": "^6.1.0",
     "agenda": "^5.0.0",
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.1",
