@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": ">=20 <21"
+  },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.7",
