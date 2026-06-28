@@ -12,16 +12,59 @@ import { ApiError } from "../../Utils/ErrorHandling";
  */
 
 // ── private key handling ─────────────────────────────────────────────────────
-// The PEM is multi-line, but env vars are single-line. We standardise on a single
-// format everywhere (local + prod):
+// The PEM is multi-line, but env vars are single-line. We standardise on:
 //   GA_PRIVATE_KEY_BASE64 — base64 of the full PEM. Its alphabet is A–Z a–z 0–9
 //   + / = only: no backslashes, newlines or quotes, so it survives any deployment
 //   console (e.g. Elastic Beanstalk) untouched. We decode it back to the PEM here.
-// Passing the raw multi-line PEM through a deploy console is what mangles the
-// newlines and produces `error:1E08010C:DECODER routines::unsupported`.
+// We also accept the raw PEM in GA_PRIVATE_KEY (with literal "\n" escapes) as a
+// fallback. Either way, deployment consoles love to wrap values in quotes or
+// inject stray whitespace — both corrupt the key and yield the opaque gRPC error
+// `error:1E08010C:DECODER routines::unsupported`. So we sanitise hard and then
+// validate that we ended up with a real PEM before handing it to the client.
+
+const stripWrappingQuotes = (s: string): string =>
+  s.replace(/^\s*['"]|['"]\s*$/g, "");
+
+const looksLikePem = (s: string): boolean =>
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(s) &&
+  /-----END [A-Z ]*PRIVATE KEY-----/.test(s);
+
 const resolvePrivateKey = (): string | undefined => {
-  const b64 = process.env.GA_PRIVATE_KEY_BASE64;
-  return b64 ? Buffer.from(b64, "base64").toString("utf8") : undefined;
+  const rawB64 = process.env.GA_PRIVATE_KEY_BASE64;
+  if (rawB64) {
+    // Drop quotes and ALL whitespace a console may have injected into the base64.
+    const cleaned = stripWrappingQuotes(rawB64).replace(/\s+/g, "");
+    const pem = Buffer.from(cleaned, "base64").toString("utf8").trim();
+    if (!looksLikePem(pem)) {
+      throw new ApiError(
+        500,
+        "GA_PRIVATE_KEY_BASE64 did not decode to a valid PEM. The value in this " +
+          "environment is corrupted (likely wrapped in quotes, truncated, or had " +
+          "whitespace inserted). Re-set it to the exact base64 of the service " +
+          "account PEM, with no quotes."
+      );
+    }
+    return pem;
+  }
+
+  // Fallback: raw PEM with literal "\n" escapes (common in dashboards).
+  const rawPem = process.env.GA_PRIVATE_KEY;
+  if (rawPem) {
+    const pem = stripWrappingQuotes(rawPem)
+      .replace(/\\r\\n|\\n/g, "\n")
+      .replace(/\r\n/g, "\n")
+      .trim();
+    if (!looksLikePem(pem)) {
+      throw new ApiError(
+        500,
+        "GA_PRIVATE_KEY is set but is not a valid PEM. Ensure newlines are encoded " +
+          'as "\\n" and the value is not wrapped in quotes.'
+      );
+    }
+    return pem;
+  }
+
+  return undefined;
 };
 
 let cachedClient: BetaAnalyticsDataClient | null = null;
