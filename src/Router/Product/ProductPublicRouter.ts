@@ -1,6 +1,16 @@
 import { Router } from "express";
 const ProductPublicRouter = Router();
 import * as ProductController from "../../Controller/Product/ProductController";
+import OrderController from "../../Controller/Order/OrderController";
+import * as orderValidation from "../../Validation/Order/OrderValidation";
+import { Validation } from "../../middleware/ValidationMiddleware";
+
+// Public cart pricing — live offers/flash applied, no auth or address required.
+ProductPublicRouter.post(
+  "/cart-preview",
+  Validation(orderValidation.cartPreviewValidation),
+  OrderController.previewCartController
+);
 
 // Named routes must come before /:id
 ProductPublicRouter.get(

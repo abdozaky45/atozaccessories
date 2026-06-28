@@ -127,6 +127,14 @@ class OrderController {
     return res.json(new ApiResponse(200, preview));
   });
 
+  // Public, no auth/address: live offer pricing for the cart page.
+  previewCartController = asyncHandler(async (req: Request, res: Response) => {
+    const { items } = req.body;
+
+    const preview = await OrderService.previewCart({ items });
+    return res.json(new ApiResponse(200, preview));
+  });
+
   cancelOrderController = asyncHandler(async (req: Request, res: Response) => {
     const { orderId } = req.params;
     const { _id, email } = req.body.currentUser.userInfo;

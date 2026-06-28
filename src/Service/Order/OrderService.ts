@@ -60,6 +60,10 @@ interface OfferResult {
   finalProducts: ProductOrder[];
   discount: number;
   freeShipping: boolean;
+  /** True if ANY free-shipping offer's conditions are met — independent of the
+   *  single "best offer" pick and of the (address-derived) shipping cost. Used by
+   *  the cart preview, which knows the cart but not yet the shipping address. */
+  freeShippingQualifies: boolean;
   /** Money the customer saved via the cart offer (flash savings excluded). */
   cartOfferSaved: number;
   /** Money the customer saved via flash-sale discounts. */
@@ -76,6 +80,7 @@ const calculateOrderOffers = async (
     finalProducts: products,
     discount: 0,
     freeShipping: false,
+    freeShippingQualifies: false,
     cartOfferSaved: 0,
     flashSaved: 0,
   };
@@ -115,6 +120,9 @@ const calculateOrderOffers = async (
   // ── Step 2: Evaluate every cart offer against the non-flash items ─────────────
   let bestOffer: any = null;
   let bestSaved = 0;
+  // Tracked separately from the "best offer" pick so the cart preview can show
+  // "Free shipping" without needing the shipping cost to win the value ranking.
+  let freeShippingQualifies = false;
 
   for (const offer of activeOffers) {
     if (offer.offerType === "flash_sale") continue;
@@ -152,6 +160,7 @@ const calculateOrderOffers = async (
       // Spend X, get free shipping
       case "spend_x_get_free_shipping": {
         if (offer.condition.minAmount == null || nonFlashSubTotal < offer.condition.minAmount) break;
+        freeShippingQualifies = true;
         saved = shippingCost;
         break;
       }
@@ -172,7 +181,10 @@ const calculateOrderOffers = async (
             .filter((p) => !excludedSet.has(p.productId.toString()))
             .reduce((s, p) => s + p.quantity, 0);
         }
-        if (qualifyingQty >= offer.condition.minQuantity) saved = shippingCost;
+        if (qualifyingQty >= offer.condition.minQuantity) {
+          freeShippingQualifies = true;
+          saved = shippingCost;
+        }
         break;
       }
 
@@ -256,6 +268,7 @@ const calculateOrderOffers = async (
     finalProducts,
     discount,
     freeShipping,
+    freeShippingQualifies,
     cartOfferSaved,
     flashSaved,
   };
@@ -740,6 +753,18 @@ class OrderService {
     const finalSubTotal = round2(finalProducts.reduce((sum, p) => sum + p.totalPrice, 0));
     const totalAmount = round2(finalSubTotal - discount + (freeShipping ? 0 : shippingCost));
 
+    // Per-line "listed" price = the live, current price BEFORE any flash discount
+    // (finalPrice ?? price). This is what the summary shows on each row, so the
+    // rows always reconcile to subTotal + flashSaved — even when the customer's
+    // cart still holds a stale price snapshot taken before a sale began.
+    // finalProducts is products.map(applyFlash), so it stays index-aligned with
+    // orderProducts (the pre-flash list).
+    const responseItems = finalProducts.map((p, i) => ({
+      ...p,
+      listedUnitPrice: orderProducts[i].itemPrice,
+      listedLineTotal: orderProducts[i].totalPrice,
+    }));
+
     // Build appliedOffer summary with savedAmount
     let appliedOfferData: {
       _id: Types.ObjectId;
@@ -766,7 +791,7 @@ class OrderService {
       : [];
 
     return {
-      items: finalProducts,
+      items: responseItems,
       subTotal: finalSubTotal,
       appliedOffer: appliedOfferData,
       flashSale: {
@@ -782,6 +807,82 @@ class OrderService {
       freeShipping,
       totalSaved: round2(cartOfferSaved + flashSaved),
       totalAmount,
+    };
+  }
+
+  // ── CART PREVIEW (public: no auth, no address) ────────────────────────────────
+  //
+  // A lightweight sibling of previewOrder for the cart page. It reuses the exact
+  // same offer engine (calculateOrderOffers) so cart and checkout never drift —
+  // but with no shipping address yet, the shipping COST is unknown. We therefore:
+  //   • compute the address-independent parts accurately (flash + monetary offers),
+  //   • surface free-shipping as a separate "qualifies" flag (shown as "Free"),
+  //   • return a merchandise total only; the final total/shipping resolve at
+  //     checkout, which stays the single source of truth.
+  async previewCart(data: {
+    items: Array<{ variantId?: string; productId?: string; quantity: number }>;
+  }) {
+    const orderProducts = await buildOrderProducts(data.items);
+
+    // Shipping cost is unknown here → 0. Free-shipping offers therefore can't win
+    // the monetary "best offer" ranking (saved 0); their qualification is reported
+    // separately via freeShippingQualifies.
+    const offerResult = await calculateOrderOffers(orderProducts, 0);
+    const {
+      appliedOffer,
+      appliedFlashOffers,
+      finalProducts,
+      discount,
+      freeShippingQualifies,
+      cartOfferSaved,
+      flashSaved,
+    } = offerResult;
+
+    const finalSubTotal = round2(finalProducts.reduce((sum, p) => sum + p.totalPrice, 0));
+    // Merchandise only — shipping is added at checkout (or waived if free).
+    const merchandiseTotal = round2(finalSubTotal - discount);
+
+    const responseItems = finalProducts.map((p, i) => ({
+      ...p,
+      listedUnitPrice: orderProducts[i].itemPrice,
+      listedLineTotal: orderProducts[i].totalPrice,
+    }));
+
+    let appliedOfferData:
+      | { _id: Types.ObjectId; title: string; offerType: string; savedAmount: number }
+      | null = null;
+    if (appliedOffer) {
+      const offerDoc = await OfferModel.findById(appliedOffer).select("title offerType");
+      if (offerDoc) {
+        appliedOfferData = {
+          _id: offerDoc._id as Types.ObjectId,
+          title: offerDoc.title,
+          offerType: offerDoc.offerType,
+          savedAmount: cartOfferSaved,
+        };
+      }
+    }
+
+    const flashOffersData = appliedFlashOffers.length
+      ? await OfferModel.find({ _id: { $in: appliedFlashOffers } }).select("title offerType")
+      : [];
+
+    return {
+      items: responseItems,
+      subTotal: finalSubTotal,
+      appliedOffer: appliedOfferData,
+      flashSale: {
+        offers: flashOffersData.map((o) => ({
+          _id: o._id as Types.ObjectId,
+          title: o.title,
+          offerType: o.offerType,
+        })),
+        savedAmount: flashSaved,
+      },
+      discount,
+      freeShipping: freeShippingQualifies,
+      totalSaved: round2(cartOfferSaved + flashSaved),
+      merchandiseTotal,
     };
   }
 

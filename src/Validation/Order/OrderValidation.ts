@@ -38,6 +38,13 @@ export const previewOrderValidation = baseSchema.concat(
   }).required()
 );
 
+// Public cart preview — same lines as previewOrder but no address/auth yet.
+export const cartPreviewValidation = baseSchema.concat(
+  joi.object({
+    items: joi.array().items(orderLineSchema).min(1).required(),
+  }).required()
+);
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export const getAllOrdersValidation = baseSchema.concat(
