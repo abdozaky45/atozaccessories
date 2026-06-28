@@ -12,17 +12,16 @@ import { ApiError } from "../../Utils/ErrorHandling";
  */
 
 // ── private key handling ─────────────────────────────────────────────────────
-// The PEM is multi-line, but env vars are single-line. Two supported formats:
-//   (1) GA_PRIVATE_KEY_BASE64 — base64 of the full PEM. No backslashes/newlines/
-//       quotes, so it survives any deployment console untouched. Preferred in prod.
-//   (2) GA_PRIVATE_KEY — single line with literal "\n" (what dotenv reads from
-//       .env); we expand them back to real newlines here.
-// Skipping this is what produces the infamous
-// `error:1E08010C:DECODER routines::unsupported`.
+// The PEM is multi-line, but env vars are single-line. We standardise on a single
+// format everywhere (local + prod):
+//   GA_PRIVATE_KEY_BASE64 — base64 of the full PEM. Its alphabet is A–Z a–z 0–9
+//   + / = only: no backslashes, newlines or quotes, so it survives any deployment
+//   console (e.g. Elastic Beanstalk) untouched. We decode it back to the PEM here.
+// Passing the raw multi-line PEM through a deploy console is what mangles the
+// newlines and produces `error:1E08010C:DECODER routines::unsupported`.
 const resolvePrivateKey = (): string | undefined => {
   const b64 = process.env.GA_PRIVATE_KEY_BASE64;
-  if (b64) return Buffer.from(b64, "base64").toString("utf8");
-  return process.env.GA_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  return b64 ? Buffer.from(b64, "base64").toString("utf8") : undefined;
 };
 
 let cachedClient: BetaAnalyticsDataClient | null = null;
@@ -35,7 +34,7 @@ const getClient = (): BetaAnalyticsDataClient => {
   if (!client_email || !private_key) {
     throw new ApiError(
       500,
-      "GA credentials are not configured (GA_CLIENT_EMAIL / GA_PRIVATE_KEY[_BASE64])."
+      "GA credentials are not configured (GA_CLIENT_EMAIL / GA_PRIVATE_KEY_BASE64)."
     );
   }
 
