@@ -70,11 +70,14 @@ export const deleteHeroSection = asyncHandler(
     const {id} = req.params;
     const media = await findMediaId(id);
     if (!media) throw new ApiError(404, ErrorMessages.IMAGE_NOT_FOUND);
+    // Delete by mediaUrl, not the stored mediaId: deleteFromS3 derives the S3
+    // key itself (via extractKey), which works for CloudFront URLs and for any
+    // legacy rows whose mediaId was never resolved correctly.
     const images = [media.images.image1, media.images.image2];
     await Promise.all(
       images
-        .filter((image) => image?.mediaId)
-        .map((image) => deletePresignedURL(image!.mediaId))
+        .filter((image) => image?.mediaUrl)
+        .map((image) => deletePresignedURL(image!.mediaUrl))
     );
     await deleteImageSlider(id);
     return res.json(new ApiResponse(200, {}, SuccessMessage.IMAGE_DELETED));
