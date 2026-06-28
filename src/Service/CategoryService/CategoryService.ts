@@ -31,11 +31,19 @@ export const createCategory = async ({
   return category;
 };
 
+// Media is now served via CloudFront, but uploads still land in S3 under the
+// same object key. The mediaId we persist is that key — the path after the host
+// — so accept both URL shapes and drop any presign/query string.
 export const extractMediaId = (imageUrl: string) => {
-  if (!imageUrl.includes("amazonaws.com/")) {
+  const host = imageUrl.includes("cloudfront.net/")
+    ? "cloudfront.net/"
+    : imageUrl.includes("amazonaws.com/")
+    ? "amazonaws.com/"
+    : null;
+  if (!host) {
     return "Invalid image url";
   }
-  const mediaId = imageUrl.split("amazonaws.com/")[1];
+  const mediaId = imageUrl.split(host)[1].split("?")[0];
   return mediaId;
 };
 

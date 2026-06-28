@@ -20,6 +20,7 @@ import AuthModel from "../../Model/User/auth/AuthModel";
 import { UserTypeEnum } from "../../Utils/UserType";
 import { cacheDel } from "../../Utils/Cache";
 import { CacheKeys } from "../../Utils/Cache/keys";
+import { extractKey } from "../../Utils/Cdn";
 
 const TIMED_OFFER_TYPES = ["flash_sale"];
 
@@ -98,12 +99,12 @@ const autoExtendExpiredTiming = (offer: any): { startDate: Date | null; endDate:
   return { startDate, endDate };
 };
 
-const S3_BASE_URL = "https://atozaccessories.s3.amazonaws.com/";
-
-// The request body only carries mediaUrl; derive mediaKey by stripping the S3 base URL.
+// The request body only carries mediaUrl; derive the S3 object key from it via
+// extractKey, which handles both CloudFront and S3 URLs (and strips any query
+// string) so the key is correct for later deletion.
 const buildImage = (image: { mediaUrl: string }) => ({
   mediaUrl: image.mediaUrl,
-  mediaKey: image.mediaUrl.replace(S3_BASE_URL, ""),
+  mediaKey: extractKey(image.mediaUrl),
 });
 
 export const createNewOffer = asyncHandler(async (req: Request, res: Response) => {
@@ -207,8 +208,9 @@ export const updateOffer = asyncHandler(async (req: Request, res: Response) => {
   if (image?.mediaUrl) {
     const newImage = buildImage(image);
     if (newImage.mediaKey !== offer.image?.mediaKey) {
-      // Delete the previous image only if the offer had one.
-      if (offer.image?.mediaKey) await deleteS3Object(offer.image.mediaKey);
+      // Delete the previous image only if the offer had one. Derive the key from
+      // mediaUrl so legacy rows (whose mediaKey was stored as a full URL) clean up too.
+      if (offer.image?.mediaUrl) await deleteS3Object(extractKey(offer.image.mediaUrl));
       offer.image = newImage;
     }
   }
@@ -272,8 +274,8 @@ export const deleteOffer = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
-  if (offer.image?.mediaKey) {
-    await deleteS3Object(offer.image.mediaKey);
+  if (offer.image?.mediaUrl) {
+    await deleteS3Object(extractKey(offer.image.mediaUrl));
   }
 
   await deleteOfferById(String(offer._id));
