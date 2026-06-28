@@ -304,25 +304,36 @@ export const SearchProducts = asyncHandler(async (req: Request, res: Response) =
 
 // ─── Public: Available items check (used by order system) ────────────────────
 
+// Body: { products: string[] } → { [productId]: { availableItems, finalPrice } }.
+// finalPrice lets the cart refresh its (possibly stale) price snapshot to the
+// live price, the same value checkout/preview charge.
 export const getProductsAndAvailableItems = asyncHandler(async (req: Request, res: Response) => {
   const products = req.body.products;
   const result = await getAvailableItems(products);
-  const response: Record<string, number> = {};
-  result.forEach((product) => {
-    response[product._id.toString()] = product.availableItems;
+  const response: Record<string, { availableItems: number; finalPrice: number }> = {};
+  result.forEach((product: any) => {
+    response[product._id.toString()] = {
+      availableItems: product.availableItems,
+      finalPrice: product.finalPrice ?? product.price,
+    };
   });
   return res.json(response);
 });
 
 // Per-variant availability for cart stock checks. Body: { variantIds: string[] }
-// → { [variantId]: availableItems }. The cart validates each line against the
-// exact color+size variant, not the product-level total.
+// → { [variantId]: { availableItems, finalPrice } }. The cart validates each line
+// against the exact color+size variant, not the product-level total; finalPrice
+// comes from the variant's parent product so the cart can refresh its price.
 export const getVariantsAndAvailableItems = asyncHandler(async (req: Request, res: Response) => {
   const variantIds = req.body.variantIds;
   const result = await getVariantsAvailableItems(variantIds);
-  const response: Record<string, number> = {};
-  result.forEach((variant) => {
-    response[variant._id.toString()] = variant.availableItems;
+  const response: Record<string, { availableItems: number; finalPrice: number | null }> = {};
+  result.forEach((variant: any) => {
+    const product = variant.product;
+    response[variant._id.toString()] = {
+      availableItems: variant.availableItems,
+      finalPrice: product?.finalPrice ?? product?.price ?? null,
+    };
   });
   return res.json(response);
 });

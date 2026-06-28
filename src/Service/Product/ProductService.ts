@@ -352,7 +352,9 @@ export const ratioCalculatePrice = async (price: number, salePrice: number) => {
     isSale = false;
   } else if (salePrice < price) {
     discount = price - salePrice;
-    discountPercentage = Math.round((discount / price) * 100 * 100) / 100;
+    // Stored as a whole number — the storefront/admin display this directly and
+    // already round it everywhere, so we keep a clean integer at the source.
+    discountPercentage = Math.round((discount / price) * 100);
     isSale = true;
   }
   return { discount, discountPercentage, isSale };
@@ -617,7 +619,7 @@ export const getAnalytics = async () => {
 export const getAvailableItems = async (productIds: [string]) => {
   const products = await ProductModel.find(
     { _id: { $in: productIds } },
-    { _id: 1, availableItems: 1 }
+    { _id: 1, availableItems: 1, finalPrice: 1, price: 1 }
   );
   return products;
 };
@@ -627,7 +629,7 @@ export const getAvailableItems = async (productIds: [string]) => {
 export const getVariantsAvailableItems = async (variantIds: string[]) => {
   const variants = await ProductVariantModel.find(
     { _id: { $in: variantIds } },
-    { _id: 1, availableItems: 1 }
-  );
+    { _id: 1, availableItems: 1, product: 1 }
+  ).populate({ path: "product", select: "finalPrice price" });
   return variants;
 };
