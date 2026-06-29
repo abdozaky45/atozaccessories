@@ -1,0 +1,177 @@
+{
+  "info": {
+    "name": "A to Z Accessories - Offers",
+    "description": "Full CRUD (+ toggle) endpoints for the Offers resource (admin only), covering all 7 offer types.\n\nBase path: /admin/offers\nAuth: Bearer token (Admin role required).\n\nOffer types:\n- buy_x_get_cheapest_free\n- spend_x_get_discount\n- spend_x_get_free_shipping\n- buy_x_get_free_shipping\n- buy_x_get_half_price\n- spend_x_get_free_item\n- flash_sale\n\nNotes:\n- The request body only carries image.mediaUrl; the server derives image.mediaKey by stripping the S3 base URL (https://atozaccessories.s3.amazonaws.com/).\n- targetProducts / targetCategories / condition.excludedCategories are arrays of MongoDB ObjectIds.\n- flash_sale is time-bounded: timing.startDate and timing.endDate are required, and lifecycle jobs are scheduled automatically.\n\nSet the collection/environment variables:\n- baseUrl: e.g. http://localhost:3000\n- token: a valid admin JWT access token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "offerId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Create Offer",
+      "item": [
+        {
+          "name": "1. buy_x_get_cheapest_free",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Buy 3, Cheapest Free\",\n  \"description\": \"Add any 3 items to your cart and the cheapest one is free.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy3-cheapest-free.png\"\n  },\n  \"offerType\": \"buy_x_get_cheapest_free\",\n  \"condition\": {\n    \"minQuantity\": 3\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        },
+        {
+          "name": "2. spend_x_get_discount",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spend 500, Get 15% Off\",\n  \"description\": \"Spend 500 EGP or more and receive 15% off your order total.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/spend500-15off.png\"\n  },\n  \"offerType\": \"spend_x_get_discount\",\n  \"condition\": {\n    \"minAmount\": 500\n  },\n  \"reward\": {\n    \"discountPercentage\": 15\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        },
+        {
+          "name": "3. spend_x_get_free_shipping",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Free Shipping Over 750\",\n  \"description\": \"Spend 750 EGP or more and shipping is on us.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/free-shipping-750.png\"\n  },\n  \"offerType\": \"spend_x_get_free_shipping\",\n  \"condition\": {\n    \"minAmount\": 750\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        },
+        {
+          "name": "4. buy_x_get_free_shipping",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Buy 2, Free Shipping\",\n  \"description\": \"Buy any 2 items and get free shipping. Some categories excluded.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/buy2-free-shipping.png\"\n  },\n  \"offerType\": \"buy_x_get_free_shipping\",\n  \"condition\": {\n    \"minQuantity\": 2,\n    \"excludedCategories\": [\"665e0000000000000000c001\"]\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        },
+        {
+          "name": "5. buy_x_get_half_price",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Buy 1, Get 2nd Half Price\",\n  \"description\": \"Buy one item and get the cheapest other item at 50% off.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/second-half-price.png\"\n  },\n  \"offerType\": \"buy_x_get_half_price\",\n  \"condition\": {\n    \"minQuantity\": 2\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        },
+        {
+          "name": "6. spend_x_get_free_item",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spend 1000, Free Gift\",\n  \"description\": \"Spend 1000 EGP and choose a free item worth up to 100 EGP.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/spend1000-free-item.png\"\n  },\n  \"offerType\": \"spend_x_get_free_item\",\n  \"condition\": {\n    \"minAmount\": 1000\n  },\n  \"reward\": {\n    \"freeItemMaxValue\": 100\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        },
+        {
+          "name": "7. flash_sale",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"48h Flash Sale - 40% Off\",\n  \"description\": \"Selected product at 40% off for 48 hours only.\",\n  \"isActive\": true,\n  \"image\": {\n    \"mediaUrl\": \"https://atozaccessories.s3.amazonaws.com/offers/flash-sale-40.png\"\n  },\n  \"offerType\": \"flash_sale\",\n  \"timing\": {\n    \"startDate\": \"2026-07-01T00:00:00.000Z\",\n    \"endDate\": \"2026-07-03T00:00:00.000Z\"\n  },\n  \"reward\": {\n    \"discountPercentage\": 40\n  },\n  \"targetProducts\": [\"665e0000000000000000p001\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/offers", "host": ["{{baseUrl}}"], "path": ["admin", "offers"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "List Offers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/offers?page=1&limit=10&offerType=flash_sale&isActive=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "offers"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "10" },
+            { "key": "offerType", "value": "flash_sale", "description": "Optional. One of the 7 offer types." },
+            { "key": "isActive", "value": "true", "description": "Optional. true | false." }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Offer By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/offers/{{offerId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "offers", "{{offerId}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Offer",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Spend 600, Get 20% Off\",\n  \"description\": \"Updated threshold and discount.\",\n  \"condition\": {\n    \"minAmount\": 600\n  },\n  \"reward\": {\n    \"discountPercentage\": 20\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/offers/{{offerId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "offers", "{{offerId}}"]
+        }
+      }
+    },
+    {
+      "name": "Toggle Offer (activate / deactivate)",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/offers/{{offerId}}/toggle",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "offers", "{{offerId}}", "toggle"]
+        }
+      }
+    },
+    {
+      "name": "Delete Offer",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/offers/{{offerId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "offers", "{{offerId}}"]
+        }
+      }
+    }
+  ]
+}

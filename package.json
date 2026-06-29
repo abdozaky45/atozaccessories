@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": ">=20 <21"
+  },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.7",
@@ -15,17 +18,27 @@
     "build": "npx tsc",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
+    "seed": "ts-node src/Seeds/index.ts",
+    "audit:predeploy": "ts-node src/Scripts/auditPreDeploy.ts",
+    "migrate:orders": "ts-node src/Scripts/migrateLegacyOrders.ts",
+    "migrate:order-variants": "ts-node src/Scripts/backfillLegacyOrderVariants.ts",
+    "migrate:variants": "ts-node src/Scripts/backfillSimpleVariants.ts",
+    "migrate:final-price": "ts-node src/Scripts/backfillFinalPrice.ts",
+    "migrate:discount-pct": "ts-node src/Scripts/backfillDiscountPercentage.ts",
+    "migrate:discount-pct": "ts-node src/Scripts/backfillDiscountPercentage.ts",
+    "migrate:gold-freesize": "ts-node src/Scripts/backfillGoldFreeSize.ts",
+    "migrate:cdn": "ts-node src/Scripts/migrateImagesToCloudfront.ts",
+    "media:cleanup": "ts-node src/Scripts/cleanupOrphanMedia.ts",
+    "test:analytics": "ts-node src/Scripts/testAnalytics.ts",
     "test": "npm run build && jasmine"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.699.0",
-    "@aws-sdk/client-sns": "^3.699.0",
     "@aws-sdk/s3-request-presigner": "^3.699.0",
+    "@google-analytics/data": "^6.1.0",
     "agenda": "^5.0.0",
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.1",
-    "bull": "^4.16.4",
-    "bullmq": "^5.32.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -39,6 +52,8 @@
     "mongoose": "^8.8.0",
     "nanoid": "^3.3.4",
     "nodemailer": "^6.9.16",
+    "nodemon": "^3.1.10",
+    "resend": "^6.12.4",
     "slugify": "^1.6.6"
   }
 }

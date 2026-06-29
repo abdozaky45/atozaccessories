@@ -1,26 +1,87 @@
 import slugify from "slugify";
 import _ from "lodash";
 import ProductModel from "../../Model/Product/ProductModel";
+import ProductVariantModel from "../../Model/ProductVariant/ProductVariantModel";
 import { extractMediaId } from "../CategoryService/CategoryService";
 import { paginate } from "../../Utils/Schemas";
 import SchemaTypesReference from "../../Utils/Schemas/SchemaTypesReference";
 import Fuse from "fuse.js";
-import { sortProductEnum } from "../../Utils/SortProduct";
 import mongoose, { Types } from "mongoose";
 import { ProductOrder } from "../../Model/Order/Iorder";
 import IProduct from "../../Model/Product/Iproduct";
 import OrderModel from "../../Model/Order/OrderModel";
 import { orderStatusType } from "../../Utils/OrderStatusType";
 import AuthModel from "../../Model/User/auth/AuthModel";
+import { deleteFromS3 } from "../../Utils/S3";
+import CategoryModel from "../../Model/Categories/CategoryModel";
+import WishListModel from "../../Model/Wishlist/WishlistModel";
+import moment from "../../Utils/DateAndTime";
+
+// ─── Product CRUD ────────────────────────────────────────────────────────────
 
 export const createProduct = async (productData: IProduct) => {
   const product = await ProductModel.create(productData);
   return product;
 };
+
 export const findProductById = async (id: string | Types.ObjectId) => {
   const product = ProductModel.findOne({ _id: id, isDeleted: false });
   return product;
 };
+
+export const findProductByIdAdmin = async (id: string | Types.ObjectId) => {
+  const product = await ProductModel.findById(id)
+    .populate(SchemaTypesReference.Category, "categoryName image slug")
+    .lean();
+  if (!product) return null;
+  const variants = await ProductVariantModel.find({ product: id })
+    .populate(SchemaTypesReference.Color, "name hex")
+    .populate(SchemaTypesReference.Size, "number order")
+    .lean();
+  return { ...product, variants };
+};
+
+export const findProductByIdPublic = async (id: string | Types.ObjectId) => {
+  const product = await ProductModel.findOne({ _id: id, isDeleted: false })
+    .select("-wholesalePrice")
+    .populate(SchemaTypesReference.Category, "categoryName image slug")
+    .lean();
+  if (!product) return null;
+  const variants = await ProductVariantModel.find({ product: id })
+    .populate(SchemaTypesReference.Color, "name hex")
+    .populate(SchemaTypesReference.Size, "number order")
+    .lean();
+  return { ...product, variants };
+};
+
+// Lightweight fetch for the social-share OG preview: only the fields the card
+// needs (name/description/image/price) plus the distinct, ordered size labels
+// across variants. `.lean()` since we never mutate or serialize the document.
+export const getProductForShare = async (id: string | Types.ObjectId) => {
+  const product = await ProductModel.findOne({ _id: id, isDeleted: false })
+    .select("productName productDescription defaultImage price salePrice")
+    .lean();
+  if (!product) return null;
+
+  const variants = await ProductVariantModel.find({ product: id })
+    .populate(SchemaTypesReference.Size, "number order")
+    .select("size")
+    .lean();
+
+  const seen = new Map<string, { number: string; order: number }>();
+  variants.forEach((v: any) => {
+    const s = v.size;
+    if (s && typeof s === "object" && s._id && !seen.has(String(s._id))) {
+      seen.set(String(s._id), { number: s.number, order: s.order });
+    }
+  });
+  const sizes = Array.from(seen.values())
+    .sort((a, b) => a.order - b.order)
+    .map((s) => s.number);
+
+  return { ...product, sizes };
+};
+
 export const prepareProductUpdates = async (
   productData: any,
   product: IProduct,
@@ -57,21 +118,16 @@ export const prepareProductUpdates = async (
   }
 
   if (albumImages && Array.isArray(albumImages)) {
-    if (!product.albumImages) {
-      product.albumImages = []; 
-    }
-
+    product.albumImages = [];
     albumImages.forEach((imageUrl: string) => {
       const mediaId = extractMediaId(imageUrl);
       if (mediaId) {
-        product.albumImages!.push({
-          mediaUrl: imageUrl,
-          mediaId: mediaId,
-        });
+        product.albumImages!.push({ mediaUrl: imageUrl, mediaId });
         updates = true;
       }
     });
   }
+
   return updates ? product : null;
 };
 
@@ -79,24 +135,242 @@ export const deleteOneProduct = async (_id: string | Types.ObjectId) => {
   const product = await ProductModel.findByIdAndUpdate(_id, { isDeleted: true });
   return product;
 };
-export const findAllProducts = async (page: number) => {
-  const products = await paginate(
-    ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 }),
-    page,
-    "categoryName image slug",
-    SchemaTypesReference.Category
-  );
-  return products;
+
+export const hardDeleteProduct = async (productId: string) => {
+  const product = await ProductModel.findById(productId);
+  if (!product) return null;
+
+  // Delete from S3 first — if this fails we stop and do not touch the DB
+  if (product.defaultImage?.mediaUrl) {
+    await deleteFromS3(product.defaultImage.mediaUrl);
+  }
+  if (product.albumImages?.length) {
+    for (const img of product.albumImages) {
+      await deleteFromS3(img.mediaUrl);
+    }
+  }
+
+  await ProductVariantModel.deleteMany({ product: productId });
+  await ProductModel.findByIdAndDelete(productId);
+  return true;
 };
-export const findAllSaleProducts = async (page: number) => {
-  const products = await paginate(
-    ProductModel.find({ isSale: true, isDeleted: false }).sort({ createdAt: -1 }),
-    page,
-    "categoryName image slug",
-    SchemaTypesReference.Category
-  );
-  return products;
+
+// ─── Variant operations ───────────────────────────────────────────────────────
+
+export const createVariants = async (
+  productId: Types.ObjectId | string,
+  variants: Array<{ color: string; size: string; availableItems: number }>
+) => {
+  if (!variants?.length) return;
+  const docs = variants.map((v) => ({
+    product: productId,
+    color: v.color,
+    size: v.size,
+    availableItems: v.availableItems,
+  }));
+  await ProductVariantModel.insertMany(docs);
 };
+
+export const upsertVariants = async (
+  productId: Types.ObjectId | string,
+  variants: Array<{ _id?: string; color: string; size: string; availableItems: number }>
+) => {
+  if (!variants?.length) return;
+  for (const v of variants) {
+    if (v._id) {
+      await ProductVariantModel.findByIdAndUpdate(v._id, {
+        color: v.color,
+        size: v.size,
+        availableItems: v.availableItems,
+      });
+    } else {
+      await ProductVariantModel.create({
+        product: productId,
+        color: v.color,
+        size: v.size,
+        availableItems: v.availableItems,
+      });
+    }
+  }
+};
+
+export const deleteVariantById = async (variantId: string) => {
+  const variant = await ProductVariantModel.findByIdAndDelete(variantId);
+  return variant;
+};
+
+// Recompute the product-level stock mirror from its variants. `availableItems`
+// is the sum of every variant's stock, and `isSoldOut` is true when nothing is
+// left. Call this after any variant create/update/delete so the product aggregate
+// (used for listings, filters and display) stays in sync with the source of truth.
+export const syncProductStockFromVariants = async (
+  productId: Types.ObjectId | string
+) => {
+  const variants = await ProductVariantModel.find({ product: productId })
+    .select("availableItems")
+    .lean();
+  const total = variants.reduce((sum, v) => sum + (v.availableItems || 0), 0);
+  await ProductModel.findByIdAndUpdate(productId, {
+    availableItems: total,
+    isSoldOut: total <= 0,
+  });
+  return total;
+};
+
+// ─── Unified GET — users ─────────────────────────────────────────────────────
+
+export interface ProductFilters {
+  category?: string;
+  isBestSeller?: boolean;
+  isSale?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  color?: string;
+  size?: string;
+  sort?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const getProducts = async (filters: ProductFilters) => {
+  const { category, isBestSeller, isSale, minPrice, maxPrice, color, size, sort, page = 1, limit = 20 } = filters;
+
+  const matchFilter: any = { isDeleted: false };
+
+  // Always restrict to products whose category is not soft-deleted
+  const activeCategoryDocs = await CategoryModel.find({ isDeleted: false }, { _id: 1 }).lean();
+  const activeCategoryIds = activeCategoryDocs.map((c) => c._id);
+
+  if (category) {
+    const catId = new mongoose.Types.ObjectId(category);
+    const isActive = activeCategoryIds.some((id) => id.toString() === catId.toString());
+    if (!isActive) return { products: [], pagination: { total: 0, page, limit, totalPages: 0 } };
+    matchFilter.category = catId;
+  } else {
+    matchFilter.category = { $in: activeCategoryIds };
+  }
+
+  if (isBestSeller !== undefined) matchFilter.isBestSeller = isBestSeller;
+  if (isSale !== undefined) matchFilter.isSale = isSale;
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    matchFilter.finalPrice = {};
+    if (minPrice !== undefined) matchFilter.finalPrice.$gte = minPrice;
+    if (maxPrice !== undefined) matchFilter.finalPrice.$lte = maxPrice;
+  }
+
+  if (color || size) {
+    const variantFilter: any = {};
+    if (color) variantFilter.color = new mongoose.Types.ObjectId(color);
+    if (size) variantFilter.size = new mongoose.Types.ObjectId(size);
+    const matchingProductIds = await ProductVariantModel.find(variantFilter).distinct("product");
+    matchFilter._id = { $in: matchingProductIds };
+  }
+
+  const sortCriteria = buildSortCriteria(sort);
+  const skip = (page - 1) * limit;
+  const total = await ProductModel.countDocuments(matchFilter);
+  const totalPages = Math.ceil(total / limit);
+
+  const products = await ProductModel.find(matchFilter)
+    .select("-wholesalePrice")
+    .sort(sortCriteria)
+    .skip(skip)
+    .limit(limit)
+    .populate(SchemaTypesReference.Category, "categoryName image slug")
+    .lean();
+
+  const productsWithVariants = await attachVariants(products);
+
+  return {
+    products: productsWithVariants,
+    pagination: { total, page, limit, totalPages },
+  };
+};
+
+// ─── Admin GET ────────────────────────────────────────────────────────────────
+
+export interface AdminProductFilters extends ProductFilters {
+  isDeleted?: boolean;
+  search?: string;
+}
+
+export const getAdminProducts = async (filters: AdminProductFilters) => {
+  const { category, isBestSeller, minPrice, maxPrice, color, size, isDeleted, search, sort, page = 1, limit = 20 } = filters;
+
+  const matchFilter: any = { isDeleted: isDeleted !== undefined ? isDeleted : false };
+
+  // Text search across product name and description (case-insensitive)
+  if (search && search.trim()) {
+    const safe = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(safe, "i");
+    matchFilter.$or = [{ productName: regex }, { productDescription: regex }];
+  }
+
+  if (category) matchFilter.category = new mongoose.Types.ObjectId(category);
+  if (isBestSeller !== undefined) matchFilter.isBestSeller = isBestSeller;
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    matchFilter.finalPrice = {};
+    if (minPrice !== undefined) matchFilter.finalPrice.$gte = minPrice;
+    if (maxPrice !== undefined) matchFilter.finalPrice.$lte = maxPrice;
+  }
+
+  if (color || size) {
+    const variantFilter: any = {};
+    if (color) variantFilter.color = new mongoose.Types.ObjectId(color);
+    if (size) variantFilter.size = new mongoose.Types.ObjectId(size);
+    const matchingProductIds = await ProductVariantModel.find(variantFilter).distinct("product");
+    matchFilter._id = { $in: matchingProductIds };
+  }
+
+  const sortCriteria = buildSortCriteria(sort);
+  const skip = (page - 1) * limit;
+  const total = await ProductModel.countDocuments(matchFilter);
+  const totalPages = Math.ceil(total / limit);
+
+  const products = await ProductModel.find(matchFilter)
+    .sort(sortCriteria)
+    .skip(skip)
+    .limit(limit)
+    .populate(SchemaTypesReference.Category, "categoryName image slug")
+    .lean();
+
+  const productsWithVariants = await attachVariants(products);
+
+  return {
+    products: productsWithVariants,
+    pagination: { total, page, limit, totalPages },
+  };
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const buildSortCriteria = (sort?: string): Record<string, 1 | -1> => {
+  if (sort === "price") return { finalPrice: 1 };
+  if (sort === "price_desc") return { finalPrice: -1 };
+  if (sort === "soldItems") return { soldItems: -1 };
+  return { createdAt: -1 };
+};
+
+const attachVariants = async (products: any[]) => {
+  if (!products.length) return products;
+  const productIds = products.map((p) => p._id);
+  const variants = await ProductVariantModel.find({ product: { $in: productIds } })
+    .populate(SchemaTypesReference.Color, "name hex")
+    .populate(SchemaTypesReference.Size, "number order")
+    .lean();
+
+  const variantsByProductId = variants.reduce<Record<string, any[]>>((acc, v: any) => {
+    const pid = v.product.toString();
+    if (!acc[pid]) acc[pid] = [];
+    acc[pid].push(v);
+    return acc;
+  }, {});
+
+  return products.map((p) => ({ ...p, variants: variantsByProductId[p._id.toString()] || [] }));
+};
+
+// ─── Price helpers ────────────────────────────────────────────────────────────
+
 export const ratioCalculatePrice = async (price: number, salePrice: number) => {
   let discount = 0;
   let discountPercentage = 0;
@@ -107,11 +381,16 @@ export const ratioCalculatePrice = async (price: number, salePrice: number) => {
     isSale = false;
   } else if (salePrice < price) {
     discount = price - salePrice;
-    discountPercentage = (discount / price) * 100;
+    // Stored as a whole number — the storefront/admin display this directly and
+    // already round it everywhere, so we keep a clean integer at the source.
+    discountPercentage = Math.round((discount / price) * 100);
     isSale = true;
   }
   return { discount, discountPercentage, isSale };
 };
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+
 export const productSearch = async (querySearch: string) => {
   const products = await ProductModel.find({ isDeleted: false });
   const fuse = new Fuse(products, {
@@ -121,156 +400,27 @@ export const productSearch = async (querySearch: string) => {
   const results = fuse.search(querySearch).map((result) => result.item);
   return results;
 };
-export const findProductBySort = async (sortBy: string, page: number) => {
-  let sortCriteria = {};
-  switch (sortBy) {
-    case sortProductEnum.newest:
-      sortCriteria = { createdAt: -1 };
-      break;
-    case sortProductEnum.priceLowToHigh:
-      sortCriteria = { price: -1 };
-      break;
-    case sortProductEnum.priceHighToLow:
-      sortCriteria = { price: 1 };
-      break;
-    default:
-      sortCriteria = { createdAt: -1 };
-      break;
-  }
+
+// ─── Legacy helpers (used by order/stock system) ──────────────────────────────
+
+export const findAllProducts = async (page: number) => {
   const products = await paginate(
-    ProductModel.find({ isDeleted: false }).sort(sortCriteria),
+    ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 }),
     page,
     "categoryName image slug",
     SchemaTypesReference.Category
   );
   return products;
-};
-export const findProductByPriceRange = async (priceRange: string, page: number) => {
-  let priceCriteria: any = { isDeleted: false };
-  switch (priceRange) {
-    case sortProductEnum.priceUnder100:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $lte: 100 } }] };
-      break;
-    case sortProductEnum.priceBetween100and500:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 100, $lte: 500 } }] };
-      break;
-    case sortProductEnum.priceBetween500and1000:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 500, $lte: 1000 } }] };
-      break;
-    case sortProductEnum.priceAbove1000:
-      priceCriteria = { $and: [{ isDeleted: false }, { price: { $gte: 1000 } }] };
-      break;
-    default:
-      priceCriteria = { isDeleted: false };
-      break;
-  }
-  const products = await paginate(
-    ProductModel.find(priceCriteria),
-    page,
-    "-_id categoryName image slug",
-    SchemaTypesReference.Category
-  );
-  return products;
-};
-export const findProductBySoldOut = async (page: number) => {
-  const products = await paginate(
-    ProductModel.find({ isSoldOut: true, isDeleted: false }).sort({ createdAt: -1 }),
-    page,
-    "categoryName image slug",
-    SchemaTypesReference.Category
-  );
-  return products;
-};
-export const findProducts = async (sort: string, priceRange: string, page: number) => {
-  const perPage = 20;
-  const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
-  const skip = (currentPage - 1) * perPage;
-
-  const pipeline: any[] = [];
-
-  pipeline.push({ $match: { isDeleted: false } });
-
-  pipeline.push({
-    $addFields: {
-      finalPrice: {
-        $cond: { if: { $gt: ["$salePrice", 0] }, then: "$salePrice", else: "$price" }
-      }
-    }
-  });
-
-  if (priceRange) {
-    let priceFilter = {};
-    switch (priceRange) {
-      case sortProductEnum.priceUnder100:
-        priceFilter = { $lte: 100 };
-        break;
-      case sortProductEnum.priceBetween100and500:
-        priceFilter = { $gte: 100, $lte: 500 };
-        break;
-      case sortProductEnum.priceBetween500and1000:
-        priceFilter = { $gte: 500, $lte: 1000 };
-        break;
-      case sortProductEnum.priceAbove1000:
-        priceFilter = { $gte: 1000 };
-        break;
-    }
-    pipeline.push({ $match: { finalPrice: priceFilter } });
-  }
-
-  let sortCriteria: any = { createdAt: -1 };
-
-  if (sort) {
-    switch (sort) {
-      case sortProductEnum.newest:
-        sortCriteria = { createdAt: -1 };
-        break;
-      case sortProductEnum.priceLowToHigh:
-        sortCriteria = { finalPrice: -1 };
-        break;
-      case sortProductEnum.priceHighToLow:
-        sortCriteria = { finalPrice: 1 };
-        break;
-    }
-  }
-  pipeline.push({ $sort: sortCriteria });
-
-  pipeline.push({
-    $lookup: {
-      from: "categories",
-      localField: "category",
-      foreignField: "_id",
-      as: "category"
-    }
-  });
-  pipeline.push({ $unwind: "$category" });
-  pipeline.push({
-    $facet: {
-      data: [
-        { $skip: skip },
-        { $limit: perPage }
-      ],
-      totalItems: [
-        { $count: "count" }
-      ]
-    }
-  });
-  const result = await ProductModel.aggregate(pipeline).exec();
-  const data = result[0].data;
-  const totalItems = result[0].totalItems[0]?.count || 0;
-  const totalPages = Math.ceil(totalItems / perPage);
-
-  return {
-    data,
-    totalItems,
-    totalPages,
-    currentPage,
-  };
 };
 
 export const retrieveProducts = async (productIds: any) => {
-  const foundProducts = await ProductModel.find({ _id: { $in: productIds }, isDeleted: false });
+  const foundProducts = await ProductModel.find({
+    _id: { $in: productIds },
+    isDeleted: false,
+  });
   return foundProducts;
 };
+
 export const updateStock = async (
   orderProducts: ProductOrder[],
   productRecord: Record<string, IProduct & { _id: Types.ObjectId }> | any,
@@ -280,12 +430,12 @@ export const updateStock = async (
   for (const orderProduct of orderProducts) {
     let productIdString: string;
 
-    if (typeof orderProduct.productId === 'string') {
+    if (typeof orderProduct.productId === "string") {
       productIdString = orderProduct.productId;
-    } else if ('_id' in orderProduct.productId) {
+    } else if ("_id" in orderProduct.productId) {
       productIdString = orderProduct.productId._id.toString();
     } else {
-      console.error('Invalid productId type:', orderProduct.productId);
+      console.error("Invalid productId type:", orderProduct.productId);
       continue;
     }
     const product = productRecord[productIdString];
@@ -326,128 +476,189 @@ export const updateStock = async (
     try {
       await ProductModel.bulkWrite(bulkOperations);
     } catch (error) {
-      console.error('Error performing bulk update:', error);
+      console.error("Error performing bulk update:", error);
     }
   } else {
     console.log("No operations to perform.");
   }
 };
 
-export const findAllProductsByCategory = async (
-  sort: string,
-  priceRange: string,
-  page: number,
-  categoryId: string | Types.ObjectId
-) => {
-  if (!categoryId) {
-    throw new Error("categoryId is required");
-  }
-  
-  const perPage = 20;
-  const currentPage = Number.isInteger(page) && page > 0 ? page : 1;
-  const skip = (currentPage - 1) * perPage;
-
-  const pipeline: any[] = [];
-
-  pipeline.push({ $match: { isDeleted: false, category: new mongoose.Types.ObjectId(categoryId) } });
-
-  pipeline.push({
-    $addFields: {
-      finalPrice: {
-        $cond: { if: { $gt: ["$salePrice", 0] }, then: "$salePrice", else: "$price" }
-      }
-    }
-  });
-
-  if (priceRange) {
-    let priceFilter = {};
-    switch (priceRange) {
-      case sortProductEnum.priceUnder100:
-        priceFilter = { $lte: 100 };
-        break;
-      case sortProductEnum.priceBetween100and500:
-        priceFilter = { $gte: 100, $lte: 500 };
-        break;
-      case sortProductEnum.priceBetween500and1000:
-        priceFilter = { $gte: 500, $lte: 1000 };
-        break;
-      case sortProductEnum.priceAbove1000:
-        priceFilter = { $gte: 1000 };
-        break;
-    }
-    pipeline.push({ $match: { finalPrice: priceFilter } });
-  }
-
-  let sortCriteria: any = { createdAt: -1 };
-
-  if (sort) {
-    switch (sort) {
-      case sortProductEnum.newest:
-        sortCriteria = { createdAt: -1 };
-        break;
-      case sortProductEnum.priceLowToHigh:
-        sortCriteria = { finalPrice: -1 };
-        break;
-      case sortProductEnum.priceHighToLow:
-        sortCriteria = { finalPrice: 1 };
-        break;
-    }
-  }
-  pipeline.push({ $sort: sortCriteria });
-
-  pipeline.push({
-    $lookup: {
-      from: "categories",
-      localField: "category",
-      foreignField: "_id",
-      as: "category"
-    }
-  });
-  pipeline.push({ $unwind: "$category" });
-  pipeline.push({
-    $facet: {
-      data: [
-        { $skip: skip },
-        { $limit: perPage }
-      ],
-      totalItems: [
-        { $count: "count" }
-      ]
-    }
-  });
-  
-  const result = await ProductModel.aggregate(pipeline).exec();
-  const data = result[0].data;
-  const totalItems = result[0].totalItems[0]?.count || 0;
-  const totalPages = Math.ceil(totalItems / perPage);
-
-  return {
-    data,
-    totalItems,
-    totalPages,
-    currentPage,
-  };
-};
-
-
-
 export const getAnalytics = async () => {
-  const totalRevenue = await OrderModel.aggregate([
-    { $match: { status: orderStatusType.delivered } },
-    { $group: { _id: null, total: { $sum: '$price' } } }
+  const TZ = "Africa/Cairo";
+
+  // ─── Products ─────────────────────────────────────────────────────────────
+  const totalProducts = await ProductModel.countDocuments({ isDeleted: false });
+  const soldOutProducts = await ProductModel.countDocuments({ isDeleted: false, isSoldOut: true });
+
+  const topSellingDocs = await ProductModel.find({ isDeleted: false })
+    .sort({ soldItems: -1 })
+    .limit(5)
+    .select("productName finalPrice soldItems defaultImage discount discountPercentage")
+    .lean();
+  const topSelling = topSellingDocs.map((p) => ({
+    ...p,
+    discountPercentage:
+      p.discountPercentage !== undefined && p.discountPercentage !== null
+        ? Math.round(p.discountPercentage)
+        : p.discountPercentage,
+  }));
+
+  const mostWishlisted = await WishListModel.aggregate([
+    { $group: { _id: "$productId", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: ProductModel.collection.name,
+        localField: "_id",
+        foreignField: "_id",
+        as: "product",
+      },
+    },
+    { $unwind: "$product" },
+    {
+      $project: {
+        _id: 0,
+        count: 1,
+        product: {
+          _id: "$product._id",
+          productName: "$product.productName",
+          finalPrice: "$product.finalPrice",
+          defaultImage: "$product.defaultImage",
+        },
+      },
+    },
   ]);
+
+  const priceTotals = await ProductModel.aggregate([
+    { $match: { isDeleted: false } },
+    {
+      $group: {
+        _id: null,
+        totalFinalPrice: { $sum: { $ifNull: ["$finalPrice", 0] } },
+        totalWholesalePrice: { $sum: { $ifNull: ["$wholesalePrice", 0] } },
+      },
+    },
+  ]);
+
+  // ─── Categories ───────────────────────────────────────────────────────────
+  const totalCategories = await CategoryModel.countDocuments({ isDeleted: false });
+
+  // ─── Orders ───────────────────────────────────────────────────────────────
   const totalOrders = await OrderModel.countDocuments();
+
+  const startOfToday = moment().startOf("day").toDate();
+  const endOfToday = moment().endOf("day").toDate();
+
+  // todaySales = revenue from today's orders (cancelled excluded); todayOrders = all of today's orders
+  const todaySalesAgg = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: startOfToday, $lte: endOfToday },
+        status: { $ne: orderStatusType.cancelled },
+      },
+    },
+    { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+  ]);
+  const todayOrders = await OrderModel.countDocuments({
+    createdAt: { $gte: startOfToday, $lte: endOfToday },
+  });
+
+  // totalRevenue = all-time revenue excluding cancelled orders
+  const totalRevenueAgg = await OrderModel.aggregate([
+    { $match: { status: { $ne: orderStatusType.cancelled } } },
+    { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+  ]);
+
+  // averageOrderValue = across completed (delivered) orders only
+  const averageOrderAgg = await OrderModel.aggregate([
+    { $match: { status: orderStatusType.delivered } },
+    { $group: { _id: null, avg: { $avg: "$totalAmount" } } },
+  ]);
+
+  const statusAgg = await OrderModel.aggregate([
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+  const byStatus: Record<string, number> = {};
+  statusAgg.forEach((s) => {
+    byStatus[s._id] = s.count;
+  });
+
+  // last7Days = daily revenue and order count for the past 7 days (cancelled excluded from revenue)
+  const sevenDaysAgo = moment().subtract(6, "days").startOf("day").toDate();
+  const last7Agg = await OrderModel.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
+        status: { $ne: orderStatusType.cancelled },
+      },
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: TZ } },
+        revenue: { $sum: "$totalAmount" },
+        orders: { $sum: 1 },
+      },
+    },
+  ]);
+  const last7Map = last7Agg.reduce<Record<string, { revenue: number; orders: number }>>(
+    (acc, d) => {
+      acc[d._id] = { revenue: d.revenue, orders: d.orders };
+      return acc;
+    },
+    {}
+  );
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = moment().subtract(i, "days").format("YYYY-MM-DD");
+    const entry = last7Map[date];
+    last7Days.push({ date, revenue: entry?.revenue ?? 0, orders: entry?.orders ?? 0 });
+  }
+
+  // ─── Customers ────────────────────────────────────────────────────────────
   const totalCustomers = await AuthModel.countDocuments();
-  const totalProducts = await ProductModel.countDocuments();
 
   return {
-    totalRevenue: totalRevenue[0]?.total ?? 0,
-    totalOrders,
-    totalCustomers,
-    totalProducts,
+    products: {
+      total: totalProducts,
+      soldOut: soldOutProducts,
+      topSelling,
+      mostWishlisted,
+      totalFinalPrice: priceTotals[0]?.totalFinalPrice ?? 0,
+      totalWholesalePrice: priceTotals[0]?.totalWholesalePrice ?? 0,
+    },
+    categories: {
+      total: totalCategories,
+    },
+    orders: {
+      total: totalOrders,
+      todaySales: todaySalesAgg[0]?.total ?? 0,
+      todayOrders,
+      totalRevenue: totalRevenueAgg[0]?.total ?? 0,
+      averageOrderValue: averageOrderAgg[0]?.avg ?? 0,
+      byStatus,
+      last7Days,
+    },
+    customers: {
+      total: totalCustomers,
+    },
   };
 };
+
 export const getAvailableItems = async (productIds: [string]) => {
-  const products = await ProductModel.find({ _id: { $in: productIds } }, { _id: 1, availableItems: 1 });
+  const products = await ProductModel.find(
+    { _id: { $in: productIds } },
+    { _id: 1, availableItems: 1, finalPrice: 1, price: 1 }
+  );
   return products;
-}
+};
+
+// Per-variant stock — the unit the cart and order system actually validate
+// against (Product.availableItems is only the denormalized sum of variants).
+export const getVariantsAvailableItems = async (variantIds: string[]) => {
+  const variants = await ProductVariantModel.find(
+    { _id: { $in: variantIds } },
+    { _id: 1, availableItems: 1, product: 1 }
+  ).populate({ path: "product", select: "finalPrice price" });
+  return variants;
+};

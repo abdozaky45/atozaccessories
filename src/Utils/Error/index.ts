@@ -40,5 +40,17 @@ enum ErrorMessages {
   ORDER_NOT_FOUND = "Order not found",
   NOT_PERMITTED = "You do not have permission",
   NOT_CANCELLED = "This order cannot be cancelled at this stage",
+  ICON_NOT_FOUND = "Icon not found",
+  ICON_KEY_ALREADY_EXISTS = "Icon key already exists",
+  COLOR_NOT_FOUND = "Color not found",
+  COLOR_NAME_ALREADY_EXISTS = "Color name already exists",
+  SIZE_NOT_FOUND = "Size not found",
+  SIZE_NUMBER_ALREADY_EXISTS = "Size number already exists",
+  OFFER_NOT_FOUND = "Offer not found",
+  VARIANT_NOT_FOUND = "Variant not found",
+  VARIANT_DUPLICATE = "This color and size combination already exists for this product",
+  S3_DELETE_FAILED = "Failed to delete image from storage, product was not deleted",
+  VIDEO_NOT_FOUND = "Video not found",
+  VIDEO_ALREADY_EXISTS = "A video already exists. Delete the current video before uploading a new one.",
 }
 export default ErrorMessages;

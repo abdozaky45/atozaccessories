@@ -8,7 +8,8 @@ const CategorySchema = new Schema<ICategory>({
     image:ImageSchema,
     createdBy:RefType(SchemaTypesReference.User,true),
     createdAt:RequiredNumber,
-    isDeleted:NotRequiredBoolean
+    isDeleted:NotRequiredBoolean,
+    icon_id: { type: Schema.Types.ObjectId, ref: SchemaTypesReference.Icon, required: false, default: null },
 });
 const CategoryModel = model(SchemaTypesReference.Category,CategorySchema);
 export default CategoryModel;

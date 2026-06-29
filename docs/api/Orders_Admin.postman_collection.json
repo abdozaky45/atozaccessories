@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "A to Z Accessory — Admin Orders API",
+    "description": "Admin-facing order endpoints (mounted at /admin/orders). All requests require an admin Bearer token. See ADMIN_ORDERS_API.md for full behavior details.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{adminToken}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "adminToken", "value": "PASTE_ADMIN_ACCESS_TOKEN_HERE", "type": "string" },
+    { "key": "orderId", "value": "PASTE_ORDER_ID_HERE", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Get All Orders (paginated + filters)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/orders/all?page=1&status=under_review&orderId=",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "orders", "all"],
+          "query": [
+            { "key": "page", "value": "1", "description": "Required. Page number (limit is fixed at 20). Clamped to 1 if invalid." },
+            { "key": "status", "value": "under_review", "description": "Optional. One of: under_review, confirmed, ordered, shipped, delivered, cancelled, deleted.", "disabled": false },
+            { "key": "orderId", "value": "", "description": "Optional. Suffix match on the order _id (e.g. the last 8 chars shown in the UI).", "disabled": true }
+          ]
+        },
+        "description": "Returns { totalItems, totalPages, currentPage, orders[] }. Orders are sorted newest-first; products.productId is populated with defaultImage."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Order By Id",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/orders/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "orders", "{{orderId}}"]
+        },
+        "description": "Returns { order }. products.productId is populated with defaultImage and productName. 404 'Order not found' if the id does not exist."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Order Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"shipped\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/orders/status/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "orders", "status", "{{orderId}}"]
+        },
+        "description": "Branches by status: 'cancelled' -> restores stock + emails admins; 'deleted' -> restores stock (no email); any other valid status -> plain status update. Returns { order }. status must be one of: under_review, confirmed, ordered, shipped, delivered, cancelled, deleted."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Order Status — Cancel",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"cancelled\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/orders/status/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "orders", "status", "{{orderId}}"]
+        },
+        "description": "Cancels the order: restores variant stock, decrements soldItems on paid lines, recomputes isSoldOut, and emails the admin addresses with the invoice. Stock is not double-restored if already cancelled/deleted."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Order Status — Soft Delete",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"deleted\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/orders/status/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "orders", "status", "{{orderId}}"]
+        },
+        "description": "Soft-deletes the order: same stock restoration as cancel, but no email is sent."
+      },
+      "response": []
+    }
+  ]
+}

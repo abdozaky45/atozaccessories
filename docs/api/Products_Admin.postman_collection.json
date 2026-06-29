@@ -1,0 +1,174 @@
+{
+  "info": {
+    "name": "Products Admin API",
+    "description": "Admin product endpoints mounted under /admin/products. All requests require an ADMIN Bearer token ({{token}}).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Analytics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/products/analysis",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products", "analysis"]
+        },
+        "description": "Aggregated analytics dashboard (products, categories, orders, customers)."
+      }
+    },
+    {
+      "name": "Get Admin Products List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/products?page=1&limit=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products"],
+          "query": [
+            { "key": "category", "value": "", "disabled": true },
+            { "key": "isBestSeller", "value": "true", "disabled": true },
+            { "key": "minPrice", "value": "0", "disabled": true },
+            { "key": "maxPrice", "value": "1000", "disabled": true },
+            { "key": "color", "value": "", "disabled": true },
+            { "key": "size", "value": "", "disabled": true },
+            { "key": "isDeleted", "value": "false", "disabled": true },
+            { "key": "sort", "value": "createdAt", "disabled": true },
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "20" }
+          ]
+        },
+        "description": "Paginated admin product list. sort accepts: price | createdAt | soldItems."
+      }
+    },
+    {
+      "name": "Create Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productName\": \"Classic Watch\",\n  \"productDescription\": \"A timeless piece.\",\n  \"price\": 300,\n  \"availableItems\": 20,\n  \"categoryId\": \"665e0a2b3c4d5e6f7a8b9c0d\",\n  \"defaultImage\": \"https://example.com/default.jpg\",\n  \"salePrice\": 250,\n  \"albumImages\": [\n    \"https://example.com/album1.jpg\",\n    \"https://example.com/album2.jpg\"\n  ],\n  \"wholesalePrice\": 180,\n  \"isBestSeller\": false,\n  \"variants\": [\n    {\n      \"color\": \"665e0a2b3c4d5e6f7a8b9c11\",\n      \"size\": \"665e0a2b3c4d5e6f7a8b9c22\",\n      \"availableItems\": 5\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/products",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products"]
+        },
+        "description": "Create a product with optional variants. finalPrice = salePrice || price; wholesalePrice must be < finalPrice."
+      }
+    },
+    {
+      "name": "Get Admin Product By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/products/{{productId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products", "{{productId}}"]
+        },
+        "description": "Get a single product by id (includes soft-deleted), with category populated and variants attached."
+      }
+    },
+    {
+      "name": "Update Product",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productName\": \"Classic Watch\",\n  \"productDescription\": \"An updated timeless piece.\",\n  \"price\": 320,\n  \"availableItems\": 15,\n  \"categoryId\": \"665e0a2b3c4d5e6f7a8b9c0d\",\n  \"defaultImage\": \"https://example.com/default.jpg\",\n  \"salePrice\": 260,\n  \"albumImages\": [\n    \"https://example.com/album1.jpg\"\n  ],\n  \"wholesalePrice\": 190,\n  \"isBestSeller\": true,\n  \"variants\": [\n    {\n      \"_id\": \"665f0a2b3c4d5e6f7a8b9c33\",\n      \"color\": \"665e0a2b3c4d5e6f7a8b9c11\",\n      \"size\": \"665e0a2b3c4d5e6f7a8b9c22\",\n      \"availableItems\": 8\n    },\n    {\n      \"color\": \"665e0a2b3c4d5e6f7a8b9c44\",\n      \"size\": \"665e0a2b3c4d5e6f7a8b9c22\",\n      \"availableItems\": 3\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/products/{{productId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products", "{{productId}}"]
+        },
+        "description": "Update a product and upsert variants. Variants with _id are updated; without _id are created. categoryId must reference an existing category."
+      }
+    },
+    {
+      "name": "Variants",
+      "item": [
+        {
+          "name": "Delete Variant",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/{{productId}}/variants/{{variantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "products", "{{productId}}", "variants", "{{variantId}}"]
+            },
+            "description": "Delete a single variant by variantId."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hard Delete Product",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/products/{{productId}}/hard",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products", "{{productId}}", "hard"]
+        },
+        "description": "Permanently delete a product: removes images from S3, deletes all variants, then deletes the product document. Irreversible."
+      }
+    },
+    {
+      "name": "Soft Delete Product",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/products/{{productId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "products", "{{productId}}"]
+        },
+        "description": "Soft delete a product (sets isDeleted: true). Document and variants remain."
+      }
+    }
+  ]
+}

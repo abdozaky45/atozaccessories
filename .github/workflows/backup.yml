@@ -1,0 +1,44 @@
+name: Daily MongoDB Backup to S3 (Tokyo)
+
+on:
+  schedule:
+    - cron: '37 2 * * *'   # 02:37 UTC daily (not :00 — GitHub delays/drops cron at the top of the hour)
+  workflow_dispatch: {}     # manual "Run workflow" button
+
+concurrency:                # prevent two backups running at once
+  group: mongo-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MDB_TOOLS_VERSION: '100.12.1'
+      BACKUP_BUCKET: atoz-mongo-backups      # change if the name is taken globally on S3
+      BACKUP_REGION: ap-northeast-1
+      S3_PREFIX: mongo
+    steps:
+    - name: Install MongoDB Database Tools
+      run: |
+        TARBALL="mongodb-database-tools-ubuntu2204-x86_64-${MDB_TOOLS_VERSION}"
+        curl -fsSL "https://fastdl.mongodb.org/tools/db/${TARBALL}.tgz" -o tools.tgz
+        tar -xzf tools.tgz
+        echo "${PWD}/${TARBALL}/bin" >> "$GITHUB_PATH"
+
+    - name: Create compressed dump
+      run: |
+        STAMP=$(date -u +%Y-%m-%d_%H%M%S)
+        ARCHIVE="backup-${STAMP}.gz"
+        mongodump --uri="${{ secrets.DB_URL }}" --gzip --archive="${ARCHIVE}"
+        echo "ARCHIVE=${ARCHIVE}" >> "$GITHUB_ENV"
+
+    - name: Configure AWS credentials (backup user)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.BACKUP_REGION }}
+
+    - name: Upload to S3
+      run: aws s3 cp "${ARCHIVE}" "s3://${BACKUP_BUCKET}/${S3_PREFIX}/${ARCHIVE}"

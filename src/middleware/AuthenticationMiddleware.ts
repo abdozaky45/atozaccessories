@@ -8,13 +8,25 @@ const checkAuthority = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { authorization } = req.headers;
     if (!authorization) {
-      throw new ApiError(401, ErrorMessages.UNAUTHORIZED_ERROR);
+    return res.status(401).json({
+        success: false,
+        message: "no token provided or in-valid Bearer Key",
+      });
     }
     if (req.originalUrl.startsWith("/public")) {
       return next();
     }
     const token = authorization.split(" ")[1];
-    const decoded = verifyToken({ token });
+    let decoded;
+    try {
+      decoded = verifyToken({ token });
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token or expired",
+      });
+    }
+
     if (!decoded?._id) {
       throw new ApiError(401, ErrorMessages.INVALID_PAYLOAD);
     }
@@ -34,11 +46,9 @@ const checkAuthority = asyncHandler(
 const checkRole = (requiredRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const { currentUser } = req.body;
-
     if (!requiredRoles.includes(currentUser.userInfo.role)) {
       throw new ApiError(403, ErrorMessages.ROLE_ERROR);
     }
-
     next();
   };
 };

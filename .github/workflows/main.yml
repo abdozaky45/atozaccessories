@@ -14,18 +14,29 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Set up Node.js
+      # Must match the EB platform's Node major (we pin 20 via .nvmrc/engines) so
+      # the prebuilt native binaries we ship (e.g. bcrypt) are ABI-compatible.
       uses: actions/setup-node@v3
       with:
-        node-version: 23
+        node-version: 20
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci
 
     - name: Build project
       run: npm run build
 
+    - name: Prune dev dependencies
+      # We ship node_modules in the bundle, so EB skips the slow on-instance
+      # `npm install` (which was timing out on the grpc-heavy analytics deps and
+      # rolling the deploy back). Drop devDeps to keep only what runtime needs.
+      run: npm prune --omit=dev
+
     - name: Create ZIP file
-      run: zip -r deployment-package.zip package.json .platform dist
+      # Bundle node_modules so EB does NOT run npm install on the instance.
+      # package-lock.json is intentionally omitted: its presence can make the
+      # platform run `npm ci`, which wipes and reinstalls the bundled modules.
+      run: zip -rq deployment-package.zip package.json .ebextensions dist node_modules
 
     - name: List files
       run: ls -la

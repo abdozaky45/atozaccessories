@@ -3,6 +3,9 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 interface TokenOptions {
   payload?: object;
   signature?: string;
+  // Pass `null` to issue a token that never expires (used for regular users,
+  // who have no login step to refresh it).
+  expiresIn?: string | number | null;
 }
 interface VerifyTokenOptions {
   token: string;
@@ -11,10 +14,11 @@ interface VerifyTokenOptions {
 export const generateAccessToken = ({
   payload = {},
   signature = process.env.TOKEN_SIGNATURE,
+  expiresIn = '7d',
 }: TokenOptions = {}): string => {
-  const token = jwt.sign(payload, signature as string, {
-    expiresIn: '7d',
-  });
+  const options: jwt.SignOptions = {};
+  if (expiresIn !== null) options.expiresIn = expiresIn as any;
+  const token = jwt.sign(payload, signature as string, options);
   return token;
 };
 export const generateRefreshToken = ({

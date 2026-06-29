@@ -1,9 +1,11 @@
 import { Router } from "express";
 import categoryPublicRouter from "../Categories/CategoryPublicRouter";
-import ProductPublicRouter from "../Product/ProductPublicRouter";
 import PublicImageSliderRouter from "../ImageSlider/PublicImageSliderRouter";
+import publicOfferRouter from "../Offers/PublicOfferRouter";
+import PublicVideoRouter from "../Video/PublicVideoRouter";
 const publicRouter = Router();
 publicRouter.use("/category", categoryPublicRouter);
-publicRouter.use("/product", ProductPublicRouter);
-publicRouter.use("/hero-section",PublicImageSliderRouter)
+publicRouter.use("/hero-section", PublicImageSliderRouter);
+publicRouter.use("/offers", publicOfferRouter);
+publicRouter.use("/video", PublicVideoRouter);
 export default publicRouter;

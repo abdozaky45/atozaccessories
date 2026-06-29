@@ -28,5 +28,10 @@ userRouter.get(
   "/user-information",
   UserController.getUserInformationById
 );
+userRouter.get(
+  "/single-user-information/:userId",
+  Validation(userValidation.CustomUserValidation),
+  UserController.getSingleUserInformation
+);
 userRouter.post("/logout", UserController.logout);
 export default userRouter;
