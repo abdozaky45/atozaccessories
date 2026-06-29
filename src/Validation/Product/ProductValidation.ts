@@ -97,3 +97,13 @@ export const getProductBySoldOutValidation = baseSchema.concat(
     page: joi.string().required(),
   }).required()
 );
+
+// Share links arrive with tracking junk (?fbclid=..., ?v=2) appended by social
+// platforms. `.unknown(true)` lets those through — a 400 here would hand the
+// crawler an error page instead of the OG card.
+export const getProductShareValidation = joi
+  .object({
+    productId: joi.string().required(),
+  })
+  .unknown(true)
+  .required();
