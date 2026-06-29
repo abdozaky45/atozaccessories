@@ -54,6 +54,34 @@ export const findProductByIdPublic = async (id: string | Types.ObjectId) => {
   return { ...product, variants };
 };
 
+// Lightweight fetch for the social-share OG preview: only the fields the card
+// needs (name/description/image/price) plus the distinct, ordered size labels
+// across variants. `.lean()` since we never mutate or serialize the document.
+export const getProductForShare = async (id: string | Types.ObjectId) => {
+  const product = await ProductModel.findOne({ _id: id, isDeleted: false })
+    .select("productName productDescription defaultImage price salePrice")
+    .lean();
+  if (!product) return null;
+
+  const variants = await ProductVariantModel.find({ product: id })
+    .populate(SchemaTypesReference.Size, "number order")
+    .select("size")
+    .lean();
+
+  const seen = new Map<string, { number: string; order: number }>();
+  variants.forEach((v: any) => {
+    const s = v.size;
+    if (s && typeof s === "object" && s._id && !seen.has(String(s._id))) {
+      seen.set(String(s._id), { number: s.number, order: s.order });
+    }
+  });
+  const sizes = Array.from(seen.values())
+    .sort((a, b) => a.order - b.order)
+    .map((s) => s.number);
+
+  return { ...product, sizes };
+};
+
 export const prepareProductUpdates = async (
   productData: any,
   product: IProduct,

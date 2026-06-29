@@ -12,3 +12,16 @@ export function getCorsOptions(): cors.CorsOptions {
         credentials: true,
     };
 }
+
+// Public storefront origin — where the share endpoint bounces real users (and
+// the canonical product URL). Override via env per environment; trailing slash
+// is stripped so we can safely append paths.
+export const STOREFRONT_URL = (
+    process.env.STOREFRONT_URL || "https://www.atozaccessory.com"
+)
+    .trim()
+    .replace(/\/+$/, "");
+
+// Frontend product page is /product/:id (singular).
+export const getStorefrontProductUrl = (id: string) =>
+    `${STOREFRONT_URL}/product/${id}`;

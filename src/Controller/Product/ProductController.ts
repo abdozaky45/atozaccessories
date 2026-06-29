@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { ApiError, ApiResponse, asyncHandler } from "../../Utils/ErrorHandling";
 import ErrorMessages from "../../Utils/Error";
+import { renderProductShareHtml } from "../../Utils/ShareHtml";
+import { STOREFRONT_URL, getStorefrontProductUrl } from "../../config";
 import { extractMediaId, findCategoryById } from "../../Service/CategoryService/CategoryService";
 import slugify from "slugify";
 import moment from "../../Utils/DateAndTime";
@@ -16,6 +19,7 @@ import {
   getAnalytics,
   getAvailableItems,
   getVariantsAvailableItems,
+  getProductForShare,
   getProducts,
   hardDeleteProduct,
   prepareProductUpdates,
@@ -301,6 +305,63 @@ export const SearchProducts = asyncHandler(async (req: Request, res: Response) =
   const products = await productSearch(searchQuery as string);
   return res.json(new ApiResponse(200, { products }, "Success"));
 });
+
+// ─── Public: Social-share OG preview ─────────────────────────────────────────
+
+// GET /products/share/:productId — returns an HTML page (NOT JSON) carrying
+// Open Graph tags so WhatsApp/Facebook/Telegram/X render a rich card (image +
+// name + description). Real users are JS-redirected to the product page.
+export const getProductSharePreview = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { productId } = req.params as { productId: string };
+    const redirectUrl = getStorefrontProductUrl(productId);
+    const shareUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+
+    const product = mongoose.isValidObjectId(productId)
+      ? await getProductForShare(productId)
+      : null;
+
+    // Never throw: a missing product still means the link was already shared.
+    // Serve a graceful fallback that bounces to the storefront home instead.
+    if (!product) {
+      res.set("Cache-Control", "public, max-age=60");
+      return res
+        .status(200)
+        .type("html")
+        .send(
+          renderProductShareHtml({
+            title: "A to Z Accessories",
+            description: "تسوّقي أحدث التشكيلات من إكسسوارات A to Z",
+            imageUrl: "",
+            shareUrl,
+            redirectUrl: STOREFRONT_URL,
+          })
+        );
+    }
+
+    // Build a share-friendly description: copy + price + available sizes.
+    const price = product.salePrice || product.price;
+    const parts: string[] = [];
+    if (product.productDescription) parts.push(product.productDescription);
+    if (price) parts.push(`السعر: ${price.toLocaleString("en-US")} EGP`);
+    if (product.sizes?.length)
+      parts.push(`المقاسات المتاحة: ${product.sizes.join(", ")}`);
+
+    res.set("Cache-Control", "public, max-age=300"); // ease crawler re-hits
+    return res
+      .status(200)
+      .type("html")
+      .send(
+        renderProductShareHtml({
+          title: product.productName || "A to Z Accessories",
+          description: parts.join(" · "),
+          imageUrl: product.defaultImage?.mediaUrl || "",
+          shareUrl,
+          redirectUrl,
+        })
+      );
+  }
+);
 
 // ─── Public: Available items check (used by order system) ────────────────────
 
