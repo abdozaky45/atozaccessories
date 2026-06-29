@@ -10,8 +10,9 @@ import {
   prepareColorUpdates,
   deleteColorById,
 } from "../../Service/ColorService/ColorService";
-import { getOrSet, cacheDel } from "../../Utils/Cache";
+import { getOrSet } from "../../Utils/Cache";
 import { CacheKeys, CacheTTL } from "../../Utils/Cache/keys";
+import { invalidateColorCaches } from "../../Utils/Cache/invalidate";
 
 export const createNewColor = asyncHandler(async (req: Request, res: Response) => {
   const { name, hex } = req.body;
@@ -20,7 +21,7 @@ export const createNewColor = asyncHandler(async (req: Request, res: Response) =
     throw new ApiError(409, ErrorMessages.COLOR_NAME_ALREADY_EXISTS);
   }
   const color = await createColor({ name, hex });
-  await cacheDel(CacheKeys.colors);
+  await invalidateColorCaches();
   return res.json(new ApiResponse(200, { color }, SuccessMessage.COLOR_CREATED));
 });
 
@@ -61,7 +62,7 @@ export const updateColor = asyncHandler(async (req: Request, res: Response) => {
   const updates = prepareColorUpdates(color, name, hex);
   if (updates) {
     await color.save();
-    await cacheDel(CacheKeys.colors);
+    await invalidateColorCaches();
     return res.json(new ApiResponse(200, { color }, SuccessMessage.COLOR_UPDATED));
   }
   return res.json(new ApiResponse(200, {}, SuccessMessage.NO_UPDATE_COLOR));
@@ -72,6 +73,6 @@ export const deleteColor = asyncHandler(async (req: Request, res: Response) => {
   if (!color) {
     throw new ApiError(404, ErrorMessages.COLOR_NOT_FOUND);
   }
-  await cacheDel(CacheKeys.colors);
+  await invalidateColorCaches();
   return res.json(new ApiResponse(200, {}, SuccessMessage.COLOR_DELETED));
 });

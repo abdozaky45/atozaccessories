@@ -10,8 +10,9 @@ import {
   prepareSizeUpdates,
   deleteSizeById,
 } from "../../Service/SizeService/SizeService";
-import { getOrSet, cacheDel } from "../../Utils/Cache";
+import { getOrSet } from "../../Utils/Cache";
 import { CacheKeys, CacheTTL } from "../../Utils/Cache/keys";
+import { invalidateSizeCaches } from "../../Utils/Cache/invalidate";
 
 export const createNewSize = asyncHandler(async (req: Request, res: Response) => {
   const { number, order } = req.body;
@@ -20,7 +21,7 @@ export const createNewSize = asyncHandler(async (req: Request, res: Response) =>
     throw new ApiError(409, ErrorMessages.SIZE_NUMBER_ALREADY_EXISTS);
   }
   const size = await createSize({ number, order });
-  await cacheDel(CacheKeys.sizes);
+  await invalidateSizeCaches();
   return res.json(new ApiResponse(200, { size }, SuccessMessage.SIZE_CREATED));
 });
 
@@ -58,7 +59,7 @@ export const updateSize = asyncHandler(async (req: Request, res: Response) => {
   const updates = prepareSizeUpdates(size, number, order);
   if (updates) {
     await size.save();
-    await cacheDel(CacheKeys.sizes);
+    await invalidateSizeCaches();
     return res.json(new ApiResponse(200, { size }, SuccessMessage.SIZE_UPDATED));
   }
   return res.json(new ApiResponse(200, {}, SuccessMessage.NO_UPDATE_SIZE));
@@ -69,6 +70,6 @@ export const deleteSize = asyncHandler(async (req: Request, res: Response) => {
   if (!size) {
     throw new ApiError(404, ErrorMessages.SIZE_NOT_FOUND);
   }
-  await cacheDel(CacheKeys.sizes);
+  await invalidateSizeCaches();
   return res.json(new ApiResponse(200, {}, SuccessMessage.SIZE_DELETED));
 });

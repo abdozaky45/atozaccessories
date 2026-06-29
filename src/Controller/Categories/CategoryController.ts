@@ -14,11 +14,9 @@ import {
 } from "../../Service/CategoryService/CategoryService";
 import { findIconById } from "../../Service/IconService/IconService";
 import SuccessMessage from "../../Utils/SuccessMessages";
-import { getOrSet, cacheDel } from "../../Utils/Cache";
+import { getOrSet } from "../../Utils/Cache";
 import { CacheKeys, CacheTTL } from "../../Utils/Cache/keys";
-
-// Categories also drive the home page sections, so any category write drops both.
-const invalidateCategoryCaches = () => cacheDel(CacheKeys.categories, CacheKeys.home);
+import { invalidateCategoryCaches } from "../../Utils/Cache/invalidate";
 
 export const CreateNewCategory = asyncHandler(async (req: Request, res: Response) => {
   const { categoryName, imageUrl, icon_id } = req.body;
