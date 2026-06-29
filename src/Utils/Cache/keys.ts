@@ -16,5 +16,9 @@ export const CacheKeys = {
 // TTLs in seconds.
 export const CacheTTL = {
   home: 120, // 2 min — heavy aggregation, changes slowly
-  reference: 3600, // 1 hour — categories/colors/sizes/icons
+  // 5 min — categories/colors/sizes/icons. Writes refresh these immediately
+  // (write-through, see Utils/Cache/invalidate.ts), so this TTL is only the
+  // safety net that bounds staleness if a Redis op is dropped during a write —
+  // never the 1-hour window that caused the production stale-image incident.
+  reference: 300,
 };

@@ -39,6 +39,23 @@ export async function getOrSet<T>(
   return fresh;
 }
 
+/**
+ * Write `value` to `key` for `ttlSeconds`, overwriting any existing entry.
+ * Use after a mutation (write-through) so the cache reflects the new state
+ * immediately instead of depending on a prior `cacheDel` having succeeded —
+ * a swallowed delete error would otherwise leave the stale value alive for
+ * the full TTL.
+ */
+export async function cacheSet<T>(key: string, ttlSeconds: number, value: T): Promise<void> {
+  const client = getRedis();
+  if (!client) return;
+  try {
+    await client.set(key, JSON.stringify(value), "EX", ttlSeconds);
+  } catch {
+    // ignore
+  }
+}
+
 /** Delete one or more exact keys. */
 export async function cacheDel(...keys: string[]): Promise<void> {
   const client = getRedis();
